@@ -1,0 +1,25 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+GPTAPIKEY.txt
+*.pem
+*.key
+
+# Dependencies and generated output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.log
+
+# Local caches
+.DS_Store
+Thumbs.db
+.turbo/
+.cache/
+
+# Raw intake artifacts retained locally outside version control
+/Time_Sovereignty_Codex_Package_v0.6.zip
+/ChatGPT Image 2026年7月15日 上午08_22_59.png
