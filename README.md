@@ -64,7 +64,8 @@ npm run build
 
 `npm run smoke:openai` performs one real Responses API request using the ignored
 local `.env.local`. Do not run it casually: it is a live, potentially billable
-check and currently remains blocked by project API quota.
+check. The required one-request smoke test passed on 2026-07-16; routine local
+development should remain mock-first.
 
 ## Evidence chain
 
@@ -78,7 +79,8 @@ check and currently remains blocked by project API quota.
 
 The real OpenAI API key belongs only in `.env.local` and must never be printed or committed. `.env.example` contains names and safe defaults only.
 
-A minimal real `gpt-5.6` Responses API request was attempted on 2026-07-16. It
-was blocked before inference by API `insufficient_quota`; the result is retained
-in `docs/evidence/` and must not be represented as a successful model-access or
-structured-output check.
+A first minimal real `gpt-5.6` Responses API request was blocked by
+`insufficient_quota`. After API billing was funded, the same one-request check
+passed on 2026-07-16: model access, the Responses API, and strict structured
+output were all confirmed. Both the failed and successful records are retained
+in `docs/evidence/` so the evidence chain remains complete.

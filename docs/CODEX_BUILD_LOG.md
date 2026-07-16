@@ -76,3 +76,19 @@
   provider and the API project remains blocked by `insufficient_quota`.
 - Cloud Tasks API availability is proven, but the real task, authenticated
   callback, and Firestore transition are not yet implemented or claimed.
+
+## 2026-07-16 — GPT-5.6 access confirmed and task handoff prepared
+
+- Chloe reported adding US$10 of API credit after attaching billing. The exact
+  account balance was not queried or recorded in the repository.
+- Reran the same minimal, billable `gpt-5.6` Responses API smoke test once.
+- The request completed successfully and the API returned model
+  `gpt-5.6-sol` for requested alias `gpt-5.6`.
+- Confirmed account model access, Responses API execution, and strict JSON
+  Schema output `{ "ok": true }`.
+- The request used 36 input tokens and 16 output tokens, 52 total, with
+  reasoning effort `none` and response storage disabled.
+- Preserved the earlier quota failure and added a separate success record under
+  `docs/evidence/` instead of rewriting history.
+- Replaced the handoff placeholder with a verified continuation manual for the
+  next Codex task.

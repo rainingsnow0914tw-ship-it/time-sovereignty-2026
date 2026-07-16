@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "requested_model": "gpt-5.6",
+  "returned_model": "gpt-5.6-sol",
+  "account_access_confirmed": true,
+  "responses_api_confirmed": true,
+  "structured_output_confirmed": true,
+  "structured_output_value": {
+    "ok": true
+  },
+  "response_status": "completed",
+  "response_id": "resp_0527267ac2bcc96b016a58d536c75c819ab8918123f58470a5",
+  "store": false,
+  "reasoning_effort": "none",
+  "started_at": "2026-07-16T12:57:25.418Z",
+  "completed_at": "2026-07-16T12:57:28.458Z",
+  "usage": {
+    "input_tokens": 36,
+    "output_tokens": 16,
+    "total_tokens": 52
+  }
+}
