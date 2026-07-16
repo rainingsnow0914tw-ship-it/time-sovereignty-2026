@@ -4,10 +4,12 @@
 
 - Handoff updated: 2026-07-17 04:38 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
+- Public remote:
+  `https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026`
 - Branch: `main`
-- Last verified product/submission commits: `3b43c12` (deployed runtime
-  evidence), `329edc3` (submission assets), and `f954e90` (focused
-  accessibility fixes).
+- Last verified product/submission commits: `329edc3` (submission assets),
+  `f954e90` (focused accessibility fixes), and `29f67a5` (MIT public-release
+  checkpoint).
 - The commit containing this file is the handoff checkpoint; verify it with
   `git log -1 --oneline` after opening the repository.
 - Project name: **Time Sovereignty** (earlier working name: Chloe Chief of
@@ -287,6 +289,10 @@ Full evidence:
 - Decision 0010 governs the judging warm instance and focused accessibility
   gate. Full evidence:
   `docs/evidence/phase-8-submission-readiness-2026-07-17.md`.
+- Chloe selected public MIT publication. GitHub verified the repository as
+  `PUBLIC`, default branch `main`, SPDX license `MIT`, public HTTP 200, and an
+  exact first-release local/remote match at commit `29f67a5`. Current and
+  historical key-pattern scans were clear before publication.
 
 ## Honest boundary: remaining submission work
 
@@ -305,12 +311,10 @@ compatibility has already been proven during Phase 4.
 
 ## Exact next action
 
-Commit this final evidence checkpoint. Then choose the repository publication
-route: public with a chosen license, or private with both judging addresses
-granted access. After that, record and upload the public under-three-minute
-YouTube demo, fill the repository/video URLs in `docs/DEVPOST_SUBMISSION.md`,
-review the Devpost entry, and submit it. Do not rerun the live GPT-5.6 task
-merely for screenshots.
+Record and upload the public under-three-minute YouTube demo, fill its URL in
+`docs/DEVPOST_SUBMISSION.md`, review the Devpost entry, and submit it. The
+repository URL, MIT license, and `/feedback` Session ID are already complete.
+Do not rerun the live GPT-5.6 task merely for screenshots.
 
 ## Guardrails that must survive the handoff
 
@@ -348,6 +352,7 @@ merely for screenshots.
 - `3b43c12` — deployed provider/model/revision evidence in the UI
 - `329edc3` — Devpost copy, demo script, architecture, and initial contrast fix
 - `f954e90` — focused accessibility and semantic-landmark fixes
+- `29f67a5` — MIT license and public repository metadata
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation

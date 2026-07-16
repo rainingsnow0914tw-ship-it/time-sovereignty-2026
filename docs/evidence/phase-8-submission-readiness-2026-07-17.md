@@ -103,10 +103,30 @@ both zero.
 No repeated GPT-5.6 regression run was made during this submission-readiness
 pass because no production Agent contract changed.
 
+## Public GitHub release
+
+Chloe selected the public MIT route. The repository was published at:
+
+`https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026`
+
+Post-publication verification confirmed:
+
+- visibility `PUBLIC`;
+- unauthenticated repository HTTP status 200;
+- default branch `main`;
+- GitHub-detected SPDX license `MIT`;
+- homepage points to the live Cloud Run application;
+- public topics include OpenAI, GPT-5.6, Codex, AI Agents, Cloud Run, Next.js,
+  and hackathon;
+- remote `main` exactly matched local commit `29f67a5` at the first public
+  release.
+
+The pre-publication scan found no OpenAI key pattern in the current tracked
+tree or Git history, no tracked private-key file, and no tracked file over
+10 MB. `.env.local` and `GPTAPIKEY.txt` remained ignored.
+
 ## Remaining human or authorization-dependent actions
 
-- choose public GitHub plus a license, or private GitHub plus access for both
-  judging email addresses;
 - record and upload the narrated demo as a public YouTube video under three
   minutes;
 - paste the final repository and video URLs into the Devpost draft;

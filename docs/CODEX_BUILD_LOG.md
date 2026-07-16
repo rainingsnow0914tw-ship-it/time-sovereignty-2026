@@ -369,3 +369,23 @@
 - Decision 0010 records the judging warm-instance and accessibility policy.
   The remaining human/authorization boundary is GitHub visibility and license,
   the narrated public YouTube upload, and final Devpost review/submit.
+
+## 2026-07-17 — Public MIT repository release
+
+- Chloe selected a public GitHub repository with the MIT License.
+- Before publication, scanned both the current tracked tree and Git history for
+  OpenAI key patterns; none were found. Confirmed `.env.local` and
+  `GPTAPIKEY.txt` remain ignored, no private-key filename is tracked, and no
+  tracked file exceeds 10 MB.
+- Added the canonical MIT License with Chloe as copyright holder and declared
+  `MIT` in both package metadata files. Commit `29f67a5` is the first licensed
+  public-release checkpoint.
+- Created public repository
+  `https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026`, pushed
+  `main`, set the deployed Cloud Run URL as its homepage, and added relevant
+  Build Week technology topics.
+- Verified unauthenticated HTTP 200, visibility `PUBLIC`, default branch
+  `main`, GitHub-detected SPDX license `MIT`, and an exact local/remote commit
+  match.
+- Repository publication is complete. Remaining submission work is the public
+  narrated YouTube demo and final Devpost review/submit.

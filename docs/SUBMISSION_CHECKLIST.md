@@ -34,6 +34,6 @@
 - [x] Final deployed mobile screenshot
 - [ ] Short demo recording
 - [x] Devpost description and architecture image
-- [ ] Final repository URL and judging visibility/access
+- [x] Public MIT repository URL and unauthenticated judging access
 - [x] Mobile walkthrough on deployed revision
 - [x] Focused accessibility walkthrough
