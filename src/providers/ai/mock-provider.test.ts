@@ -53,6 +53,7 @@ describe("MockAiProvider", () => {
       model: "mock:goal_happy_path",
       outputSchemaName: "GoalArchitectOutput",
       inputSummary: "Three onboarding answers; content omitted from trace",
+      tokenUsage: null,
       status: "COMPLETED",
       startedAt: "2026-07-16T10:00:00.000Z",
       completedAt: "2026-07-16T10:00:00.005Z",

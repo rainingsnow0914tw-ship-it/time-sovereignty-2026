@@ -226,3 +226,32 @@
   before cloud live activation.
 - Full evidence is recorded in
   `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`.
+
+## 2026-07-16 — Phase 4 finalized live contract perimeter
+
+- Reconfirmed that the post-billing `gpt-5.6` smoke had already passed all
+  three required checks: model alias, account access, and strict structured
+  output. The repository records Chloe's reported US$10 funding event, not an
+  independently queried US$100 promotional-credit balance, so no redundant
+  smoke request was made.
+- Adopted Decision 0007: routine development and CI remain deterministic mock;
+  each finalized Agent output contract receives one thin live GPT-5.6 check;
+  Phase 7 becomes provider-switch activation plus end-to-end rehearsal rather
+  than first contact with the real model.
+- Extended safe agent traces with optional token usage. Mock traces record
+  `null`; live traces record only input, output, and total token counts. Raw
+  prompts, model output, secrets, and private reasoning remain excluded.
+- Added a gated four-contract runner using `responses.parse`, each Agent's
+  production Zod schema, requested model `gpt-5.6`, `store: false`, reasoning
+  `none`, and SDK automatic retries disabled.
+- The first runner launch stopped before loading the API client because Node 24
+  rejected a named import from the CommonJS `@next/env` package. No OpenAI
+  request occurred. The import was corrected and syntax-checked before the
+  single evidence run.
+- The evidence run made exactly four HTTP requests, one for each finalized
+  Agent contract, with no retry or repeated iteration. All four passed:
+  Goal Architect 602 tokens, Commitment Recovery 340, Memory Curator 497, and
+  Chief of Staff 519, for 1,958 total tokens.
+- Routine verification remained green at 50 passed tests with five live-only
+  tests skipped, plus TypeScript and ESLint. The exact live records are stored
+  in `docs/evidence/phase-4-live-contracts-2026-07-16.md` and matching JSON.

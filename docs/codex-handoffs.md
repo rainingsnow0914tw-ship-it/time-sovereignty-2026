@@ -2,7 +2,7 @@
 
 ## Current checkpoint
 
-- Handoff updated: 2026-07-16 23:45 Asia/Shanghai.
+- Handoff updated: 2026-07-16 23:58 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
 - Last verified implementation commits: `57be0ed`
@@ -154,8 +154,16 @@ Full evidence:
 - The live run found and fixed a real contract bug: `z.record` generated the
   unsupported JSON Schema keyword `propertyNames`. Memory proposals now use a
   fixed `summary` plus `attributes[]` structure.
-- Normal verification is 50 passed tests, one billable live test skipped by
-  default, plus typecheck, lint, production build, and zero npm audit findings.
+- Decision 0007 now makes the inner loop and CI mock-only. A separate gated
+  contract suite performs exactly one real call per finalized Agent contract,
+  with SDK retries disabled.
+- The one-time four-contract proof passed: Goal Architect 602 tokens,
+  Commitment Recovery 340, Memory Curator 497, and Chief of Staff 519; 1,958
+  tokens total. Every `responses.parse` result passed its production Zod schema
+  and returned model `gpt-5.6-sol` for requested `gpt-5.6`.
+- Current routine verification is 50 passed tests with five live-only tests
+  skipped, plus typecheck and lint. The new proof is recorded in
+  `docs/evidence/phase-4-live-contracts-2026-07-16.md` and matching JSON.
 - Cloud Run revision `time-sovereignty-00006-szv` has 100% traffic. Runtime
   identity, eight Phase 3 non-secret env vars, 1 CPU, 512 MiB, max scale 20,
   and the HTTP 200 public page were preserved.
@@ -171,6 +179,8 @@ Full evidence:
   unchanged.
 - Full split evidence:
   `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`.
+- Finalized per-Agent live evidence:
+  `docs/evidence/phase-4-live-contracts-2026-07-16.md`.
 
 ### Phase 4 cloud-live activation gate
 
@@ -197,6 +207,8 @@ Full evidence:
 - Confirmed: account access, Responses API, and strict structured output
   `{ "ok": true }`.
 - Usage: 36 input + 16 output = 52 tokens; storage disabled; reasoning `none`.
+- This proves billing became usable after the recorded US$10 funding event; it
+  does not independently verify the current US$100 promotional-credit balance.
 - Success evidence:
   `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` and matching JSON.
 
@@ -208,6 +220,10 @@ Do not claim any of the following until new evidence exists:
 - text/photo/voice progress sharing;
 - a user-facing notification delivery path.
 - deployed Cloud Run live mode with four persisted `openai` traces.
+
+Phase 7 is now explicitly provider-switch activation plus end-to-end rehearsal,
+not the product's first contact with real GPT-5.6. Per-Agent live schema
+compatibility has already been proven during Phase 4.
 
 ## Exact next action
 
@@ -266,6 +282,8 @@ that proof should Phase 5 begin.
 - `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md` — local live
   GPT-5.6 four-agent acceptance plus Cloud Run mock persistence and duplicate
   proof
+- `docs/evidence/phase-4-live-contracts-2026-07-16.md` — exactly four finalized
+  live contract calls with schema and token evidence
 - `docs/CODEX_BUILD_LOG.md` — chronological work log
 
 If the repository state conflicts with this manual, stop and reconcile the

@@ -10,6 +10,11 @@ type ResponseParseBody = Parameters<OpenAI["responses"]["parse"]>[0];
 export interface ParsedOpenAiResponse {
   outputParsed: unknown;
   model: string | null;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  } | null;
 }
 
 export type OpenAiResponseParser = (
@@ -20,6 +25,7 @@ export interface OpenAiResponsesProviderOptions {
   apiKey?: string;
   model?: string;
   maxOutputTokens?: number;
+  maxRetries?: number;
   now?: () => Date;
   parseResponse?: OpenAiResponseParser;
 }
@@ -47,12 +53,22 @@ export class OpenAiResponsesProvider implements AiProvider {
       return;
     }
 
-    const client = new OpenAI({ apiKey: options.apiKey });
+    const client = new OpenAI({
+      apiKey: options.apiKey,
+      maxRetries: options.maxRetries,
+    });
     this.parseResponse = async (body) => {
       const response = await client.responses.parse(body);
       return {
         outputParsed: response.output_parsed,
         model: response.model,
+        usage: response.usage
+          ? {
+              inputTokens: response.usage.input_tokens,
+              outputTokens: response.usage.output_tokens,
+              totalTokens: response.usage.total_tokens,
+            }
+          : null,
       };
     };
   }
@@ -96,6 +112,7 @@ export class OpenAiResponsesProvider implements AiProvider {
         model: response.model ?? this.model,
         outputSchemaName: request.outputSchemaName,
         inputSummary: request.inputSummary,
+        tokenUsage: response.usage,
         status: "COMPLETED",
         startedAt,
         completedAt,

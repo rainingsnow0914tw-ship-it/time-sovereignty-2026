@@ -15,6 +15,7 @@
 - mock and live providers behind the same `AiProvider` interface and Zod schemas
 - OpenAI Responses API `responses.parse` with `zodTextFormat`
 - requested model `gpt-5.6`, reasoning effort `none`, `store: false`
+- safe per-call token usage on live traces; mock traces explicitly use `null`
 - safe trace return plus Firestore `agent_runs` persistence
 - request-level Firestore lease, failure state, retry takeover, completion, and
   duplicate suppression
@@ -28,8 +29,8 @@ and Structured Outputs:
 
 ## Deterministic verification
 
-- Test files: 13 passed, 1 live-only file skipped by default
-- Tests: 50 passed, 1 live-only test skipped by default
+- Test files: 13 passed, 2 live-only files skipped by default
+- Tests: 50 passed, 5 live-only tests skipped by default
 - TypeScript: passed
 - ESLint: passed
 - Next.js production build: passed
@@ -63,9 +64,39 @@ After fixing the live schema incompatibility, the gated acceptance completed in
 - every returned model string contained `gpt-5.6`;
 - safe traces contained no raw prompt or private reasoning.
 
-The live test is skipped during routine `npm test` so normal development does
-not spend API credit. Response storage is disabled. Exact token usage was not
-captured by this test and is not claimed.
+This historical all-agent test is skipped during routine `npm test` so normal
+development does not spend API credit. Response storage is disabled. Exact
+token usage was not captured by that historical run and is not retroactively
+claimed.
+
+## Finalized per-Agent live contract evidence
+
+Command surface: `npm run test:live:phase4-contracts`.
+
+Decision 0007 adds a thin live perimeter around the mock-first inner loop. The
+runner uses the production `OpenAiResponsesProvider`, `responses.parse`, and
+the exact Zod schema for each role. SDK automatic retries are disabled. The
+recorded run made exactly one request per role, four total, and did not repeat
+or iterate on any result.
+
+| Agent | Zod output contract | Requested / returned model | Input | Output | Total | Result |
+|---|---|---|---:|---:|---:|---|
+| Goal Architect | `GoalArchitectOutput` | `gpt-5.6` / `gpt-5.6-sol` | 277 | 325 | 602 | PASS |
+| Commitment Recovery | `CommitmentRecoveryOutput` | `gpt-5.6` / `gpt-5.6-sol` | 254 | 86 | 340 | PASS |
+| Memory Curator | `MemoryCuratorOutput` | `gpt-5.6` / `gpt-5.6-sol` | 358 | 139 | 497 | PASS |
+| Chief of Staff | `ChiefOfStaffOutput` | `gpt-5.6` / `gpt-5.6-sol` | 477 | 42 | 519 | PASS |
+| **Total** | four contracts |  | **1,366** | **592** | **1,958** | **PASS** |
+
+The first launch of this new runner failed before the OpenAI client was loaded
+because Node 24 rejected a named import from CommonJS `@next/env`. Therefore it
+made zero API requests. After the import-only correction and a syntax check,
+the recorded run completed four tests in 30.90 seconds. The machine-readable
+record is `phase-4-live-contracts-2026-07-16.json`.
+
+This four-call record is a new contract-evidence pass. Earlier development
+calls, including the Structured Outputs incompatibility and the historical
+all-agent acceptance, remain disclosed above; this document does not claim
+that only four OpenAI calls have ever occurred during Phase 4.
 
 ## Live issue found and fixed
 
@@ -165,3 +196,7 @@ After approval, the exact activation path is:
 4. send one new OIDC task and verify four Firestore traces report provider
    `openai` and a `gpt-5.6` model;
 5. send a duplicate task and prove no second orchestration cost.
+
+Phase 7 is now provider-switch activation plus end-to-end rehearsal. It is not
+the first point at which the product contracts meet a real model; that proof is
+already established by the four per-Agent records above.

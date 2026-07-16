@@ -36,7 +36,11 @@ describe("OpenAiResponsesProvider", () => {
     const bodies: unknown[] = [];
     const parseResponse: OpenAiResponseParser = vi.fn(async (body) => {
       bodies.push(body);
-      return { outputParsed: goalPlan, model: "gpt-5.6-sol" };
+      return {
+        outputParsed: goalPlan,
+        model: "gpt-5.6-sol",
+        usage: { inputTokens: 101, outputTokens: 202, totalTokens: 303 },
+      };
     });
     const times = [
       new Date("2026-07-16T15:10:00.000Z"),
@@ -61,6 +65,7 @@ describe("OpenAiResponsesProvider", () => {
       model: "gpt-5.6-sol",
       outputSchemaName: "GoalArchitectOutput",
       inputSummary: "Validated onboarding context; raw answers omitted from trace",
+      tokenUsage: { inputTokens: 101, outputTokens: 202, totalTokens: 303 },
       status: "COMPLETED",
       startedAt: "2026-07-16T15:10:00.000Z",
       completedAt: "2026-07-16T15:10:00.010Z",
@@ -86,6 +91,7 @@ describe("OpenAiResponsesProvider", () => {
       parseResponse: async () => ({
         outputParsed: { goalSummary: "missing required fields" },
         model: "gpt-5.6-sol",
+        usage: null,
       }),
     });
 
@@ -99,6 +105,7 @@ describe("OpenAiResponsesProvider", () => {
       parseResponse: async () => ({
         outputParsed: null,
         model: "gpt-5.6-sol",
+        usage: null,
       }),
     });
 

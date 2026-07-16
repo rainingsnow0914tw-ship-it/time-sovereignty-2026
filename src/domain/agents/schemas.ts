@@ -41,6 +41,14 @@ export const ChiefOfStaffOutputSchema = z.object({
   memoryProposals: z.array(MemoryProposalSchema).max(20),
 }).strict();
 
+export const AgentTokenUsageSchema = z
+  .object({
+    inputTokens: z.number().int().nonnegative(),
+    outputTokens: z.number().int().nonnegative(),
+    totalTokens: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const AgentRunTraceSchema = z.object({
   runId: EntityIdSchema,
   agent: ImplementedAgentRoleSchema,
@@ -48,6 +56,7 @@ export const AgentRunTraceSchema = z.object({
   model: z.string().trim().min(1).max(240),
   outputSchemaName: z.string().trim().min(1).max(240),
   inputSummary: z.string().trim().min(1).max(1_000),
+  tokenUsage: AgentTokenUsageSchema.nullable().optional(),
   status: z.enum(["COMPLETED", "FAILED"]),
   startedAt: IsoDateTimeSchema,
   completedAt: IsoDateTimeSchema,
@@ -63,4 +72,5 @@ export type CommitmentRecoveryOutput = z.infer<
 >;
 export type MemoryCuratorOutput = z.infer<typeof MemoryCuratorOutputSchema>;
 export type ChiefOfStaffOutput = z.infer<typeof ChiefOfStaffOutputSchema>;
+export type AgentTokenUsage = z.infer<typeof AgentTokenUsageSchema>;
 export type AgentRunTrace = z.infer<typeof AgentRunTraceSchema>;

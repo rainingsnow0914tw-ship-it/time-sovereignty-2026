@@ -55,6 +55,7 @@ export class MockAiProvider implements AiProvider {
         model: `mock:${scenario}`,
         outputSchemaName: request.outputSchemaName,
         inputSummary: request.inputSummary,
+        tokenUsage: null,
         status: "COMPLETED",
         startedAt,
         completedAt,

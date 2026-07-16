@@ -99,7 +99,9 @@ Phase 3 evidence:
 Local real GPT-5.6 all-agent acceptance passed. Cloud revision
 `time-sovereignty-00006-szv` is deliberately still in safe mock mode because no
 OpenAI key has been transferred to or bound from GCP. See
-`docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`.
+`docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`. A second,
+finalized-contract proof recorded exactly one live call per Agent with token
+usage in `docs/evidence/phase-4-live-contracts-2026-07-16.md`.
 
 ## Local verification
 
@@ -111,9 +113,18 @@ npm run lint
 npm run build
 ```
 
-`npm run test:live:phase4` performs four real, potentially billable GPT-5.6
-structured-output calls. Run it only for deliberate live acceptance; routine
-`npm test` skips it.
+Routine development and CI are mock-only. Both live suites are skipped by
+`npm test`.
+
+`npm run test:live:phase4-contracts` performs four real, potentially billable
+GPT-5.6 calls: one per finalized Agent Zod contract, with SDK retries disabled.
+The required one-time Phase 4 run already passed on 2026-07-16; do not rerun it
+unless a contract changes and a new live evidence record is explicitly
+authorized.
+
+`npm run test:live:phase4` is the earlier end-to-end local orchestration
+acceptance surface. It is retained for deliberate rehearsal, not routine
+contract development.
 
 `npm run smoke:openai` performs one real Responses API request using the ignored
 local `.env.local`. Do not run it casually: it is a live, potentially billable

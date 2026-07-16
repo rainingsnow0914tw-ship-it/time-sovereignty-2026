@@ -1,0 +1,75 @@
+{
+  "date": "2026-07-16",
+  "timezone": "Asia/Shanghai",
+  "result": "PASS",
+  "runner": "npm run test:live:phase4-contracts",
+  "api_calls": 4,
+  "sdk_max_retries": 0,
+  "store": false,
+  "reasoning_effort": "none",
+  "duration_seconds": 30.9,
+  "contracts": [
+    {
+      "agent": "GOAL_ARCHITECT",
+      "output_schema": "GoalArchitectOutput",
+      "requested_model": "gpt-5.6",
+      "returned_model": "gpt-5.6-sol",
+      "schema_passed": true,
+      "status": "COMPLETED",
+      "usage": {
+        "input_tokens": 277,
+        "output_tokens": 325,
+        "total_tokens": 602
+      }
+    },
+    {
+      "agent": "COMMITMENT_RECOVERY",
+      "output_schema": "CommitmentRecoveryOutput",
+      "requested_model": "gpt-5.6",
+      "returned_model": "gpt-5.6-sol",
+      "schema_passed": true,
+      "status": "COMPLETED",
+      "usage": {
+        "input_tokens": 254,
+        "output_tokens": 86,
+        "total_tokens": 340
+      }
+    },
+    {
+      "agent": "MEMORY_CURATOR",
+      "output_schema": "MemoryCuratorOutput",
+      "requested_model": "gpt-5.6",
+      "returned_model": "gpt-5.6-sol",
+      "schema_passed": true,
+      "status": "COMPLETED",
+      "usage": {
+        "input_tokens": 358,
+        "output_tokens": 139,
+        "total_tokens": 497
+      }
+    },
+    {
+      "agent": "CHIEF_OF_STAFF",
+      "output_schema": "ChiefOfStaffOutput",
+      "requested_model": "gpt-5.6",
+      "returned_model": "gpt-5.6-sol",
+      "schema_passed": true,
+      "status": "COMPLETED",
+      "usage": {
+        "input_tokens": 477,
+        "output_tokens": 42,
+        "total_tokens": 519
+      }
+    }
+  ],
+  "totals": {
+    "input_tokens": 1366,
+    "output_tokens": 592,
+    "total_tokens": 1958
+  },
+  "pre_api_launch_failure": {
+    "api_calls": 0,
+    "cause": "Node 24 CommonJS named-import incompatibility in @next/env",
+    "corrected_before_recorded_run": true
+  }
+}

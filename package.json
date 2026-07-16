@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:live:phase4": "node scripts/run-phase4-live.mjs",
+    "test:live:phase4-contracts": "node scripts/run-phase4-contract-live.mjs",
     "test:watch": "vitest",
     "smoke:openai": "node scripts/smoke-openai.mjs"
   },
