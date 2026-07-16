@@ -39,3 +39,17 @@
   same strict structured-output schemas used by the live-provider boundary.
 - Verified 15 tests across three test files, TypeScript, ESLint, and a Next.js
   production build.
+
+## 2026-07-16 — Reference-asset guardrails
+
+- Read only `TS_參考資產蒸餾_v1.md`; did not open or copy any indexed legacy
+  project file.
+- Accepted Decision 0004 for concept-only reference use, cost controls,
+  deployment bootstrap rules, callback authentication, and reminder
+  idempotency.
+- Added the Cloud Scheduler polling downgrade to Decision 0003 as a disclosed
+  Plan B. It preserves runtime continuity but cannot be presented as successful
+  Cloud Tasks evidence.
+- Preserved phase-gated bookmarks for Phase 3 infrastructure work and Phase 5
+  voice-provider work. Each future consultation must be problem-specific and
+  recorded in this log.

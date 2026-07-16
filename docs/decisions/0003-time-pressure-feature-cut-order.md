@@ -57,6 +57,34 @@ to show that acceptance criterion 20 is satisfied.
 These features form the proof that the product is a longitudinal, adaptive
 Chief of Staff rather than a chat mockup.
 
+## Plan B — Cloud Scheduler polling downgrade
+
+Cloud Tasks remains the required primary path and may not be silently replaced.
+If its real callback integration is blocked after a documented Phase 3 attempt,
+the operational downgrade is a Cloud Scheduler polling tick:
+
+```text
+Cloud Scheduler tick
+→ query Firestore for status == pending and fireAt <= now
+→ reserve by interventionId in a transaction
+→ deliver
+→ mark fired
+```
+
+Plan B activation requires a new decision-log entry under the cut-log rules
+below. That entry must include the concrete Cloud Tasks blocker and evidence,
+the time limit that triggered the downgrade, and the condition for restoring
+Cloud Tasks.
+
+The polling path must reserve delivery as `in-flight` before sending. This
+closes the known duplicate-delivery window where delivery succeeds but the
+subsequent Firestore update fails.
+
+Plan B keeps the product demonstrable, but it does not satisfy or replace the
+non-cuttable evidence requirement for a real Cloud Tasks trigger. While Plan B
+is active, Cloud Tasks must be reported as unresolved rather than simulated or
+claimed complete.
+
 ## Required cut log
 
 Every actual cut requires a new accepted decision record in `docs/decisions/`
