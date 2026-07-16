@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:live:phase4": "node scripts/run-phase4-live.mjs",
     "test:watch": "vitest",
     "smoke:openai": "node scripts/smoke-openai.mjs"
   },

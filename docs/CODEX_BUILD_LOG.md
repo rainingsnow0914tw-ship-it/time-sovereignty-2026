@@ -179,3 +179,50 @@
   dispatcher contract; the first action is a deterministic mock orchestration
   test proving need-based agent selection, strict final-output validation, and
   safe agent-trace persistence.
+
+## 2026-07-16 — Phase 4 four-agent orchestration and split acceptance
+
+- Implemented a deterministic Chief of Staff dispatcher that selects Goal
+  Architect, Commitment Recovery, and Memory Curator only when their explicit
+  need signals are present. Chief of Staff always synthesizes the one final
+  user-facing decision and must report the actual dispatch list exactly.
+- Added the official OpenAI JavaScript SDK and a Responses API live provider
+  using `responses.parse`, `zodTextFormat`, requested model `gpt-5.6`, reasoning
+  effort `none`, response storage disabled, and the same Zod contracts as mock
+  mode.
+- Added safe in-memory and Firestore trace repositories. Traces retain run ID,
+  role, provider, returned model, schema name, safe input summary, status, and
+  timestamps; raw prompts, secrets, and private reasoning are excluded.
+- Added a request-level Firestore lease and completed receipt so Cloud Tasks
+  retries cannot repeat a completed orchestration or its API cost.
+- The first live attempt exposed an OpenAI Structured Outputs incompatibility:
+  arbitrary `z.record` memory values emitted forbidden `propertyNames`. The
+  memory-proposal contract now uses fixed `summary` plus `attributes[]`, while
+  durable internal memory records may remain flexible.
+- Ran one complete local live acceptance after the fix. All four roles passed
+  through real GPT-5.6 Responses API structured outputs in 47.38 seconds; all
+  four traces reported provider `openai` and a returned model containing
+  `gpt-5.6`.
+- Verified the normal suite at 50 passed tests with the billable live test
+  skipped by default, plus TypeScript, ESLint, production build, and zero npm
+  audit findings after installing the SDK.
+- Deployed commits `57be0ed` and `e0391a3` as Cloud Run revision
+  `time-sovereignty-00006-szv`, 100% traffic. The existing runtime identity,
+  eight non-secret environment variables, 1 CPU, 512 MiB, max scale 20, and
+  public Phase 2 page were preserved.
+- Verified the Phase 4 route fails closed with HTTP 401 without Cloud Tasks
+  OIDC. A real OIDC task completed request `phase4-cloud-20260716-1` in mock
+  mode and persisted one orchestration receipt plus four safe agent traces in
+  Firestore. A second task with the same request ID logged `duplicate`; the
+  receipt stayed `COMPLETED` with `attemptCount: 1` and all trace timestamps
+  stayed unchanged.
+- The split evidence is intentional and disclosed: real GPT-5.6 all-agent
+  execution is proven locally; real Cloud Run OIDC and Firestore trace
+  persistence are proven with the behaviorally identical mock provider.
+- A GCP Secret Manager resource named `openai-api-key` was created, but the
+  credential-transfer safety gate rejected uploading the local key. The secret
+  has zero versions, the runtime has no secret binding, and the deployed mode
+  remains mock. Explicit user approval after risk disclosure is required
+  before cloud live activation.
+- Full evidence is recorded in
+  `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`.

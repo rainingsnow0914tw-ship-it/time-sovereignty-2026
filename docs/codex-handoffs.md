@@ -2,12 +2,12 @@
 
 ## Current checkpoint
 
-- Handoff updated: 2026-07-16 23:05 Asia/Shanghai.
+- Handoff updated: 2026-07-16 23:45 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
-- Last verified implementation commits: `d6c390a`
-  (`feat: add authenticated Phase 3 trigger foundation`) and `e8d93e1`
-  (`fix: use gRPC for Firestore transactions`).
+- Last verified implementation commits: `57be0ed`
+  (`feat: add need-based four-agent orchestration`) and `e0391a3`
+  (`feat: add safe runtime provider selection`).
 - The commit containing this file is the handoff checkpoint; verify it with
   `git log -1 --oneline` after opening the repository.
 - Project name: **Time Sovereignty** (earlier working name: Chloe Chief of
@@ -139,6 +139,51 @@ Full evidence:
   default gRPC transport. Do not reintroduce `preferRest` without a real
   transaction regression test.
 
+### Phase 4 four-agent orchestration
+
+- Chief of Staff selects Goal Architect, Commitment Recovery, and Memory
+  Curator from explicit need signals and always produces the final structured
+  decision.
+- A mismatch between the actual sub-agent calls and the Chief of Staff's
+  reported `dispatchedAgents` is rejected.
+- The official OpenAI SDK provider uses Responses API structured outputs,
+  requested model `gpt-5.6`, reasoning `none`, `store: false`, and the exact
+  same Zod schemas as mock mode.
+- Local live acceptance passed all four roles in 47.38 seconds. All four traces
+  reported provider `openai` and a returned model containing `gpt-5.6`.
+- The live run found and fixed a real contract bug: `z.record` generated the
+  unsupported JSON Schema keyword `propertyNames`. Memory proposals now use a
+  fixed `summary` plus `attributes[]` structure.
+- Normal verification is 50 passed tests, one billable live test skipped by
+  default, plus typecheck, lint, production build, and zero npm audit findings.
+- Cloud Run revision `time-sovereignty-00006-szv` has 100% traffic. Runtime
+  identity, eight Phase 3 non-secret env vars, 1 CPU, 512 MiB, max scale 20,
+  and the HTTP 200 public page were preserved.
+- The new orchestration route is OIDC-only; an unauthenticated request returned
+  HTTP 401.
+- Real task `phase4-cloud-20260716-1` ran all four roles in safe mock mode and
+  persisted a `COMPLETED` Firestore receipt plus four safe `agent_runs` traces.
+  Receipt attempt count is `1`, start time
+  `2026-07-16T15:38:25.929Z`, completion time
+  `2026-07-16T15:38:26.368Z`, with no error.
+- Duplicate task `phase4-cloud-20260716-1-duplicate` logged `duplicate`; the
+  receipt remained at one attempt and all four trace timestamps remained
+  unchanged.
+- Full split evidence:
+  `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`.
+
+### Phase 4 cloud-live activation gate
+
+- Local live GPT-5.6 is proven; cloud OIDC and Firestore persistence are
+  proven. Deployed GPT-5.6 is not yet claimed.
+- Secret Manager resource `openai-api-key` exists but has zero versions. The
+  local key was not uploaded, runtime secret access was not granted, and Cloud
+  Run has no OpenAI secret binding.
+- Cloud Run defaults to `AI_PROVIDER_MODE=mock` when the variable is absent.
+- Explicit Chloe approval is required before copying the local API credential
+  into GCP. Risk: compromise of the Cloud Run/Secret Manager boundary could
+  expose OpenAI API-spend authority.
+
 ### OpenAI API smoke test
 
 - Project-specific key name: `chloe-chief-of-staff-build-week-2026`.
@@ -159,28 +204,26 @@ Full evidence:
 
 Do not claim any of the following until new evidence exists:
 
-- a real four-agent OpenAI orchestration path;
 - Accelerated Simulation UI;
 - text/photo/voice progress sharing;
 - a user-facing notification delivery path.
+- deployed Cloud Run live mode with four persisted `openai` traces.
 
 ## Exact next action
 
-Start **Phase 4: Chief of Staff and four-agent orchestration**.
+Wait for Chloe's explicit credential-transfer approval in this same Codex
+task. Do not open a new task.
 
-The first action is exact: implement a deterministic mock orchestration test
-and dispatcher contract that selects agents by need instead of calling all
-four by default, validates the final result against `ChiefOfStaffOutputSchema`,
-and persists or returns safe agent traces without raw prompts, secrets, or
-private reasoning.
+After approval, the first action is exact: add one version to the existing
+empty `openai-api-key` Secret Manager resource without printing or writing the
+key to a temp file. Then grant only the runtime service account access to that
+secret, bind it as `OPENAI_API_KEY`, set `AI_PROVIDER_MODE=live`, and preserve
+all existing resource settings and eight non-secret variables.
 
-Then implement the Goal Architect, Commitment Recovery, and Memory Curator
-execution paths behind the shared provider boundary, preserving mock/live
-contract parity and trace evidence.
-
-Only when the live provider is integrated should the OpenAI key move from the
-local file into Secret Manager and a Cloud Run secret binding. Keep normal
-development mock-first so the API credit is not consumed by routine UI work.
+Send one new OIDC orchestration task and require four persisted Firestore
+traces with provider `openai` and a returned `gpt-5.6` model. Then send a
+duplicate with the same request ID and prove no second API cost. Only after
+that proof should Phase 5 begin.
 
 ## Guardrails that must survive the handoff
 
@@ -209,6 +252,9 @@ development mock-first so the API credit is not consumed by routine UI work.
 - `e1430c3` — Phase 2 local onboarding vertical slice
 - `d6c390a` — authenticated Phase 3 trigger foundation
 - `e8d93e1` — Firestore gRPC live-transaction fix
+- `953c200` — verified Phase 3 checkpoint
+- `57be0ed` — need-based four-agent orchestration and OpenAI provider
+- `e0391a3` — safe runtime provider selection for Cloud Run
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation
@@ -217,6 +263,9 @@ development mock-first so the API credit is not consumed by routine UI work.
   onboarding and support-agreement exit gate
 - `docs/evidence/phase-3-real-cloud-task-2026-07-16.md` — real OIDC task,
   Firestore transition, retry, and duplicate acceptance
+- `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md` — local live
+  GPT-5.6 four-agent acceptance plus Cloud Run mock persistence and duplicate
+  proof
 - `docs/CODEX_BUILD_LOG.md` — chronological work log
 
 If the repository state conflicts with this manual, stop and reconcile the
