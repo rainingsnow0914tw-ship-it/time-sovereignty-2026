@@ -132,7 +132,7 @@ function ProgressHeader({ stage }: { stage: Stage }) {
 
   return (
     <div className="border-b border-[#e5e8e4] px-5 py-4 sm:px-8">
-      <div className="mb-2.5 flex items-center justify-between gap-4 text-xs font-semibold tracking-wide text-[#68746e]">
+      <div className="mb-2.5 flex items-center justify-between gap-4 text-xs font-semibold tracking-wide text-[#52615a]">
         <span>{label}</span>
         <span>{Math.round(progress)}%</span>
       </div>
@@ -496,7 +496,7 @@ function PlanCard({
           : "border-[#e0e4df] bg-white"
       } ${className}`}
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#6d7c74]">
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#55635c]">
         {label}
       </p>
       <p className="mt-2 text-[15px] font-medium leading-6 text-[#24332d]">{value}</p>
@@ -648,7 +648,7 @@ function SupportAgreementForm({
                       </span>
                     )}
                   </span>
-                  <span className="mt-2 block text-xs leading-5 text-[#75807a]">
+                  <span className="mt-2 block text-xs leading-5 text-[#59665f]">
                     {intensity.detail}
                   </span>
                 </button>
@@ -748,7 +748,7 @@ function SupportAgreementForm({
                     })
                   }
                 />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#77827c]">
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#5f6a64]">
                   days
                 </span>
               </div>
@@ -788,7 +788,7 @@ function Fieldset({
   return (
     <fieldset className="rounded-[1.6rem] border border-[#dfe4df] bg-white p-5 sm:p-6">
       <legend className="px-1 text-base font-semibold text-[#24342d]">{legend}</legend>
-      <p className="mb-4 -mt-0.5 text-xs leading-5 text-[#7a847f]">{hint}</p>
+      <p className="mb-4 -mt-0.5 text-xs leading-5 text-[#5f6a64]">{hint}</p>
       {children}
     </fieldset>
   );
@@ -923,7 +923,7 @@ function CompletedJourney({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-[#dce2dd] bg-white p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#708078]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#55635c]">
             First milestone
           </p>
           <p className="mt-2 text-sm font-medium leading-6 text-[#25372f]">
@@ -937,7 +937,7 @@ function CompletedJourney({
           <p className="mt-2 text-sm font-semibold leading-6 text-[#244538]">
             {record.action.title}
           </p>
-          <p className="mt-3 text-xs leading-5 text-[#60756b]">
+          <p className="mt-3 text-xs leading-5 text-[#4f665b]">
             Hard day version: {record.action.minimumVersion}
           </p>
         </div>
@@ -955,7 +955,7 @@ function CompletedJourney({
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#f1f4ef] px-4 py-3 text-xs text-[#68746e]">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#f1f4ef] px-4 py-3 text-xs text-[#52615a]">
         <span>
           Agent trace: {record.agentTrace.agent.replaceAll("_", " ")} · {record.agentTrace.provider} · validated
         </span>
@@ -981,7 +981,7 @@ function CompletedJourney({
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#7c8881]">
+      <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#59665f]">
         {label}
       </p>
       <p className="mt-1.5 text-sm font-semibold capitalize text-[#2d4037]">{value}</p>

@@ -40,6 +40,8 @@ const tabs: Array<{ value: JourneyView; label: string; hint: string }> = [
 
 const cardClass =
   "rounded-[1.6rem] border border-[#dfe5df] bg-white p-5 shadow-[0_14px_45px_rgba(23,63,53,0.06)] sm:p-6";
+const darkCardClass =
+  "rounded-[1.6rem] border border-[#173f35] bg-[#173f35] p-5 text-white shadow-[0_14px_45px_rgba(23,63,53,0.12)] sm:p-6";
 const primaryButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-full bg-[#173f35] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0e3329] focus:outline-none focus:ring-4 focus:ring-[#bcd5c6] disabled:cursor-not-allowed disabled:opacity-45";
 const secondaryButtonClass =
@@ -626,7 +628,7 @@ export function JourneyWorkspace({
         </div>
       ) : null}
 
-      <main className="p-4 sm:p-6 lg:p-7">
+      <section className="p-4 sm:p-6 lg:p-7" aria-label="Time Sovereignty command center">
         {state.activeView === "TODAY" ? (
           <TodayView
             record={record}
@@ -765,7 +767,7 @@ export function JourneyWorkspace({
               <button type="button" onClick={shareProgress} className={`${primaryButtonClass} mt-4`}>Share progress</button>
             </div>
 
-            <div className={`${cardClass} bg-[#173f35] text-white`}>
+            <div className={darkCardClass}>
               <Eyebrow light>Specific feedback</Eyebrow>
               <p className="mt-4 text-lg leading-8 text-white/88">
                 {state.latestFeedback || "Feedback will name the real evidence, connect it to your goal, and preserve the next resume point."}
@@ -798,7 +800,7 @@ export function JourneyWorkspace({
                   <article key={event.id} className="relative border-l border-[#b7c9bd] py-3 pl-6">
                     <span className="absolute -left-1.5 top-5 size-3 rounded-full border-2 border-white bg-[#5d8974]" />
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#638071]">Day {event.simulatedDay}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#52675c]">Day {event.simulatedDay}</span>
                       <span className="rounded-full bg-[#f0f4ef] px-2 py-1 text-[10px] text-[#66756e]">{event.kind.replaceAll("_", " ")}</span>
                     </div>
                     <h3 className="mt-1 text-sm font-bold text-[#263d33]">{event.title}</h3>
@@ -814,7 +816,7 @@ export function JourneyWorkspace({
                 <div className="mt-4 space-y-3">
                   {[...state.memories].reverse().slice(0, 5).map((memory) => (
                     <div key={memory.id} className="rounded-2xl bg-[#f3f6f1] p-4">
-                      <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#638071]">
+                      <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#52675c]">
                         <span>{memory.kind.replaceAll("_", " ")}</span>
                         <span>{memory.requiresConfirmation ? "Needs confirmation" : "Confirmed"}</span>
                       </div>
@@ -854,7 +856,7 @@ export function JourneyWorkspace({
               </div>
               <div className="mt-5 overflow-x-auto">
                 <table className="w-full min-w-[680px] border-collapse text-left text-xs">
-                  <thead className="text-[#6b7a72]">
+                  <thead className="text-[#59665f]">
                     <tr className="border-b border-[#dfe5df]">
                       <th className="py-3 pr-4">Agent</th><th className="py-3 pr-4">Provider / model</th><th className="py-3 pr-4">Schema</th><th className="py-3 pr-4">Day</th><th className="py-3">Status</th>
                     </tr>
@@ -872,7 +874,7 @@ export function JourneyWorkspace({
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-xs leading-5 text-[#78847e]">Raw prompts, secrets, media, and private reasoning are excluded. Live traces add safe token usage.</p>
+              <p className="mt-4 text-xs leading-5 text-[#5f6a64]">Raw prompts, secrets, media, and private reasoning are excluded. Live traces add safe token usage.</p>
             </div>
             <div className="space-y-5">
               <div className={cardClass}>
@@ -900,9 +902,9 @@ export function JourneyWorkspace({
             </div>
           </section>
         ) : null}
-      </main>
+      </section>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#dfe5df] bg-white px-5 py-4 text-xs text-[#6d7a74] sm:px-7">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#dfe5df] bg-white px-5 py-4 text-xs text-[#56645d] sm:px-7">
         <span>Saved in this browser · media stays local until cloud upload is activated</span>
         <button type="button" onClick={resetAll} className="font-bold text-[#49675a] hover:text-[#173f35]">Reset this journey</button>
       </footer>
@@ -932,7 +934,7 @@ function TodayView({
   return (
     <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-5">
-        <div className={`${cardClass} bg-[#173f35] text-white`}>
+        <div className={darkCardClass}>
           <Eyebrow light>North star</Eyebrow>
           <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">{record.goal.title}</h2>
           <p className="mt-4 border-l border-[#d8f48a]/55 pl-4 text-sm leading-7 text-white/70">{record.goal.motivation}</p>
@@ -946,7 +948,7 @@ function TodayView({
             <span className="rounded-full bg-[#e5f0e7] px-3 py-2 text-xs font-bold text-[#426252]">{state.interventionState.replaceAll("_", " ")}</span>
           </div>
           <div className="mt-5 rounded-2xl bg-[#f2f6ef] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#668072]">Hard-day version</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#52675c]">Hard-day version</p>
             <p className="mt-2 text-sm font-semibold leading-6 text-[#365045]">{state.minimumAction}</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -1001,11 +1003,11 @@ function TodayView({
 }
 
 function Eyebrow({ children, light = false }: { children: ReactNode; light?: boolean }) {
-  return <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${light ? "text-[#d8f48a]" : "text-[#668072]"}`}>{children}</p>;
+  return <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${light ? "text-[#d8f48a]" : "text-[#52675c]"}`}>{children}</p>;
 }
 
 function ResumeField({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl bg-[#f4f6f2] p-4"><p className="text-[10px] font-bold uppercase tracking-[0.11em] text-[#74837b]">{label}</p><p className="mt-2 text-sm font-semibold leading-6 text-[#364c42]">{value}</p></div>;
+  return <div className="rounded-2xl bg-[#f4f6f2] p-4"><p className="text-[10px] font-bold uppercase tracking-[0.11em] text-[#58675f]">{label}</p><p className="mt-2 text-sm font-semibold leading-6 text-[#364c42]">{value}</p></div>;
 }
 
 function StatusRow({ label, value, good = false }: { label: string; value: string; good?: boolean }) {
