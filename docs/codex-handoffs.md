@@ -2,12 +2,12 @@
 
 ## Current checkpoint
 
-- Handoff updated: 2026-07-17 00:39 Asia/Shanghai.
+- Handoff updated: 2026-07-17 01:40 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
-- Last verified implementation commits: `57be0ed`
-  (`feat: add need-based four-agent orchestration`) and `e0391a3`
-  (`feat: add safe runtime provider selection`).
+- Last verified product commits: `4bfd647` (integrated longitudinal journey),
+  `c5b78a6` (live deployment perimeter), and `3b43c12` (deployed runtime
+  evidence in the UI).
 - The commit containing this file is the handoff checkpoint; verify it with
   `git log -1 --oneline` after opening the repository.
 - Project name: **Time Sovereignty** (earlier working name: Chloe Chief of
@@ -16,15 +16,17 @@
 
 ## Resume rule for this same Codex task
 
-1. This is the final `/feedback` Codex task; do not open a new task for Phase 4.
+1. This remains the primary `/feedback` Codex task; preserve its final Session
+   ID and link for submission.
 2. After any context compression, first read `docs/CODEX_BUILD_LOG.md`, then
-   Decisions 0005 and 0006, before changing code.
+   Decisions 0008 and 0009, before changing code or cloud settings.
 3. Verify `git status --short` and `git log -3 --oneline`.
-4. Read only the source slices needed for the exact Phase 4 action.
+4. Read only the source slices needed for the exact submission action.
 5. Do not reload every source or reference asset. Use the source-of-truth order
    in `README.md`; consult the Decision 0004 index only when a Phase 3 or Phase
    5 problem actually requires it.
-6. Before changing application code, run `npm test` and `npm run typecheck`.
+6. Do not rerun a live GPT-5.6 suite unless a production contract changes and a
+   new billable run is explicitly approved.
 
 ## Verified completed work
 
@@ -33,9 +35,9 @@
 - Clean dedicated Git repository created on 2026-07-16.
 - PRD, architecture, and kickoff materials preserved unchanged in
   `docs/source/`.
-- Decisions 0001-0006 record review approval, phase order, cut order,
-  reference/cost guardrails, GCP project/region choices, and the Phase 3
-  identity/idempotency contract.
+- Decisions 0001-0009 record review approval, phase order, cuts, reference and
+  cost guardrails, GCP choices, identity/idempotency, live-contract perimeter,
+  integrated-build cadence, and cloud-live cost controls.
 - Milestone commits, evidence files, and `docs/CODEX_BUILD_LOG.md` form the
   dated Codex evidence chain.
 
@@ -77,11 +79,11 @@
   enabled.
 - Region: `asia-east1`.
 - Firestore `(default)`: Native mode, Standard edition, delete protection on.
-- Cloud Run service: `time-sovereignty`, revision
-  `time-sovereignty-00005-wb5`, 100% traffic, 1 CPU, 512 MiB, startup CPU
-  boost, maximum scale 20, minimum instances left at the default zero.
-- Public URL: `https://time-sovereignty-defqnamrrq-de.a.run.app` (verified HTTP
-  200 and complete Phase 2 browser path after deployment).
+- Cloud Run service: `time-sovereignty`, final revision
+  `time-sovereignty-00009-2bn`, 100% traffic, 1 CPU, 512 MiB, startup CPU
+  boost, maximum scale 1, container concurrency 1, and minimum instances zero.
+- Public URL: `https://time-sovereignty-29309448808.asia-east1.run.app`
+  (verified HTTP 200 and complete Phase 5–8 mobile journey).
 - Monthly GCP budget: US$30 with 50%, 90%, and 100% current-spend alerts.
 - Required APIs, including Cloud Tasks and Secret Manager, are enabled.
 - Runtime service account:
@@ -92,14 +94,15 @@
   `roles/datastore.user` and `roles/cloudtasks.enqueuer` at project scope, may
   act as the caller, and the caller has `roles/run.invoker` on the service.
 - Queue `time-sovereignty-checkins` is `RUNNING` with no remaining tasks. Its
-  dispatch limits are 10/second and 10 concurrent; its retry policy is 100
-  attempts, 0.1-second minimum backoff, 3600-second maximum backoff, and 16
-  doublings.
+  cost-bounded acceptance limits are 1/second, 1 concurrent, and 1 total
+  attempt.
 - Eight non-secret environment variables are bound: `GCP_PROJECT_ID`,
   `FIRESTORE_DATABASE_ID`, `CLOUD_TASKS_LOCATION`, `CLOUD_TASKS_QUEUE`,
   `CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL`, `CLOUD_TASKS_OIDC_AUDIENCE`,
   `CLOUD_TASKS_CALLBACK_BASE_URL`, and `TASK_CALLBACK_LEASE_SECONDS`.
-- The deployed service has no OpenAI secret.
+- `AI_PROVIDER_MODE=live` and `OPENAI_MODEL=gpt-5.6` are also bound. Secret env
+  `OPENAI_API_KEY` references `openai-api-key:latest`; only the runtime service
+  account has accessor permission on that secret.
 
 Phase 3 verified checklist:
 
@@ -182,17 +185,14 @@ Full evidence:
 - Finalized per-Agent live evidence:
   `docs/evidence/phase-4-live-contracts-2026-07-16.md`.
 
-### Phase 4 cloud-live activation gate
+### Phase 4 cloud-live activation gate — closed in Phase 7
 
-- Local live GPT-5.6 is proven; cloud OIDC and Firestore persistence are
-  proven. Deployed GPT-5.6 is not yet claimed.
-- Secret Manager resource `openai-api-key` exists but has zero versions. The
-  local key was not uploaded, runtime secret access was not granted, and Cloud
-  Run has no OpenAI secret binding.
-- Cloud Run defaults to `AI_PROVIDER_MODE=mock` when the variable is absent.
-- Explicit Chloe approval is required before copying the local API credential
-  into GCP. Risk: compromise of the Cloud Run/Secret Manager boundary could
-  expose OpenAI API-spend authority.
+- Chloe explicitly approved the credential transfer on 2026-07-17 after the
+  cost and exposure risk was restated.
+- Secret Manager version 1 is enabled; the runtime identity alone can access
+  it, and Cloud Run binds it without exposing the value.
+- Deployed GPT-5.6, OIDC, Firestore traces, token usage, and duplicate-cost
+  suppression are now proven under Decision 0009.
 
 ### OpenAI API smoke test
 
@@ -239,15 +239,37 @@ Full evidence:
 - Evidence:
   `docs/evidence/phase-5-8-integrated-build-2026-07-17.md`.
 
-## Honest boundary: not completed yet
+### Phase 7–8 deployed live acceptance
 
-Do not claim any of the following until new evidence exists:
+- Full pre-deployment validation passed for 100 tracked files and all 66 gcloud
+  upload files: clean lockfile install, 51 routine tests, typecheck, lint,
+  production build, standalone runtime, zero npm vulnerabilities, secret
+  exclusion, and Git object integrity.
+- OpenAI SDK retries default to zero. Queue and Cloud Run remain at the 1/1/1
+  cost profile recorded in Decision 0009.
+- OIDC task `phase7-live-20260717-1` completed one four-Agent GPT-5.6 run and
+  stored four safe `openai` traces in Firestore. Per-Agent tokens were 717,
+  449, 599, and 1,521; total 3,286.
+- Duplicate task `phase7-live-20260717-1-duplicate` left receipt attempt count,
+  task name, timestamps, traces, token data, and evidence fingerprint unchanged.
+- Final revision `time-sovereignty-00009-2bn` serves 100% traffic and reports
+  health `live`, model `gpt-5.6`, with `Cache-Control: no-store`.
+- A fresh 390x844 Chrome run passed onboarding, support agreement, text
+  check-in, text/photo/voice progress, rating, Day 30, Journey, Developer, and
+  reload persistence. Console errors and failed requests were both zero.
+- Evidence and screenshot:
+  `docs/evidence/phase-7-8-cloud-live-and-deployment-2026-07-17.md` and
+  `docs/evidence/phase-7-8-deployed-developer-2026-07-17.png`.
 
-- deployed browser acceptance of the Phase 5–8 command center;
+## Honest boundary: remaining submission work
+
+The production path is accepted, but do not claim these deferred items:
+
 - background notification delivery while the web app is closed;
 - Cloud Storage persistence for photo or voice media;
-- deployed Cloud Run live mode with four persisted `openai` traces;
-- final accessibility/mobile walkthrough, screenshots, or demo recording.
+- a physical-microphone voice demo; browser acceptance used Chrome's fake
+  microphone device;
+- a full accessibility audit or recorded demo video.
 
 Phase 7 is now explicitly provider-switch activation plus end-to-end rehearsal,
 not the product's first contact with real GPT-5.6. Per-Agent live schema
@@ -255,21 +277,11 @@ compatibility has already been proven during Phase 4.
 
 ## Exact next action
 
-Create a clean integrated-build commit, then move to the controlled cloud
-acceptance requested by Chloe. Before enabling billable live execution, change
-the test-stage queue profile from the recorded 100 attempts / 10 concurrent
-dispatches to a cost-bounded profile and record it in evidence.
-
-Then add one version to the existing empty `openai-api-key` Secret Manager
-resource without printing or writing the key to a temp file. Grant only the
-runtime service account access to that secret, bind it as `OPENAI_API_KEY`, set
-`AI_PROVIDER_MODE=live`, and preserve the non-secret runtime configuration.
-
-Send one new OIDC orchestration task and require four persisted Firestore
-traces with provider `openai` and a returned `gpt-5.6` model. Then send a
-duplicate with the same request ID and prove no second API cost. Only after
-that proof should the deployed Phase 5–8 journey and final submission polish
-be claimed as accepted.
+Commit this final evidence checkpoint, then finish the non-code submission
+package: preserve the primary `/feedback` Session ID/link, record the short demo
+with a physical microphone if available, complete a focused accessibility
+walkthrough, and prepare the Devpost description, architecture image, and
+repository URL. Do not rerun the live GPT-5.6 task merely for screenshots.
 
 ## Guardrails that must survive the handoff
 
@@ -301,6 +313,9 @@ be claimed as accepted.
 - `953c200` — verified Phase 3 checkpoint
 - `57be0ed` — need-based four-agent orchestration and OpenAI provider
 - `e0391a3` — safe runtime provider selection for Cloud Run
+- `4bfd647` — integrated Phase 5–8 longitudinal product journey
+- `c5b78a6` — zero-retry live perimeter and React validation fixes
+- `3b43c12` — deployed provider/model/revision evidence in the UI
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation
@@ -316,6 +331,11 @@ be claimed as accepted.
   live contract calls with schema and token evidence
 - `docs/evidence/phase-5-8-integrated-build-2026-07-17.md` — single-pass local
   integration and compilation boundary before cloud acceptance
+- `docs/evidence/phase-7-8-cloud-live-and-deployment-2026-07-17.md` — final
+  tracked-file validation, Secret Manager activation, real GPT-5.6 OIDC task,
+  duplicate-cost proof, deployed browser journey, and health check
+- `docs/evidence/phase-7-8-deployed-developer-2026-07-17.png` — final 390px
+  Developer/Journey runtime-evidence screenshot
 - `docs/NOTION_PHASE_5_8_CHECKPOINT_2026-07-17.md` — human-readable checkpoint
   ready to paste or sync into Notion
 - `docs/CODEX_BUILD_LOG.md` — chronological work log

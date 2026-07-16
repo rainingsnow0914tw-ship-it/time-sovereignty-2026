@@ -4,26 +4,20 @@ OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chi
 
 ## Current status
 
-Repository foundation created on 2026-07-16 (Asia/Shanghai). Phases 1 through
-4 have their required evidence, and Phase 5 through Phase 8 are now integrated
-in one local longitudinal product build. The product supports the three-question onboarding flow,
-a schema-validated mock Goal Architect plan, plan confirmation, a detailed
-support agreement, and validated browser-local persistence with reload
-recovery. At the driver's direction, the GCP project, Firestore database, and
-public Cloud Run walking skeleton were also bootstrapped early to expose cloud
-and billing risk.
+Repository foundation was created on 2026-07-16 (Asia/Shanghai). Phases 1
+through 8 are implemented, evidence-backed, and deployed. The product combines
+the three-question onboarding flow, consented support agreement, dual state
+machines, four Agent contracts, voice/check-in/progress loops, memory and resume
+points, and a clearly labeled 30-day journey.
 
 The deployed application is available at
-`https://time-sovereignty-defqnamrrq-de.a.run.app`. It now serves the verified
-Phase 2 mock onboarding and support-agreement slice plus the authenticated
-Phase 3 callback route. A real Cloud Task changed a Firestore intervention from
-`SCHEDULED` to `DUE`; a second task was accepted as a duplicate without a
-second transition. Four real GPT-5.6 roles now pass locally through the shared
-Responses API provider, while Cloud Run has persisted the same four-role mock
-trace contract through a real OIDC task. Cloud live activation is gated on
-explicit credential-transfer approval. The repository is currently ahead of
-the deployed revision: the new command center has compiled locally but has not
-yet been deployed or browser-accepted in Cloud Run.
+`https://time-sovereignty-29309448808.asia-east1.run.app`. Final revision
+`time-sovereignty-00009-2bn` serves 100% of traffic. Its health endpoint reports
+provider `live`, model `gpt-5.6`, and the final revision. One real OIDC Cloud
+Task completed all four GPT-5.6 Agent contracts and persisted four safe OpenAI
+traces; a second task with the same request ID left the Firestore proof
+unchanged and incurred no second Agent run. The complete deployed browser
+journey passed at 390x844 with zero console errors and zero failed requests.
 
 ## Source of truth
 
@@ -81,7 +75,8 @@ complete 390x844 Chrome user flow with zero console errors. See
   transition, completed receipt, real retry recovery, and duplicate suppression;
 - cost guardrail: project-scoped monthly US$30 budget with 50%, 90%, and 100%
   alerts;
-- OpenAI key: local only; it has not been deployed to Cloud Run.
+- OpenAI key: local plaintext remains ignored; Cloud Run reads only the
+  Secret Manager binding, accessible to the dedicated runtime identity.
 
 Phase 3 evidence:
 `docs/evidence/phase-3-real-cloud-task-2026-07-16.md`.
@@ -98,12 +93,11 @@ Phase 3 evidence:
 - Firestore persists one run receipt and one trace per actual agent call;
 - a request-level lease suppresses duplicate Cloud Task execution and cost.
 
-Local real GPT-5.6 all-agent acceptance passed. Cloud revision
-`time-sovereignty-00006-szv` is deliberately still in safe mock mode because no
-OpenAI key has been transferred to or bound from GCP. See
-`docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`. A second,
-finalized-contract proof recorded exactly one live call per Agent with token
-usage in `docs/evidence/phase-4-live-contracts-2026-07-16.md`.
+Local real GPT-5.6 all-agent acceptance passed first. The finalized-contract
+proof recorded exactly one live call per Agent with token usage in
+`docs/evidence/phase-4-live-contracts-2026-07-16.md`. The later Cloud Run live
+acceptance is recorded separately so the local contract proof and deployed OIDC
+proof remain distinguishable.
 
 ## Phase 5–8 integrated longitudinal product
 
@@ -128,10 +122,12 @@ progress, memories, resume point, intervention state, effectiveness, and safe
 traces. Video/file progress, the dedicated Memory Review screen, and an
 expanded rating interface are intentionally deferred under Decision 0008.
 
-The integrated production build passed once on 2026-07-17. Separate local
-phase acceptance and browser walkthroughs were intentionally deferred to the
-deployed environment. Evidence:
-`docs/evidence/phase-5-8-integrated-build-2026-07-17.md`.
+The integrated production build passed on 2026-07-17. Deployed acceptance then
+covered onboarding, check-in, text/photo/voice progress, Day 30, Journey,
+Developer runtime evidence, reload persistence, Cloud Run live GPT-5.6, and
+duplicate-cost suppression. Evidence:
+`docs/evidence/phase-5-8-integrated-build-2026-07-17.md` and
+`docs/evidence/phase-7-8-cloud-live-and-deployment-2026-07-17.md`.
 
 ## Local verification
 
@@ -171,7 +167,10 @@ development should remain mock-first.
 
 ## Secret handling
 
-The real OpenAI API key belongs only in `.env.local` and must never be printed or committed. `.env.example` contains names and safe defaults only.
+The local plaintext OpenAI API key belongs only in `.env.local` and must never
+be printed or committed. The deployed value is read from Secret Manager
+resource `openai-api-key`; only the dedicated runtime service account may
+access it. `.env.example` contains names and safe defaults only.
 
 A first minimal real `gpt-5.6` Responses API request was blocked by
 `insufficient_quota`. After API billing was funded, the same one-request check

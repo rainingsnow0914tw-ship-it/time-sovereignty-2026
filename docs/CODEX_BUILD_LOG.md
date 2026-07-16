@@ -289,3 +289,49 @@
   and `manifest.webmanifest` all built.
 - Full scope and the deferred cloud acceptance boundary are recorded in
   `docs/evidence/phase-5-8-integrated-build-2026-07-17.md`.
+
+## 2026-07-17 — Phase 7–8 cloud live activation and final deployment
+
+- Chloe explicitly approved moving the existing local OpenAI key into the
+  dedicated GCP project after full verification, followed by deployment and a
+  final health check.
+- Verified 100/100 tracked files, Git object integrity, secret exclusions, and
+  all 66 files in the actual gcloud upload manifest. Reinstalled 499 packages
+  from the lockfile; 51 routine tests, TypeScript, ESLint, production build,
+  standalone runtime, and npm audit all passed. Five billable live-only tests
+  remained skipped.
+- The full lint pass found two synchronous React effect state updates and one
+  incorrect mutable binding in the integrated journey UI. Fixed them and added
+  a tested default of zero OpenAI SDK automatic retries in commit `c5b78a6`.
+- Replaced the queue's unsafe 100-attempt / 10-concurrent profile with one
+  dispatch per second, one concurrent dispatch, and one total attempt. Cloud
+  Run max instances and container concurrency are both one for the acceptance
+  period. Decision 0009 records this cost profile.
+- Added Secret Manager version 1 without printing the key or writing it to a
+  temporary file. Only the dedicated runtime service account received accessor
+  permission. Bound it as `OPENAI_API_KEY`, set `AI_PROVIDER_MODE=live`, and
+  preserved the original eight non-secret variables.
+- Verified the deployed route still failed closed with HTTP 401 without OIDC.
+  Real task `phase7-live-20260717-1` completed all four Agents through GPT-5.6
+  and persisted four safe `openai` traces: Goal Architect 717 tokens,
+  Commitment Recovery 449, Memory Curator 599, and Chief of Staff 1,521; 3,286
+  tokens total.
+- Sent duplicate task `phase7-live-20260717-1-duplicate` with the same request
+  ID. Receipt attempt count, original task name, four trace timestamps, token
+  data, and SHA-256 evidence fingerprint remained unchanged, proving no second
+  Agent cost.
+- A deployed Chrome walkthrough found stale UI text saying the live switch was
+  still pending. Replaced it with an honest local-journey/cloud-live split and
+  made Developer read provider, model, and revision from `/api/health`. The
+  corrected source passed the full verification suite again in commit
+  `3b43c12`.
+- Deployed final revision `time-sovereignty-00009-2bn` with 100% traffic. A
+  fresh 390x844 Chrome run passed onboarding, support agreement, text check-in,
+  text/photo/voice progress, rating, Day 30 simulation, Journey, Developer, and
+  reload persistence with zero console errors and zero failed requests.
+- Final queue state is `RUNNING` and empty under the 1/1/1 cost profile. Final
+  `/api/health` returned HTTP 200 with `no-store`, provider `live`, model
+  `gpt-5.6`, and revision `time-sovereignty-00009-2bn`.
+- Full evidence and screenshot are stored in
+  `docs/evidence/phase-7-8-cloud-live-and-deployment-2026-07-17.md` and
+  `docs/evidence/phase-7-8-deployed-developer-2026-07-17.png`.

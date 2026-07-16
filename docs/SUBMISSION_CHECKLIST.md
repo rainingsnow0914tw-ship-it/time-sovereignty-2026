@@ -13,24 +13,26 @@
 - [x] Specific feedback, resume point, memory retrieval, and rating
 - [x] Clearly labeled 30-day accelerated simulation
 - [x] Journey timeline and safe developer trace
-- [ ] Cloud Run live switch with Secret Manager binding
-- [ ] One live OIDC orchestration receipt plus duplicate-cost proof
+- [x] Cloud Run live switch with Secret Manager binding
+- [x] One live OIDC orchestration receipt plus duplicate-cost proof
 
 ## Evidence
 
 - [x] Dated Codex build log
-- [x] Decisions 0001–0008
+- [x] Decisions 0001–0009
 - [x] GPT-5.6 smoke and four finalized contract records
 - [x] Phase 2 browser evidence
 - [x] Phase 3 Cloud Tasks/Firestore evidence
 - [x] Phase 4 local-live/cloud-mock split evidence
-- [ ] Phase 5–8 deployed product walkthrough evidence
+- [x] Phase 5–8 deployed product walkthrough evidence
 - [ ] Final `/feedback` Session ID and link
 
 ## Submission assets
 
 - [x] README setup, mock/live explanation, and evidence map
 - [x] Demo script
-- [ ] Final screenshots and short demo recording
+- [x] Final deployed mobile screenshot
+- [ ] Short demo recording
 - [ ] Devpost description, architecture image, and repository URL
-- [ ] Accessibility/mobile walkthrough on deployed revision
+- [x] Mobile walkthrough on deployed revision
+- [ ] Focused accessibility walkthrough
