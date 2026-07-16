@@ -13,6 +13,9 @@ dist/
 build/
 coverage/
 *.log
+*.tsbuildinfo
+.vercel/
+.eslintcache
 
 # Local caches
 .DS_Store

@@ -25,6 +25,32 @@ The active implementation order is recorded in
 cuts are governed by
 `docs/decisions/0003-time-pressure-feature-cut-order.md`.
 
+## Phase 1 foundation
+
+The deterministic foundation contains:
+
+- typed goal, action, support-agreement, intervention, memory, and agent
+  schemas;
+- separate action and intervention state machines;
+- invariants for active interventions and idempotent delivery keys;
+- a deterministic mock AI provider that validates the same structured outputs
+  expected from the live provider;
+- agent trace contracts that omit raw prompts and secrets.
+
+## Local verification
+
+```bash
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
+`npm run smoke:openai` performs one real Responses API request using the ignored
+local `.env.local`. Do not run it casually: it is a live, potentially billable
+check and currently remains blocked by project API quota.
+
 ## Evidence chain
 
 - Keep milestone-sized Git commits with clear dates and intent.

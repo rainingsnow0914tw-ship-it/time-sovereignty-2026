@@ -24,3 +24,18 @@
   unvalidated until the project API quota becomes available.
 - Continued into the deterministic mock-first Phase 1 because the live-provider
   quota precondition does not block local schemas, state machines, or tests.
+
+## 2026-07-16 — Phase 1 deterministic foundation
+
+- Created the official Next.js 16.2.10 App Router and TypeScript application
+  skeleton.
+- Added Zod schemas for goals, actions, support agreements, interventions,
+  memories, four real agent outputs, and safe agent traces.
+- Split action progress from intervention delivery into two independent state
+  machines.
+- Added configurable repeated-delay detection, single-active-intervention and
+  unique-delivery-key invariants.
+- Added a deterministic mock AI provider that validates fixtures against the
+  same strict structured-output schemas used by the live-provider boundary.
+- Verified 15 tests across three test files, TypeScript, ESLint, and a Next.js
+  production build.
