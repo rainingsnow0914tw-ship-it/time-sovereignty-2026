@@ -130,10 +130,11 @@
 - Consulted only the Decision 0004 Phase 3 index entries
   `P0-gcp-bootstrap.md`, `aibao-v3/Dockerfile`,
   `aibao-v3/src/firestore.js`, and `aibao-v3/src/server.js`.
-- Adopted atomic bootstrap verification, a lazy `preferRest` Firestore client,
-  a minimal multi-stage container, and separated endpoint handling. Rejected
-  the legacy shared-secret callback pattern in favor of the approved OIDC
-  path. No legacy code or secret was copied.
+- Adopted atomic bootstrap verification, a minimal multi-stage container, and
+  separated endpoint handling. A live callback exposed a Firestore
+  `preferRest` serialization failure, so the client now uses its default gRPC
+  transport. The legacy shared-secret callback pattern was rejected in favor
+  of the approved OIDC path. No legacy code or secret was copied.
 - Added official Firestore, Cloud Tasks, and Google auth packages plus a safe
   PostCSS override. A clean dependency rebuild reduced the production npm
   audit from two moderate findings to zero.
@@ -145,3 +146,36 @@
 - Added a Time Sovereignty-specific, atomic Phase 3 GCP bootstrap checklist.
 - Verified 31/31 tests, TypeScript, ESLint, and an optimized standalone Next.js
   production build before changing live GCP resources.
+
+## 2026-07-16 — Phase 3 real Cloud Tasks trigger verified
+
+- Created dedicated runtime and task-caller service accounts. The runtime has
+  only Firestore user and Cloud Tasks enqueuer project roles, may act as the
+  caller identity for task creation, and the caller alone has Cloud Run
+  invoker permission.
+- Created queue `time-sovereignty-checkins` in `asia-east1` and left it
+  `RUNNING` with no pending tasks after acceptance.
+- Deployed revision `time-sovereignty-00005-wb5` with 100% traffic, 1 CPU,
+  512 MiB, the dedicated runtime identity, and eight non-secret Phase 3
+  environment variables. No OpenAI key was deployed.
+- Verified the public callback fails closed: a request without the expected
+  Google-signed OIDC identity returned HTTP 401 `unauthorized_task`.
+- Sent a real authenticated Cloud Task for intervention
+  `phase3-20260716142638`. The same task retried after the Firestore transport
+  fix and atomically changed the intervention from `SCHEDULED` to `DUE`, then
+  completed one delivery receipt with `attemptCount: 1`.
+- Sent a second task with the same intervention ID. Cloud Run logged
+  `duplicate`; the intervention timestamp, completed receipt, original task
+  name, and attempt count remained unchanged. This proves callback
+  idempotency and no duplicate transition.
+- Preserved the complete Phase 3 acceptance record in
+  `docs/evidence/phase-3-real-cloud-task-2026-07-16.md`.
+- Two operational pitfalls are now documented: PowerShell/gcloud argument
+  handling swallowed inline JSON passed with `--body-content`, fixed by using
+  a JSON file with `--body-file`; Firestore `preferRest` failed to serialize a
+  numeric value in a transaction, fixed by returning to the supported gRPC
+  transport.
+- Phase 3 exit gate is complete. Phase 4 starts at the Chief of Staff
+  dispatcher contract; the first action is a deterministic mock orchestration
+  test proving need-based agent selection, strict final-output validation, and
+  safe agent-trace persistence.

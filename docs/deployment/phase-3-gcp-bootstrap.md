@@ -104,7 +104,7 @@ Expected: queue state `RUNNING`.
 ### 11. Deploy without resource flags
 
 ```bash
-gcloud run deploy time-sovereignty --source=. --region=asia-east1 --project=time-sovereignty-2026 --quiet
+gcloud run deploy time-sovereignty --source=. --region=asia-east1 --project=time-sovereignty-2026 --clear-base-image --quiet
 ```
 
 Expected: a new ready revision with 100% traffic. Existing CPU, memory,
@@ -126,7 +126,7 @@ gcloud run services describe time-sovereignty --region=asia-east1 --project=time
 ```
 
 Expected: 100% traffic, dedicated runtime identity, 1 CPU, 512 MiB, and only
-the seven non-secret Phase 3 variable names.
+the eight non-secret Phase 3 variable names.
 
 ## Acceptance proof
 

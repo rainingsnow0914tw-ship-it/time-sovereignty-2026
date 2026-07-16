@@ -4,19 +4,20 @@ OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chi
 
 ## Current status
 
-Repository foundation created on 2026-07-16 (Asia/Shanghai). Phases 1 and 2 are
-complete. The local product now supports the three-question onboarding flow,
+Repository foundation created on 2026-07-16 (Asia/Shanghai). Phases 1, 2, and
+3 are complete. The product supports the three-question onboarding flow,
 a schema-validated mock Goal Architect plan, plan confirmation, a detailed
 support agreement, and validated browser-local persistence with reload
 recovery. At the driver's direction, the GCP project, Firestore database, and
 public Cloud Run walking skeleton were also bootstrapped early to expose cloud
 and billing risk.
 
-The deployed landing page is available at
+The deployed application is available at
 `https://time-sovereignty-defqnamrrq-de.a.run.app`. It now serves the verified
-Phase 2 mock onboarding and support-agreement slice. This is not completion of
-the Phase 3 exit gate: the real Cloud Tasks callback and persisted Firestore
-intervention transition still have to be implemented.
+Phase 2 mock onboarding and support-agreement slice plus the authenticated
+Phase 3 callback route. A real Cloud Task changed a Firestore intervention from
+`SCHEDULED` to `DUE`; a second task was accepted as a duplicate without a
+second transition. Phase 4 agent orchestration is next.
 
 ## Source of truth
 
@@ -67,11 +68,17 @@ complete 390x844 Chrome user flow with zero console errors. See
 - GCP project: `time-sovereignty-2026`;
 - primary region: `asia-east1`;
 - Firestore: Native mode, `(default)`, delete protection enabled;
-- Cloud Run service: `time-sovereignty`, public Phase 2 mock UI (revision
-  `time-sovereignty-00002-hr4`);
+- Cloud Run service: `time-sovereignty`, revision
+  `time-sovereignty-00005-wb5`, 100% traffic;
+- Cloud Tasks queue: `time-sovereignty-checkins`, `RUNNING`;
+- Phase 3 proof: authenticated OIDC callback, transactional Firestore
+  transition, completed receipt, real retry recovery, and duplicate suppression;
 - cost guardrail: project-scoped monthly US$30 budget with 50%, 90%, and 100%
   alerts;
 - OpenAI key: local only; it has not been deployed to Cloud Run.
+
+Phase 3 evidence:
+`docs/evidence/phase-3-real-cloud-task-2026-07-16.md`.
 
 ## Local verification
 
