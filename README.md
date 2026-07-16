@@ -5,8 +5,8 @@ OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chi
 ## Current status
 
 Repository foundation created on 2026-07-16 (Asia/Shanghai). Phases 1 through
-3 are complete, and the Phase 4 orchestration core has passed split live/cloud
-acceptance. The product supports the three-question onboarding flow,
+4 have their required evidence, and Phase 5 through Phase 8 are now integrated
+in one local longitudinal product build. The product supports the three-question onboarding flow,
 a schema-validated mock Goal Architect plan, plan confirmation, a detailed
 support agreement, and validated browser-local persistence with reload
 recovery. At the driver's direction, the GCP project, Firestore database, and
@@ -21,7 +21,9 @@ Phase 3 callback route. A real Cloud Task changed a Firestore intervention from
 second transition. Four real GPT-5.6 roles now pass locally through the shared
 Responses API provider, while Cloud Run has persisted the same four-role mock
 trace contract through a real OIDC task. Cloud live activation is gated on
-explicit credential-transfer approval.
+explicit credential-transfer approval. The repository is currently ahead of
+the deployed revision: the new command center has compiled locally but has not
+yet been deployed or browser-accepted in Cloud Run.
 
 ## Source of truth
 
@@ -102,6 +104,34 @@ OpenAI key has been transferred to or bound from GCP. See
 `docs/evidence/phase-4-four-agent-orchestration-2026-07-16.md`. A second,
 finalized-contract proof recorded exactly one live call per Agent with token
 usage in `docs/evidence/phase-4-live-contracts-2026-07-16.md`.
+
+## Phase 5–8 integrated longitudinal product
+
+After onboarding, the product now opens a single mobile-responsive command
+center with five surfaces:
+
+- **Today** — North Star, current action, protected minimum, quiet-hours state,
+  next check-in, and resume point;
+- **Check-in** — text notification, tap-to-play browser TTS, browser speech
+  transcription with text fallback, one-delay handling, repeated-delay
+  recovery, and a new commitment;
+- **Progress** — text, photo, and voice evidence plus specific feedback,
+  progress memory, and resume-point update;
+- **Journey** — planning, interruptions, adaptations, evidence, feedback,
+  calibration, memory retrieval, and intervention rating;
+- **Developer** — safe Agent Run Trace, schema/model/provider labels, and a
+  redacted runtime snapshot.
+
+Accelerated Simulation advances through Days 1, 2, 3, 4, 5, 8, 14, and 30 and
+clearly labels simulated time. The same local journey repository holds events,
+progress, memories, resume point, intervention state, effectiveness, and safe
+traces. Video/file progress, the dedicated Memory Review screen, and an
+expanded rating interface are intentionally deferred under Decision 0008.
+
+The integrated production build passed once on 2026-07-17. Separate local
+phase acceptance and browser walkthroughs were intentionally deferred to the
+deployed environment. Evidence:
+`docs/evidence/phase-5-8-integrated-build-2026-07-17.md`.
 
 ## Local verification
 

@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import type { AgentRunTrace } from "../../domain/agents/schemas";
 import type { GoalPlan } from "../../domain/goals/schemas";
+import { JourneyWorkspace } from "../journey/journey-workspace";
 import {
   createConfirmedOnboardingRecord,
   createLocalOnboardingRepository,
@@ -146,10 +147,12 @@ function ProgressHeader({ stage }: { stage: Stage }) {
 }
 
 function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
+  const workspace = stage === "complete";
   return (
     <main className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1180px] overflow-hidden rounded-[2rem] border border-[#173f35]/10 bg-white shadow-[0_28px_90px_rgba(31,63,50,0.12)] sm:min-h-[calc(100vh-3rem)] lg:grid-cols-[0.72fr_1.28fr]">
-        <aside className="relative hidden overflow-hidden bg-[#173f35] p-10 text-white lg:flex lg:flex-col">
+      <div className={`mx-auto min-h-[calc(100vh-2rem)] overflow-hidden rounded-[2rem] border border-[#173f35]/10 bg-white shadow-[0_28px_90px_rgba(31,63,50,0.12)] sm:min-h-[calc(100vh-3rem)] ${workspace ? "max-w-[1480px]" : "grid max-w-[1180px] lg:grid-cols-[0.72fr_1.28fr]"}`}>
+        {!workspace ? (
+          <aside className="relative hidden overflow-hidden bg-[#173f35] p-10 text-white lg:flex lg:flex-col">
           <div className="absolute -right-24 -top-20 size-72 rounded-full border border-[#d8f48a]/20" />
           <div className="absolute -right-8 -top-8 size-40 rounded-full border border-[#d8f48a]/25" />
           <div className="relative flex items-center gap-3">
@@ -182,10 +185,12 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
               ),
             )}
           </div>
-        </aside>
+          </aside>
+        ) : null}
 
         <section className="flex min-w-0 flex-col bg-[#fffefa]">
-          <header className="flex items-center justify-between border-b border-[#e5e8e4] px-5 py-4 lg:hidden">
+          {!workspace ? (
+            <header className="flex items-center justify-between border-b border-[#e5e8e4] px-5 py-4 lg:hidden">
             <div className="flex items-center gap-2.5">
               <BrandMark compact />
               <div>
@@ -196,16 +201,17 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
             <span className="rounded-full bg-[#edf4ee] px-3 py-1.5 text-[11px] font-semibold text-[#436457]">
               Private setup
             </span>
-          </header>
-          <ProgressHeader stage={stage} />
-          <div className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8 sm:py-12">
-            <div key={stage} className="stage-enter w-full max-w-[690px]">
+            </header>
+          ) : null}
+          {!workspace ? <ProgressHeader stage={stage} /> : null}
+          <div className={`flex flex-1 justify-center ${workspace ? "items-start p-3 sm:p-5" : "items-center px-5 py-8 sm:px-8 sm:py-12"}`}>
+            <div key={stage} className={`stage-enter w-full ${workspace ? "max-w-[1380px]" : "max-w-[690px]"}`}>
               {children}
             </div>
           </div>
           <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e8ebe7] px-5 py-3 text-[11px] text-[#7c8781] sm:px-8">
-            <span>Mock mode · no API usage</span>
-            <span>Saved only in this browser after confirmation</span>
+            <span>{workspace ? "Integrated local mode · cloud switch prepared" : "Mock mode · no API usage"}</span>
+            <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
           </footer>
         </section>
       </div>
@@ -896,8 +902,9 @@ function CompletedJourney({
             Your goal has a protected path.
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#69746e]">
-            The local vertical slice is complete. Nothing has been sent or
-            scheduled in the cloud yet.
+            Your longitudinal workspace is ready. Cloud Run and Cloud Tasks are
+            already deployed; the product remains in safe local mode until the
+            live provider switch is approved.
           </p>
         </div>
       </div>
@@ -960,8 +967,12 @@ function CompletedJourney({
           Start over
         </button>
         <div className="rounded-full bg-[#edf4ee] px-4 py-2 text-xs font-semibold text-[#49675a]">
-          Phase 2 · local mock complete
+          Phases 1–8 · integrated local build
         </div>
+      </div>
+
+      <div className="mt-8">
+        <JourneyWorkspace record={record} onReset={onReset} />
       </div>
     </div>
   );

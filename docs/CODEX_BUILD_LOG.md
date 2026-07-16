@@ -255,3 +255,37 @@
 - Routine verification remained green at 50 passed tests with five live-only
   tests skipped, plus TypeScript and ESLint. The exact live records are stored
   in `docs/evidence/phase-4-live-contracts-2026-07-16.md` and matching JSON.
+
+## 2026-07-17 — Phase 5–8 integrated local product build
+
+- Chloe changed the execution cadence after more than four hours of Build Week
+  work: implement Phase 5–8 as one local integration pass, skip separate phase
+  acceptance, then move the complete surface to Cloud Run for debugging and
+  deployment acceptance. Decision 0008 records the cadence and approved UI
+  cuts.
+- Consulted only the Decision 0004 Phase 5 index entries
+  `小寶助理/tts.py` and `小寶助理/voice_input.py`. Adopted the principles of
+  lazy capability initialization, text cleanup and length bounds before TTS,
+  explicit provider boundaries, short-media limits, capability detection, and
+  text fallback. No legacy code, credentials, project IDs, user data, or
+  provider choice was copied.
+- Added a longitudinal command center after onboarding with Today, Check-in,
+  Progress, Journey, and Developer surfaces.
+- Added browser notification, tap-to-play speech synthesis, speech-recognition
+  transcription with text fallback, voice recording, photo evidence, and local
+  media-size guardrails.
+- Added one-delay rescheduling, repeated-delay recovery, user-selected reason,
+  new commitment, specific progress feedback, retrieved memory, resume point,
+  and persisted 1–5 intervention effectiveness.
+- Added a clearly labeled accelerated simulation across Days 1, 2, 3, 4, 5,
+  8, 14, and 30. It preserves journey events, memory changes, intervention
+  states, progress, goal calibration, and safe mock Agent traces for the local
+  preview; live cloud acceptance remains separate and honest.
+- Added PWA manifest metadata, `/api/health`, demo script, submission checklist,
+  Decision 0008, and a Notion-ready checkpoint document.
+- Per Chloe's revised cadence, no per-phase tests or browser walkthroughs were
+  run. One whole-product production build completed successfully: Next.js
+  compilation, TypeScript, six generated pages, `/api/health`, both task routes,
+  and `manifest.webmanifest` all built.
+- Full scope and the deferred cloud acceptance boundary are recorded in
+  `docs/evidence/phase-5-8-integrated-build-2026-07-17.md`.

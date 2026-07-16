@@ -2,7 +2,7 @@
 
 ## Current checkpoint
 
-- Handoff updated: 2026-07-16 23:58 Asia/Shanghai.
+- Handoff updated: 2026-07-17 00:39 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
 - Last verified implementation commits: `57be0ed`
@@ -212,14 +212,42 @@ Full evidence:
 - Success evidence:
   `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` and matching JSON.
 
+### Phase 5–8 integrated local product
+
+- Chloe replaced phase-by-phase local acceptance with one integrated build,
+  followed by real Cloud Run debugging and deployment acceptance. Decision
+  0008 records this method and the three approved interface cuts.
+- The post-onboarding command center now contains Today, Incoming Check-in,
+  Share Progress, Journey, and Developer surfaces.
+- Browser adapters provide notification, tap-to-play TTS, speech transcription
+  with text fallback, voice recording, and bounded local media persistence.
+- The intervention experience supports one accepted delay, repeated-delay
+  investigation, user-selected recovery reason, adapted action, and confirmed
+  new commitment.
+- Progress supports the required text, photo, and voice formats. Saving
+  progress also stores specific feedback, retrieved memory, and an updated
+  resume point.
+- A compact 1–5 control persists intervention effectiveness and user sentiment.
+- Accelerated Simulation covers meaningful Days 1, 2, 3, 4, 5, 8, 14, and 30.
+  Journey shows the full longitudinal story; Developer shows safe traces and a
+  redacted runtime snapshot.
+- PWA manifest, `/api/health`, demo script, submission checklist, Build Log,
+  evidence, and a Notion-ready checkpoint are included.
+- Per Chloe's instruction, separate Phase 5–8 tests and local browser
+  acceptance were skipped. One integrated `npm run build` passed on 2026-07-17,
+  including TypeScript and all six generated routes/pages.
+- Evidence:
+  `docs/evidence/phase-5-8-integrated-build-2026-07-17.md`.
+
 ## Honest boundary: not completed yet
 
 Do not claim any of the following until new evidence exists:
 
-- Accelerated Simulation UI;
-- text/photo/voice progress sharing;
-- a user-facing notification delivery path.
-- deployed Cloud Run live mode with four persisted `openai` traces.
+- deployed browser acceptance of the Phase 5–8 command center;
+- background notification delivery while the web app is closed;
+- Cloud Storage persistence for photo or voice media;
+- deployed Cloud Run live mode with four persisted `openai` traces;
+- final accessibility/mobile walkthrough, screenshots, or demo recording.
 
 Phase 7 is now explicitly provider-switch activation plus end-to-end rehearsal,
 not the product's first contact with real GPT-5.6. Per-Agent live schema
@@ -227,19 +255,21 @@ compatibility has already been proven during Phase 4.
 
 ## Exact next action
 
-Wait for Chloe's explicit credential-transfer approval in this same Codex
-task. Do not open a new task.
+Create a clean integrated-build commit, then move to the controlled cloud
+acceptance requested by Chloe. Before enabling billable live execution, change
+the test-stage queue profile from the recorded 100 attempts / 10 concurrent
+dispatches to a cost-bounded profile and record it in evidence.
 
-After approval, the first action is exact: add one version to the existing
-empty `openai-api-key` Secret Manager resource without printing or writing the
-key to a temp file. Then grant only the runtime service account access to that
-secret, bind it as `OPENAI_API_KEY`, set `AI_PROVIDER_MODE=live`, and preserve
-all existing resource settings and eight non-secret variables.
+Then add one version to the existing empty `openai-api-key` Secret Manager
+resource without printing or writing the key to a temp file. Grant only the
+runtime service account access to that secret, bind it as `OPENAI_API_KEY`, set
+`AI_PROVIDER_MODE=live`, and preserve the non-secret runtime configuration.
 
 Send one new OIDC orchestration task and require four persisted Firestore
 traces with provider `openai` and a returned `gpt-5.6` model. Then send a
 duplicate with the same request ID and prove no second API cost. Only after
-that proof should Phase 5 begin.
+that proof should the deployed Phase 5–8 journey and final submission polish
+be claimed as accepted.
 
 ## Guardrails that must survive the handoff
 
@@ -284,6 +314,10 @@ that proof should Phase 5 begin.
   proof
 - `docs/evidence/phase-4-live-contracts-2026-07-16.md` — exactly four finalized
   live contract calls with schema and token evidence
+- `docs/evidence/phase-5-8-integrated-build-2026-07-17.md` — single-pass local
+  integration and compilation boundary before cloud acceptance
+- `docs/NOTION_PHASE_5_8_CHECKPOINT_2026-07-17.md` — human-readable checkpoint
+  ready to paste or sync into Notion
 - `docs/CODEX_BUILD_LOG.md` — chronological work log
 
 If the repository state conflicts with this manual, stop and reconcile the
