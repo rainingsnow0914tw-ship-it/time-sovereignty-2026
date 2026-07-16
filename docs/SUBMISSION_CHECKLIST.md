@@ -19,13 +19,13 @@
 ## Evidence
 
 - [x] Dated Codex build log
-- [x] Decisions 0001–0009
+- [x] Decisions 0001–0010
 - [x] GPT-5.6 smoke and four finalized contract records
 - [x] Phase 2 browser evidence
 - [x] Phase 3 Cloud Tasks/Firestore evidence
 - [x] Phase 4 local-live/cloud-mock split evidence
 - [x] Phase 5–8 deployed product walkthrough evidence
-- [ ] Final `/feedback` Session ID and link
+- [x] Final `/feedback` Session ID
 
 ## Submission assets
 
@@ -33,6 +33,7 @@
 - [x] Demo script
 - [x] Final deployed mobile screenshot
 - [ ] Short demo recording
-- [ ] Devpost description, architecture image, and repository URL
+- [x] Devpost description and architecture image
+- [ ] Final repository URL and judging visibility/access
 - [x] Mobile walkthrough on deployed revision
-- [ ] Focused accessibility walkthrough
+- [x] Focused accessibility walkthrough

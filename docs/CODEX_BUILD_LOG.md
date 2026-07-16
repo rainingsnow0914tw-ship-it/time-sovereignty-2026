@@ -335,3 +335,37 @@
 - Full evidence and screenshot are stored in
   `docs/evidence/phase-7-8-cloud-live-and-deployment-2026-07-17.md` and
   `docs/evidence/phase-7-8-deployed-developer-2026-07-17.png`.
+
+## 2026-07-17 — Judging readiness and submission package
+
+- Verified that Cloud Run, Firestore, Cloud Tasks, Artifact Registry, and the
+  source bucket are all in GCP `asia-east1`; the alternate `-de.a.run.app`
+  hostname is not a European deployment marker.
+- Compared a 2.617-second idle health request with approximately 8–12 ms warm
+  requests. The real four-Agent orchestration remained 23.488 seconds, so the
+  latency sources were separated instead of misdiagnosed as a cross-region GCP
+  deployment.
+- With Chloe's approval, changed Cloud Run minimum instances from zero to one
+  for the judging window. Preserved maximum instances one, concurrency one,
+  all 11 environment entries, the Secret Manager binding, both service
+  accounts, and the queue's 1/1/1 cost profile.
+- Added the Devpost submission draft, timed 2:50 demo script, and a final
+  implementation-only architecture diagram in Mermaid and PNG formats.
+- A focused deployed accessibility scan first found five serious contrast
+  issues. Corrected the palette, dark-card class composition, and nested main
+  landmark. The final goal, plan, agreement, and command-center screens each
+  passed with zero axe violations and zero incomplete findings; keyboard focus
+  reached every primary control, with zero console errors and zero failed
+  requests.
+- Reverified 51 routine tests, TypeScript, ESLint, and the production build.
+  No Agent contract changed, so no repeated billable GPT-5.6 suite was run.
+- Deployed final revision `time-sovereignty-00012-7gn`, 100% traffic. Live
+  health returned HTTP 200, `no-store`, provider `live`, model `gpt-5.6`.
+- Re-read Firestore to confirm the completed live receipt and all four safe
+  OpenAI traces still exist with the original 3,286-token total. The read did
+  not call OpenAI or modify data.
+- Retrieved the primary Codex `/feedback` Session ID directly from Codex:
+  `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`.
+- Decision 0010 records the judging warm-instance and accessibility policy.
+  The remaining human/authorization boundary is GitHub visibility and license,
+  the narrated public YouTube upload, and final Devpost review/submit.

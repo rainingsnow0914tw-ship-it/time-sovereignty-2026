@@ -2,12 +2,12 @@
 
 ## Current checkpoint
 
-- Handoff updated: 2026-07-17 01:40 Asia/Shanghai.
+- Handoff updated: 2026-07-17 04:38 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
-- Last verified product commits: `4bfd647` (integrated longitudinal journey),
-  `c5b78a6` (live deployment perimeter), and `3b43c12` (deployed runtime
-  evidence in the UI).
+- Last verified product/submission commits: `3b43c12` (deployed runtime
+  evidence), `329edc3` (submission assets), and `f954e90` (focused
+  accessibility fixes).
 - The commit containing this file is the handoff checkpoint; verify it with
   `git log -1 --oneline` after opening the repository.
 - Project name: **Time Sovereignty** (earlier working name: Chloe Chief of
@@ -19,7 +19,7 @@
 1. This remains the primary `/feedback` Codex task; preserve its final Session
    ID and link for submission.
 2. After any context compression, first read `docs/CODEX_BUILD_LOG.md`, then
-   Decisions 0008 and 0009, before changing code or cloud settings.
+   Decisions 0009 and 0010, before changing code or cloud settings.
 3. Verify `git status --short` and `git log -3 --oneline`.
 4. Read only the source slices needed for the exact submission action.
 5. Do not reload every source or reference asset. Use the source-of-truth order
@@ -35,7 +35,7 @@
 - Clean dedicated Git repository created on 2026-07-16.
 - PRD, architecture, and kickoff materials preserved unchanged in
   `docs/source/`.
-- Decisions 0001-0009 record review approval, phase order, cuts, reference and
+- Decisions 0001-0010 record review approval, phase order, cuts, reference and
   cost guardrails, GCP choices, identity/idempotency, live-contract perimeter,
   integrated-build cadence, and cloud-live cost controls.
 - Milestone commits, evidence files, and `docs/CODEX_BUILD_LOG.md` form the
@@ -80,8 +80,9 @@
 - Region: `asia-east1`.
 - Firestore `(default)`: Native mode, Standard edition, delete protection on.
 - Cloud Run service: `time-sovereignty`, final revision
-  `time-sovereignty-00009-2bn`, 100% traffic, 1 CPU, 512 MiB, startup CPU
-  boost, maximum scale 1, container concurrency 1, and minimum instances zero.
+  `time-sovereignty-00012-7gn`, 100% traffic, 1 CPU, 512 MiB, startup CPU
+  boost, maximum scale 1, container concurrency 1, and minimum instances one
+  for the judging window.
 - Public URL: `https://time-sovereignty-29309448808.asia-east1.run.app`
   (verified HTTP 200 and complete Phase 5–8 mobile journey).
 - Monthly GCP budget: US$30 with 50%, 90%, and 100% current-spend alerts.
@@ -261,6 +262,32 @@ Full evidence:
   `docs/evidence/phase-7-8-cloud-live-and-deployment-2026-07-17.md` and
   `docs/evidence/phase-7-8-deployed-developer-2026-07-17.png`.
 
+### Judging-readiness and submission checkpoint
+
+- Live inspection at 2026-07-17 04:38 +08:00 confirmed final revision
+  `time-sovereignty-00012-7gn`, 100% traffic, minimum/maximum instances one,
+  concurrency one, all 11 environment entries, and Secret Manager binding
+  `openai-api-key:latest`.
+- Queue `time-sovereignty-checkins` remains `RUNNING` at one dispatch/second,
+  one concurrent dispatch, and one maximum attempt. Both dedicated service
+  accounts remain enabled.
+- `/api/health` returned HTTP 200 with `no-store`, provider `live`, model
+  `gpt-5.6`, and revision `time-sovereignty-00012-7gn`.
+- Firestore still contains completed receipt
+  `orchestration_runs/phase7-live-20260717-1` and all four safe OpenAI traces
+  with the original 717, 449, 599, and 1,521 token counts. This was a read-only
+  inspection and did not call OpenAI.
+- Final focused live axe acceptance at 390x844 passed the goal question, plan
+  review, support agreement, and command center with 0 violations and 0
+  incomplete findings on every screen. Keyboard focus reached all primary
+  controls; console errors and failed requests were zero.
+- Devpost copy, the timed 2:50 narration, and final Mermaid/PNG architecture
+  are complete. Primary Codex `/feedback` Session ID:
+  `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`.
+- Decision 0010 governs the judging warm instance and focused accessibility
+  gate. Full evidence:
+  `docs/evidence/phase-8-submission-readiness-2026-07-17.md`.
+
 ## Honest boundary: remaining submission work
 
 The production path is accepted, but do not claim these deferred items:
@@ -269,7 +296,8 @@ The production path is accepted, but do not claim these deferred items:
 - Cloud Storage persistence for photo or voice media;
 - a physical-microphone voice demo; browser acceptance used Chrome's fake
   microphone device;
-- a full accessibility audit or recorded demo video.
+- a comprehensive manual WCAG audit or recorded demo video. The focused axe
+  and keyboard walkthrough is complete and may be claimed as such.
 
 Phase 7 is now explicitly provider-switch activation plus end-to-end rehearsal,
 not the product's first contact with real GPT-5.6. Per-Agent live schema
@@ -277,11 +305,12 @@ compatibility has already been proven during Phase 4.
 
 ## Exact next action
 
-Commit this final evidence checkpoint, then finish the non-code submission
-package: preserve the primary `/feedback` Session ID/link, record the short demo
-with a physical microphone if available, complete a focused accessibility
-walkthrough, and prepare the Devpost description, architecture image, and
-repository URL. Do not rerun the live GPT-5.6 task merely for screenshots.
+Commit this final evidence checkpoint. Then choose the repository publication
+route: public with a chosen license, or private with both judging addresses
+granted access. After that, record and upload the public under-three-minute
+YouTube demo, fill the repository/video URLs in `docs/DEVPOST_SUBMISSION.md`,
+review the Devpost entry, and submit it. Do not rerun the live GPT-5.6 task
+merely for screenshots.
 
 ## Guardrails that must survive the handoff
 
@@ -296,8 +325,9 @@ repository URL. Do not rerun the live GPT-5.6 task merely for screenshots.
   0004; do not copy legacy code wholesale.
 - Never commit `.env.local`, `GPTAPIKEY.txt`, raw secrets, prompts, or private
   reasoning traces.
-- Keep Cloud Run minimum instances at zero unless a measured need and a new
-  decision justify a change.
+- Keep Cloud Run minimum instances at one during judging under Decision 0010;
+  return it to zero after judging unless a later decision accepts the standing
+  warm-instance cost.
 
 ## Evidence and commit map
 
@@ -316,6 +346,8 @@ repository URL. Do not rerun the live GPT-5.6 task merely for screenshots.
 - `4bfd647` — integrated Phase 5–8 longitudinal product journey
 - `c5b78a6` — zero-retry live perimeter and React validation fixes
 - `3b43c12` — deployed provider/model/revision evidence in the UI
+- `329edc3` — Devpost copy, demo script, architecture, and initial contrast fix
+- `f954e90` — focused accessibility and semantic-landmark fixes
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation
@@ -336,6 +368,9 @@ repository URL. Do not rerun the live GPT-5.6 task merely for screenshots.
   duplicate-cost proof, deployed browser journey, and health check
 - `docs/evidence/phase-7-8-deployed-developer-2026-07-17.png` — final 390px
   Developer/Journey runtime-evidence screenshot
+- `docs/evidence/phase-8-submission-readiness-2026-07-17.md` — warm-instance,
+  final cloud snapshot, Firestore persistence, submission assets, and focused
+  accessibility evidence
 - `docs/NOTION_PHASE_5_8_CHECKPOINT_2026-07-17.md` — human-readable checkpoint
   ready to paste or sync into Notion
 - `docs/CODEX_BUILD_LOG.md` — chronological work log

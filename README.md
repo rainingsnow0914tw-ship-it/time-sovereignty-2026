@@ -12,12 +12,14 @@ points, and a clearly labeled 30-day journey.
 
 The deployed application is available at
 `https://time-sovereignty-29309448808.asia-east1.run.app`. Final revision
-`time-sovereignty-00009-2bn` serves 100% of traffic. Its health endpoint reports
+`time-sovereignty-00012-7gn` serves 100% of traffic. Its health endpoint reports
 provider `live`, model `gpt-5.6`, and the final revision. One real OIDC Cloud
 Task completed all four GPT-5.6 Agent contracts and persisted four safe OpenAI
 traces; a second task with the same request ID left the Firestore proof
 unchanged and incurred no second Agent run. The complete deployed browser
 journey passed at 390x844 with zero console errors and zero failed requests.
+Four focused live accessibility screens passed with zero axe violations and
+zero incomplete findings after the judging-readiness fixes.
 
 ## Source of truth
 
@@ -69,7 +71,8 @@ complete 390x844 Chrome user flow with zero console errors. See
 - primary region: `asia-east1`;
 - Firestore: Native mode, `(default)`, delete protection enabled;
 - Cloud Run service: `time-sovereignty`, revision
-  `time-sovereignty-00006-szv`, 100% traffic;
+  `time-sovereignty-00012-7gn`, 100% traffic, minimum/maximum instances one and
+  container concurrency one during judging;
 - Cloud Tasks queue: `time-sovereignty-checkins`, `RUNNING`;
 - Phase 3 proof: authenticated OIDC callback, transactional Firestore
   transition, completed receipt, real retry recovery, and duplicate suppression;
@@ -164,6 +167,21 @@ development should remain mock-first.
 - Record major decisions in `docs/decisions/`.
 - Record cross-task continuity in `docs/codex-handoffs.md` only if a handoff becomes necessary.
 - Preserve the final primary-task `/feedback` Session ID for submission.
+
+Primary Codex `/feedback` Session ID:
+`019f6085-1e4d-7e23-a0b8-371e6e47bbfa`.
+
+## Submission package
+
+- Devpost copy: `docs/DEVPOST_SUBMISSION.md`
+- Under-three-minute narration: `docs/DEMO_SCRIPT.md`
+- Final architecture: `docs/submission/time-sovereignty-architecture.png`
+- Submission-readiness proof:
+  `docs/evidence/phase-8-submission-readiness-2026-07-17.md`
+
+Repository publication and the public YouTube URL remain intentionally outside
+the automatic build: GitHub visibility/licensing and the final narrated upload
+require Chloe's explicit choice and review.
 
 ## Secret handling
 
