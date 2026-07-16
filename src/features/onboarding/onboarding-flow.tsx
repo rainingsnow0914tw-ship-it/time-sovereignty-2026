@@ -210,7 +210,7 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
             </div>
           </div>
           <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e8ebe7] px-5 py-3 text-[11px] text-[#7c8781] sm:px-8">
-            <span>{workspace ? "Integrated local mode · cloud switch prepared" : "Mock mode · no API usage"}</span>
+            <span>{workspace ? "Local journey · protected cloud orchestration" : "Mock mode · no API usage"}</span>
             <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
           </footer>
         </section>
@@ -902,9 +902,9 @@ function CompletedJourney({
             Your goal has a protected path.
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#69746e]">
-            Your longitudinal workspace is ready. Cloud Run and Cloud Tasks are
-            already deployed; the product remains in safe local mode until the
-            live provider switch is approved.
+            Your longitudinal workspace is ready. The browser journey stays
+            local-first, while the protected Cloud Run and Cloud Tasks path is
+            verified separately with the live provider.
           </p>
         </div>
       </div>

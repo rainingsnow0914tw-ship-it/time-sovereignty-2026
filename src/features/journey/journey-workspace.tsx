@@ -49,6 +49,11 @@ const inputClass =
 
 type ProgressFormat = "TEXT" | "PHOTO" | "VOICE";
 type AssetDraft = { name: string; dataUrl: string };
+type RuntimeHealth = {
+  providerMode: "mock" | "live";
+  model: string;
+  revision: string;
+};
 
 export function JourneyWorkspace({
   record,
@@ -62,6 +67,7 @@ export function JourneyWorkspace({
   );
   const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState("");
+  const [runtimeHealth, setRuntimeHealth] = useState<RuntimeHealth | null>(null);
   const [checkInReply, setCheckInReply] = useState("");
   const [recoveryReason, setRecoveryReason] = useState("SIZE");
   const [progressFormat, setProgressFormat] =
@@ -89,6 +95,36 @@ export function JourneyWorkspace({
 
     return () => window.clearTimeout(hydrationTimer);
   }, [record.goal.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/health", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as Record<string, unknown>;
+        if (
+          response.ok &&
+          (payload.providerMode === "mock" || payload.providerMode === "live") &&
+          typeof payload.model === "string" &&
+          typeof payload.revision === "string"
+        ) {
+          setRuntimeHealth({
+            providerMode: payload.providerMode,
+            model: payload.model,
+            revision: payload.revision,
+          });
+        }
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setRuntimeHealth(null);
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -810,7 +846,11 @@ export function JourneyWorkspace({
                   <Eyebrow>Agent run trace</Eyebrow>
                   <h2 className="mt-2 text-2xl font-semibold text-[#173f35]">Auditable orchestration</h2>
                 </div>
-                <span className="rounded-full bg-[#fff2cc] px-3 py-2 text-xs font-bold text-[#6f5310]">Local mock · live switch prepared</span>
+                <span className="rounded-full bg-[#fff2cc] px-3 py-2 text-xs font-bold text-[#6f5310]">
+                  {runtimeHealth?.providerMode === "live"
+                    ? `Local simulation · cloud live · ${runtimeHealth.model}`
+                    : "Local simulation · cloud health pending"}
+                </span>
               </div>
               <div className="mt-5 overflow-x-auto">
                 <table className="w-full min-w-[680px] border-collapse text-left text-xs">
@@ -838,6 +878,11 @@ export function JourneyWorkspace({
               <div className={cardClass}>
                 <Eyebrow>Acceptance path</Eyebrow>
                 <ul className="mt-4 space-y-2 text-sm text-[#4f6259]">
+                  <li>
+                    {runtimeHealth?.providerMode === "live"
+                      ? `✓ Cloud runtime: ${runtimeHealth.model} · ${runtimeHealth.revision}`
+                      : "○ Cloud runtime health pending"}
+                  </li>
                   <li>✓ Two real state machines</li>
                   <li>✓ Four Agent contracts</li>
                   <li>✓ Text + tap-to-play TTS</li>
