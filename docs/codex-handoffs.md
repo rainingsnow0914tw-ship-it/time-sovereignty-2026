@@ -5,8 +5,8 @@
 - Handoff updated: 2026-07-16 21:50 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
-- Last committed checkpoint before the current Phase 2 milestone: `46ac6d4`
-  (`docs: confirm GPT-5.6 access and prepare handoff`).
+- Last verified implementation commit: `e1430c3`
+  (`feat: complete local onboarding vertical slice`).
 - The commit containing this file is the handoff checkpoint; verify it with
   `git log -1 --oneline` after opening the repository.
 - Project name: **Time Sovereignty** (earlier working name: Chloe Chief of
@@ -74,15 +74,17 @@
 - Region: `asia-east1`.
 - Firestore `(default)`: Native mode, Standard edition, delete protection on.
 - Cloud Run service: `time-sovereignty`, revision
-  `time-sovereignty-00001-hl6`, 100% traffic, 1 CPU, 512 MiB, minimum instances
+  `time-sovereignty-00002-hr4`, 100% traffic, 1 CPU, 512 MiB, minimum instances
   left at zero.
 - Public URL: `https://time-sovereignty-defqnamrrq-de.a.run.app` (verified HTTP
-  200 at deployment).
+  200 and complete Phase 2 browser path after deployment).
 - Monthly GCP budget: US$30 with 50%, 90%, and 100% current-spend alerts.
 - Required APIs, including Cloud Tasks and Secret Manager, are enabled.
-- The deployed service has no OpenAI secret and still serves only the walking
-  skeleton. Full evidence:
-  `docs/evidence/gcp-walking-skeleton-2026-07-16.md`.
+- The deployed service has no OpenAI secret. It serves the Phase 2 mock UI but
+  still has no Firestore application write or Cloud Tasks callback. Initial
+  infrastructure evidence: `docs/evidence/gcp-walking-skeleton-2026-07-16.md`;
+  current UI evidence:
+  `docs/evidence/phase-2-local-vertical-slice-2026-07-16.md`.
 
 ### OpenAI API smoke test
 
@@ -152,6 +154,7 @@ development mock-first so the API credit is not consumed by routine UI work.
 - `a762410` — reference and deployment guardrails
 - `91987f2` — GCP walking skeleton deployment
 - `46ac6d4` — successful GPT-5.6 evidence and verified handoff
+- `e1430c3` — Phase 2 local onboarding vertical slice
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation

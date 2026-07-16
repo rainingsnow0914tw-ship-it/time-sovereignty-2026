@@ -60,9 +60,31 @@ trace behavior.
 
 ![Phase 2 mobile completion screen](./phase-2-onboarding-mobile-2026-07-16.png)
 
+## Cloud Run deployment verification
+
+After commit `e1430c3`, the same source was deployed to the existing service:
+
+- GCP project: `time-sovereignty-2026`
+- region: `asia-east1`
+- service: `time-sovereignty`
+- revision: `time-sovereignty-00002-hr4`
+- traffic: 100% to the latest revision
+- service URL: `https://time-sovereignty-defqnamrrq-de.a.run.app`
+- HTTP result: 200 with title `Time Sovereignty — AI Chief of Staff`
+- resource settings retained: 1 CPU, 512 MiB, startup CPU boost, zero minimum
+  instances
+- deployed environment-variable list: empty; the OpenAI key was not deployed
+- Cloud Logging query for revision severity `ERROR` or higher: 0 entries
+
+The complete 390x844 browser path was then repeated against the public Cloud
+Run URL. It passed with local-storage recovery after reload and zero browser
+console errors.
+
+![Phase 2 public Cloud Run completion screen](./phase-2-cloud-run-mobile-2026-07-16.png)
+
 ## Honest boundary
 
-This phase proves the local mock vertical slice only. It does not claim:
+This phase proves the deployed mock UI vertical slice. It does not claim:
 
 - Firestore application persistence;
 - creation or delivery of a real Cloud Task;

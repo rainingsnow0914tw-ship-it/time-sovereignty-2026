@@ -13,9 +13,10 @@ public Cloud Run walking skeleton were also bootstrapped early to expose cloud
 and billing risk.
 
 The deployed landing page is available at
-`https://time-sovereignty-defqnamrrq-de.a.run.app`. This is infrastructure
-evidence, not completion of the Phase 3 exit gate: the real Cloud Tasks
-callback and persisted intervention transition still have to be implemented.
+`https://time-sovereignty-defqnamrrq-de.a.run.app`. It now serves the verified
+Phase 2 mock onboarding and support-agreement slice. This is not completion of
+the Phase 3 exit gate: the real Cloud Tasks callback and persisted Firestore
+intervention transition still have to be implemented.
 
 ## Source of truth
 
@@ -66,7 +67,8 @@ complete 390x844 Chrome user flow with zero console errors. See
 - GCP project: `time-sovereignty-2026`;
 - primary region: `asia-east1`;
 - Firestore: Native mode, `(default)`, delete protection enabled;
-- Cloud Run service: `time-sovereignty`, public walking skeleton;
+- Cloud Run service: `time-sovereignty`, public Phase 2 mock UI (revision
+  `time-sovereignty-00002-hr4`);
 - cost guardrail: project-scoped monthly US$30 budget with 50%, 90%, and 100%
   alerts;
 - OpenAI key: local only; it has not been deployed to Cloud Run.

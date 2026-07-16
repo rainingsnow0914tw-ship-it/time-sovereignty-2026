@@ -115,3 +115,10 @@
   errors.
 - Preserved the final mobile screenshot and full Phase 2 acceptance record in
   `docs/evidence/phase-2-local-vertical-slice-2026-07-16.md`.
+- Deployed commit `e1430c3` to the existing Cloud Run service as revision
+  `time-sovereignty-00002-hr4`, with 100% of traffic routed to it.
+- Preserved the prior 1 CPU / 512 MiB service settings and did not deploy any
+  environment variable or OpenAI secret.
+- Verified public HTTP 200 and repeated the complete 390x844 Phase 2 browser
+  path against Cloud Run; persistence survived reload and browser console
+  errors remained zero.
