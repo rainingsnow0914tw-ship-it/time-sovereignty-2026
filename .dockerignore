@@ -1,0 +1,12 @@
+.git
+.next
+node_modules
+coverage
+docs
+.env
+.env.*
+GPTAPIKEY.txt
+*.pem
+*.key
+*.log
+*.tsbuildinfo

@@ -122,3 +122,26 @@
 - Verified public HTTP 200 and repeated the complete 390x844 Phase 2 browser
   path against Cloud Run; persistence survived reload and browser console
   errors remained zero.
+
+## 2026-07-16 — Phase 3 authenticated trigger foundation
+
+- Revalidated the repository, Phase 2 deployment, handoff, architecture, and
+  Phase 3 exit gate before implementation.
+- Consulted only the Decision 0004 Phase 3 index entries
+  `P0-gcp-bootstrap.md`, `aibao-v3/Dockerfile`,
+  `aibao-v3/src/firestore.js`, and `aibao-v3/src/server.js`.
+- Adopted atomic bootstrap verification, a lazy `preferRest` Firestore client,
+  a minimal multi-stage container, and separated endpoint handling. Rejected
+  the legacy shared-secret callback pattern in favor of the approved OIDC
+  path. No legacy code or secret was copied.
+- Added official Firestore, Cloud Tasks, and Google auth packages plus a safe
+  PostCSS override. A clean dependency rebuild reduced the production npm
+  audit from two moderate findings to zero.
+- Added a dedicated OIDC verifier, Cloud Tasks scheduler, transactional
+  Firestore callback repository, retry lease, completed receipt, and dynamic
+  Next.js callback route.
+- Accepted Decision 0006 for dedicated runtime/task identities and explicit
+  idempotency behavior.
+- Added a Time Sovereignty-specific, atomic Phase 3 GCP bootstrap checklist.
+- Verified 31/31 tests, TypeScript, ESLint, and an optimized standalone Next.js
+  production build before changing live GCP resources.
