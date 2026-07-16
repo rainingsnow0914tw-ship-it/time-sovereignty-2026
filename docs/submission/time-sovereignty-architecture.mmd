@@ -1,0 +1,55 @@
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "primaryColor": "#F4F0FF", "primaryBorderColor": "#6E5BC7", "lineColor": "#474151", "clusterBkg": "#FFFDF3", "clusterBorder": "#B9A86C"}, "flowchart": {"nodeSpacing": 48, "rankSpacing": 62, "curve": "basis"}}}%%
+flowchart TB
+    USER(["User"])
+
+    subgraph BROWSER["Mobile-first browser experience"]
+        direction LR
+        UI["Onboarding · Today · Check-in<br/>Progress · Journey · Developer"]
+        LOCAL["Local journey repository<br/>two state machines · memories · resume point"]
+        MEDIA["Text · photo · voice<br/>TTS with text fallback"]
+        SIM["Clearly labeled<br/>30-day accelerated simulation"]
+        UI <--> LOCAL
+        UI <--> MEDIA
+        UI --> SIM --> LOCAL
+    end
+
+    subgraph GCP["Google Cloud · asia-east1"]
+        direction LR
+        CALLER["Task-caller<br/>service account"]
+        TASKS["Cloud Tasks<br/>OIDC · 1/sec<br/>1 concurrent · 1 attempt"]
+        RUN["Cloud Run<br/>PWA + protected callback<br/>min 1 · max 1"]
+        DB["Firestore<br/>lease · completed receipt<br/>safe Agent traces"]
+        SECRET["Secret Manager<br/>OpenAI key"]
+        RUNTIME["Runtime<br/>service account"]
+
+        CALLER --> TASKS
+        TASKS -->|"Google-signed OIDC"| RUN
+        RUNTIME --> RUN
+        RUN <--> DB
+        RUN --> SECRET
+    end
+
+    subgraph ORCH["Live structured-output orchestration"]
+        direction LR
+        DISPATCH["Need-based<br/>dispatcher"]
+        GOAL["Goal Architect"]
+        RECOVERY["Commitment Recovery"]
+        MEMORY["Memory Curator"]
+        CHIEF["Chief of Staff<br/>one final decision"]
+
+        DISPATCH --> GOAL --> CHIEF
+        DISPATCH --> RECOVERY --> CHIEF
+        DISPATCH --> MEMORY --> CHIEF
+    end
+
+    OPENAI["OpenAI Responses API · GPT-5.6<br/>strict Zod schemas · store false · SDK retries 0"]
+
+    USER --> UI
+    RUN -->|"serves PWA + /api/health"| UI
+    RUN --> DISPATCH
+    LOCAL -. "same deterministic mock contracts" .-> DISPATCH
+    GOAL <--> OPENAI
+    RECOVERY <--> OPENAI
+    MEMORY <--> OPENAI
+    CHIEF <--> OPENAI
+    CHIEF -->|"safe result + usage only"| DB

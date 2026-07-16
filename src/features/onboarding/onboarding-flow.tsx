@@ -195,7 +195,7 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
               <BrandMark compact />
               <div>
                 <p className="text-sm font-semibold text-[#173f35]">Time Sovereignty</p>
-                <p className="text-[11px] text-[#77817c]">AI Chief of Staff</p>
+                <p className="text-[11px] text-[#5f6964]">AI Chief of Staff</p>
               </div>
             </div>
             <span className="rounded-full bg-[#edf4ee] px-3 py-1.5 text-[11px] font-semibold text-[#436457]">
@@ -209,7 +209,7 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
               {children}
             </div>
           </div>
-          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e8ebe7] px-5 py-3 text-[11px] text-[#7c8781] sm:px-8">
+          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e8ebe7] px-5 py-3 text-[11px] text-[#5f6a64] sm:px-8">
             <span>{workspace ? "Local journey · protected cloud orchestration" : "Mock mode · no API usage"}</span>
             <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
           </footer>
@@ -252,7 +252,7 @@ function QuestionScreen({
       }}
       className="mx-auto max-w-xl"
     >
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#648272]">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4f6d5e]">
         0{number} · Your north star
       </p>
       <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-[-0.035em] text-[#17211d] sm:text-[2.55rem]">
@@ -294,7 +294,7 @@ function QuestionScreen({
             Back
           </button>
         ) : (
-          <p className="max-w-[230px] text-xs leading-5 text-[#89928d]">
+          <p className="max-w-[230px] text-xs leading-5 text-[#606a65]">
             Natural, unfinished answers are welcome.
           </p>
         )}
@@ -338,7 +338,7 @@ function PlanReview({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#648272]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4f6d5e]">
             Goal Architect · mock preview
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-[#17211d] sm:text-[2.35rem]">
@@ -573,7 +573,7 @@ function SupportAgreementForm({
 
   return (
     <form onSubmit={onSubmit}>
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#648272]">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4f6d5e]">
         Your boundaries
       </p>
       <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-[#17211d] sm:text-[2.35rem]">
@@ -895,7 +895,7 @@ function CompletedJourney({
           <CheckIcon />
         </span>
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#648272]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4f6d5e]">
             Agreement confirmed
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] text-[#17211d] sm:text-[2.35rem]">
