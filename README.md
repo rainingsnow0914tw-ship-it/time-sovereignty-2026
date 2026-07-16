@@ -2,6 +2,10 @@
 
 OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chief of Staff brain.
 
+- Live app: https://time-sovereignty-29309448808.asia-east1.run.app
+- Source: https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
+- License: [MIT](LICENSE)
+
 ## Current status
 
 Repository foundation was created on 2026-07-16 (Asia/Shanghai). Phases 1
@@ -179,9 +183,8 @@ Primary Codex `/feedback` Session ID:
 - Submission-readiness proof:
   `docs/evidence/phase-8-submission-readiness-2026-07-17.md`
 
-Repository publication and the public YouTube URL remain intentionally outside
-the automatic build: GitHub visibility/licensing and the final narrated upload
-require Chloe's explicit choice and review.
+The repository is prepared for public GitHub publication under the MIT License.
+The final narrated public YouTube URL remains a human recording and review step.
 
 ## Secret handling
 

@@ -15,7 +15,7 @@ Apps for Your Life
 ## Links
 
 - Live app: https://time-sovereignty-29309448808.asia-east1.run.app
-- Repository: `[add final GitHub URL]`
+- Repository: https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
 - Public YouTube demo: `[add final video URL]`
 - Codex `/feedback` Session ID: `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`
 
