@@ -2,11 +2,11 @@
 
 ## Current checkpoint
 
-- Handoff prepared: 2026-07-16 21:00 Asia/Shanghai.
+- Handoff updated: 2026-07-16 21:50 Asia/Shanghai.
 - Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
 - Branch: `main`
-- Last verified implementation commit before this handoff: `91987f2`
-  (`infra: deploy GCP walking skeleton`).
+- Last committed checkpoint before the current Phase 2 milestone: `46ac6d4`
+  (`docs: confirm GPT-5.6 access and prepare handoff`).
 - The commit containing this file is the handoff checkpoint; verify it with
   `git log -1 --oneline` after opening the repository.
 - Project name: **Time Sovereignty** (earlier working name: Chloe Chief of
@@ -49,6 +49,23 @@
   production build also passing. Evidence:
   `docs/evidence/phase-1-verification-2026-07-16.md`.
 
+### Phase 2 local vertical slice
+
+- Mobile-first onboarding asks goal, target window, and motivation one at a
+  time.
+- A deterministic Goal Architect mock returns the existing strict plan schema
+  and a safe `GOAL_ARCHITECT` trace.
+- The plan can be confirmed, directly adjusted, or annotated with explicit
+  concern feedback.
+- The support agreement captures rhythm, quiet hours, intervention intensity,
+  tone, channels, text/photo/voice progress formats, pause conditions,
+  stronger-follow-up consent, and review frequency.
+- A validated local repository persists goal, first action, plan, support
+  agreement, and trace, and restores the completed state after reload.
+- Final verification: 21/21 tests, typecheck, lint, production build, and a
+  complete 390x844 Chrome path with zero console errors. Evidence:
+  `docs/evidence/phase-2-local-vertical-slice-2026-07-16.md`.
+
 ### Live GCP walking skeleton
 
 - Account used: `soulfaihk@gmail.com`.
@@ -87,7 +104,6 @@
 
 Do not claim any of the following until new evidence exists:
 
-- Phase 2 onboarding, goal confirmation, or support-agreement UI;
 - a real four-agent OpenAI orchestration path;
 - Firestore application persistence;
 - creation and delivery of a real Cloud Task;
@@ -99,12 +115,8 @@ Do not claim any of the following until new evidence exists:
 
 ## Exact next action
 
-Implement **Phase 2 in mock mode**: onboarding, one confirmed goal, and the
-support agreement. Preserve the existing schemas and state machines instead of
-redesigning them. Add tests and one milestone commit.
-
-After Phase 2, complete the already-deployed **Phase 3 real trigger path** on
-the existing GCP project:
+Complete the already-deployed **Phase 3 real trigger path** on the existing
+GCP project:
 
 1. persist the required domain state in Firestore;
 2. create a Cloud Tasks queue and one real task;
@@ -139,10 +151,13 @@ development mock-first so the API credit is not consumed by routine UI work.
 - `33d153a` — deterministic domain foundation
 - `a762410` — reference and deployment guardrails
 - `91987f2` — GCP walking skeleton deployment
+- `46ac6d4` — successful GPT-5.6 evidence and verified handoff
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation
 - `docs/evidence/gcp-walking-skeleton-2026-07-16.md` — public infrastructure
+- `docs/evidence/phase-2-local-vertical-slice-2026-07-16.md` — full local
+  onboarding and support-agreement exit gate
 - `docs/CODEX_BUILD_LOG.md` — chronological work log
 
 If the repository state conflicts with this manual, stop and reconcile the

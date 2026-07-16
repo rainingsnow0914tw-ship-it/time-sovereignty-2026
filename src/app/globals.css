@@ -1,22 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3f8f4;
-  --foreground: #18181b;
+  --ink: #17211d;
+  --muted: #65716b;
+  --paper: #f7f5ef;
+  --sage: #dce9df;
+  --forest: #173f35;
+  --lime: #d8f48a;
+  --line: rgb(23 63 53 / 12%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: "Aptos", "Segoe UI", sans-serif;
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --font-sans: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
   --font-mono: "Cascadia Code", "SFMono-Regular", monospace;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--paper);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% 4%, rgb(216 244 138 / 24%), transparent 27rem),
+    radial-gradient(circle at 96% 86%, rgb(130 175 154 / 20%), transparent 32rem),
+    var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
-  background-image:
-    radial-gradient(circle at top left, rgb(167 243 208 / 35%), transparent 32rem),
-    radial-gradient(circle at bottom right, rgb(253 224 71 / 18%), transparent 28rem);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9aa39f;
+}
+
+::selection {
+  background: var(--lime);
+  color: var(--forest);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stage-enter {
+  animation: rise-in 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-enter {
+    animation: none;
+  }
 }

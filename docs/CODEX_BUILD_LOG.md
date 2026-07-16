@@ -92,3 +92,26 @@
   `docs/evidence/` instead of rewriting history.
 - Replaced the handoff placeholder with a verified continuation manual for the
   next Codex task.
+
+## 2026-07-16 — Phase 2 local onboarding vertical slice
+
+- Built a mobile-first, single-question onboarding path for goal, target
+  window, and motivation.
+- Added a deterministic Goal Architect mock plan that passes the existing
+  strict agent-output schema and retains a safe mock agent trace.
+- Added plan confirmation, direct editing, and explicit "what feels wrong"
+  feedback capture before consent.
+- Added a support agreement covering rhythm, quiet hours, intensity, tone,
+  channels, text/photo/voice progress formats, pause conditions, stronger
+  follow-up consent, and review frequency.
+- Added a validated local repository that persists the confirmed goal, first
+  action, support agreement, plan, and trace, then restores them after reload.
+- Kept the slice mock-first: no OpenAI API call, Firestore write, Cloud Task,
+  or notification was performed.
+- Verified 21/21 automated tests, TypeScript, ESLint, and the optimized Next.js
+  production build.
+- Executed the complete user path in Chrome at a 390x844 mobile viewport;
+  local persistence survived reload and the browser reported zero console
+  errors.
+- Preserved the final mobile screenshot and full Phase 2 acceptance record in
+  `docs/evidence/phase-2-local-vertical-slice-2026-07-16.md`.

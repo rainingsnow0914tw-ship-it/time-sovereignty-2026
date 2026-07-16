@@ -4,10 +4,13 @@ OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chi
 
 ## Current status
 
-Repository foundation created on 2026-07-16 (Asia/Shanghai). Phase 1 is
-complete. At the driver's direction, the GCP project, Firestore database, and
-public Cloud Run walking skeleton were bootstrapped immediately after Phase 1
-to expose cloud and billing risk early.
+Repository foundation created on 2026-07-16 (Asia/Shanghai). Phases 1 and 2 are
+complete. The local product now supports the three-question onboarding flow,
+a schema-validated mock Goal Architect plan, plan confirmation, a detailed
+support agreement, and validated browser-local persistence with reload
+recovery. At the driver's direction, the GCP project, Firestore database, and
+public Cloud Run walking skeleton were also bootstrapped early to expose cloud
+and billing risk.
 
 The deployed landing page is available at
 `https://time-sovereignty-defqnamrrq-de.a.run.app`. This is infrastructure
@@ -41,6 +44,22 @@ The deterministic foundation contains:
 - a deterministic mock AI provider that validates the same structured outputs
   expected from the live provider;
 - agent trace contracts that omit raw prompts and secrets.
+
+## Phase 2 local vertical slice
+
+- mobile-first onboarding asks the three PRD questions one at a time;
+- the deterministic Goal Architect mock returns the same strict plan contract
+  intended for the live provider;
+- the user can confirm, directly adjust, or attach concern feedback to the
+  plan;
+- the support agreement captures rhythm, quiet hours, intervention consent,
+  channels, text/photo/voice progress formats, and review conditions;
+- confirmed domain data and the safe mock trace persist in local storage and
+  restore after reload.
+
+Phase 2 verification: 21/21 tests, typecheck, lint, production build, and a
+complete 390x844 Chrome user flow with zero console errors. See
+`docs/evidence/phase-2-local-vertical-slice-2026-07-16.md`.
 
 ## Live infrastructure
 
