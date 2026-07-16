@@ -18,7 +18,10 @@ import {
   ChiefOfStaffOrchestrator,
   selectAgentsByNeed,
 } from "@/orchestration/chief-of-staff";
-import { OpenAiResponsesProvider } from "@/providers/ai/openai-provider";
+import {
+  createRuntimeAiProvider,
+  readAiProviderMode,
+} from "@/providers/ai/runtime-provider";
 
 export const runtime = "nodejs";
 
@@ -93,8 +96,9 @@ export async function POST(
       requestId,
       leaseToken: claim.receipt.leaseToken,
     };
+    const providerMode = readAiProviderMode();
     const orchestrator = new ChiefOfStaffOrchestrator(
-      new OpenAiResponsesProvider(),
+      createRuntimeAiProvider(body, { mode: providerMode }),
       createFirestoreAgentTraceRepository(config),
     );
     const result = await orchestrator.run(body);
@@ -110,6 +114,7 @@ export async function POST(
       attemptCount: completed.attemptCount,
       dispatchedAgents: result.decision.dispatchedAgents,
       traceCount: result.traces.length,
+      providerMode,
       models: [...new Set(result.traces.map((trace) => trace.model))],
     });
 
@@ -120,6 +125,7 @@ export async function POST(
       attemptCount: completed.attemptCount,
       dispatchedAgents: result.decision.dispatchedAgents,
       traceCount: result.traces.length,
+      providerMode,
     });
   } catch (error) {
     if (runRepository && activeLease) {
