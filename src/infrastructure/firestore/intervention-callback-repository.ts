@@ -167,7 +167,6 @@ function getFirestore(config: CloudConfig): Firestore {
     sharedFirestore = new Firestore({
       projectId: config.projectId,
       databaseId: config.firestoreDatabaseId,
-      preferRest: true,
     });
   }
   return sharedFirestore;
