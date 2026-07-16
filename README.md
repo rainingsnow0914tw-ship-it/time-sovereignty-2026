@@ -4,10 +4,15 @@ OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chi
 
 ## Current status
 
-Repository foundation created on 2026-07-16 (Asia/Shanghai). The architecture
-review is approved and Phase 1 implementation is in progress. The revised plan
-moves the Cloud Run, Firestore, and real Cloud Tasks walking skeleton to Phase
-3 so deployment risk is exposed early.
+Repository foundation created on 2026-07-16 (Asia/Shanghai). Phase 1 is
+complete. At the driver's direction, the GCP project, Firestore database, and
+public Cloud Run walking skeleton were bootstrapped immediately after Phase 1
+to expose cloud and billing risk early.
+
+The deployed landing page is available at
+`https://time-sovereignty-defqnamrrq-de.a.run.app`. This is infrastructure
+evidence, not completion of the Phase 3 exit gate: the real Cloud Tasks
+callback and persisted intervention transition still have to be implemented.
 
 ## Source of truth
 
@@ -36,6 +41,16 @@ The deterministic foundation contains:
 - a deterministic mock AI provider that validates the same structured outputs
   expected from the live provider;
 - agent trace contracts that omit raw prompts and secrets.
+
+## Live infrastructure
+
+- GCP project: `time-sovereignty-2026`;
+- primary region: `asia-east1`;
+- Firestore: Native mode, `(default)`, delete protection enabled;
+- Cloud Run service: `time-sovereignty`, public walking skeleton;
+- cost guardrail: project-scoped monthly US$30 budget with 50%, 90%, and 100%
+  alerts;
+- OpenAI key: local only; it has not been deployed to Cloud Run.
 
 ## Local verification
 

@@ -1,0 +1,22 @@
+.gcloudignore
+.git/
+.gitignore
+
+# Local dependencies and build output
+node_modules/
+.next/
+coverage/
+*.log
+*.tsbuildinfo
+
+# Secrets and local-only environment
+.env
+.env.*
+GPTAPIKEY.txt
+*.pem
+*.key
+
+# Local intake and non-runtime documentation
+docs/
+Time_Sovereignty_Codex_Package_v0.6.zip
+ChatGPT Image 2026年7月15日 上午08_22_59.png

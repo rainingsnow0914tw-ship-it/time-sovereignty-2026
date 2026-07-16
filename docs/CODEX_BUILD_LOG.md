@@ -53,3 +53,26 @@
 - Preserved phase-gated bookmarks for Phase 3 infrastructure work and Phase 5
   voice-provider work. Each future consultation must be problem-specific and
   recorded in this log.
+
+## 2026-07-16 — GCP project and public walking skeleton
+
+- Installed Google Cloud SDK 576.0.0 on the 4070 workstation and authenticated
+  `soulfaihk@gmail.com`.
+- Created dedicated project `time-sovereignty-2026` and verified that billing
+  is enabled.
+- Enabled Cloud Run, Firestore, Cloud Tasks, Cloud Storage, Secret Manager,
+  Cloud Build, Cloud Logging, Artifact Registry, and Billing Budgets APIs.
+- Created the `(default)` Firestore Native database in `asia-east1` with delete
+  protection enabled.
+- Added `.gcloudignore` and verified the 29-file upload set excluded
+  `.env.local`, `GPTAPIKEY.txt`, `node_modules`, and `.next`.
+- Deployed Cloud Run service `time-sovereignty`, revision
+  `time-sovereignty-00001-hl6`, with 100% traffic.
+- Verified the public URL returned HTTP 200, title `Time Sovereignty`, and the
+  expected project name.
+- Created a project-scoped monthly US$30 budget with alerts at 50%, 90%, and
+  100% current spend.
+- Did not deploy `OPENAI_API_KEY`; the current service does not use the live
+  provider and the API project remains blocked by `insufficient_quota`.
+- Cloud Tasks API availability is proven, but the real task, authenticated
+  callback, and Firestore transition are not yet implemented or claimed.
