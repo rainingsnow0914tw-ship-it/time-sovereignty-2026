@@ -4,7 +4,10 @@ OpenAI Build Week 2026 project built in Codex, with GPT-5.6 as the product's Chi
 
 ## Current status
 
-Repository foundation created on 2026-07-16 (Asia/Shanghai). Product implementation has not started. The next gate is the required architecture and implementation review described in the Codex kickoff prompt.
+Repository foundation created on 2026-07-16 (Asia/Shanghai). The architecture
+review is approved and Phase 1 implementation is in progress. The revised plan
+moves the Cloud Run, Firestore, and real Cloud Tasks walking skeleton to Phase
+3 so deployment risk is exposed early.
 
 ## Source of truth
 
@@ -14,7 +17,13 @@ Read these files in order:
 2. `docs/source/02_Time_Sovereignty_Architecture_v2.md`
 3. `docs/source/03_Codex_Kickoff_Prompt.md`
 
-The imported source documents are preserved unchanged. New decisions belong in `docs/decisions/`.
+The imported source documents are preserved unchanged. New decisions belong in
+`docs/decisions/`.
+
+The active implementation order is recorded in
+`docs/decisions/0002-approved-architecture-and-phase-order.md`. Time-pressure
+cuts are governed by
+`docs/decisions/0003-time-pressure-feature-cut-order.md`.
 
 ## Evidence chain
 
@@ -28,4 +37,7 @@ The imported source documents are preserved unchanged. New decisions belong in `
 
 The real OpenAI API key belongs only in `.env.local` and must never be printed or committed. `.env.example` contains names and safe defaults only.
 
-No API request has been made during repository setup.
+A minimal real `gpt-5.6` Responses API request was attempted on 2026-07-16. It
+was blocked before inference by API `insufficient_quota`; the result is retained
+in `docs/evidence/` and must not be represented as a successful model-access or
+structured-output check.
