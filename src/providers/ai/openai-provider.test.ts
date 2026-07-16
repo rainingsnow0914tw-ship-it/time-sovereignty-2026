@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { GoalArchitectOutputSchema } from "../../domain/agents/schemas";
 import {
+  DEFAULT_OPENAI_MAX_RETRIES,
   MissingOpenAiStructuredOutputError,
   OpenAiResponsesProvider,
   instructionsFor,
@@ -32,6 +33,10 @@ const request = {
 };
 
 describe("OpenAiResponsesProvider", () => {
+  it("disables SDK automatic retries by default for cost-bounded live execution", () => {
+    expect(DEFAULT_OPENAI_MAX_RETRIES).toBe(0);
+  });
+
   it("uses Responses structured output and returns the shared provider contract", async () => {
     const bodies: unknown[] = [];
     const parseResponse: OpenAiResponseParser = vi.fn(async (body) => {

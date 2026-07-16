@@ -81,22 +81,33 @@ export function JourneyWorkspace({
       window.localStorage,
       record.goal.id,
     );
-    const saved = repository.load();
-    if (saved) setState(saved);
-    setHydrated(true);
+    const hydrationTimer = window.setTimeout(() => {
+      const saved = repository.load();
+      if (saved) setState(saved);
+      setHydrated(true);
+    }, 0);
+
+    return () => window.clearTimeout(hydrationTimer);
   }, [record.goal.id]);
 
   useEffect(() => {
     if (!hydrated) return;
+    let noticeTimer: number | null = null;
     try {
       createLocalJourneyRepository(window.localStorage, record.goal.id).save(
         state,
       );
     } catch {
-      setNotice(
-        "The browser could not save this media locally. Keep future recordings shorter.",
-      );
+      noticeTimer = window.setTimeout(() => {
+        setNotice(
+          "The browser could not save this media locally. Keep future recordings shorter.",
+        );
+      }, 0);
     }
+
+    return () => {
+      if (noticeTimer !== null) window.clearTimeout(noticeTimer);
+    };
   }, [hydrated, record.goal.id, state]);
 
   useEffect(
@@ -504,7 +515,7 @@ export function JourneyWorkspace({
   const rateIntervention = (rating: number) => {
     setState((current) => {
       const timestamp = new Date().toISOString();
-      let next = JourneyStateSchema.parse({
+      const next = JourneyStateSchema.parse({
         ...current,
         effectiveness: [
           ...current.effectiveness,

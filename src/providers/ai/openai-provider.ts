@@ -30,6 +30,8 @@ export interface OpenAiResponsesProviderOptions {
   parseResponse?: OpenAiResponseParser;
 }
 
+export const DEFAULT_OPENAI_MAX_RETRIES = 0;
+
 export class MissingOpenAiStructuredOutputError extends Error {
   constructor(agent: ImplementedAgentRole) {
     super(`OpenAI returned no parsed structured output for ${agent}.`);
@@ -55,7 +57,7 @@ export class OpenAiResponsesProvider implements AiProvider {
 
     const client = new OpenAI({
       apiKey: options.apiKey,
-      maxRetries: options.maxRetries,
+      maxRetries: options.maxRetries ?? DEFAULT_OPENAI_MAX_RETRIES,
     });
     this.parseResponse = async (body) => {
       const response = await client.responses.parse(body);
