@@ -5,6 +5,7 @@ import { sha256 } from "./session-auth";
 export const REALTIME_MODEL = "gpt-realtime-2.1";
 export const REALTIME_TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe";
 export const REALTIME_VOICE = "marin";
+export const REALTIME_MAX_OUTPUT_TOKENS = 1_024;
 export const MAX_REALTIME_SDP_BYTES = 200_000;
 
 export const RealtimeLocaleSchema = z.enum(["zh-TW", "en"]);
@@ -44,10 +45,10 @@ export function buildRealtimeSessionConfig(locale: RealtimeLocale) {
     type: "realtime" as const,
     model: REALTIME_MODEL,
     output_modalities: ["audio"] as const,
-    max_output_tokens: 240,
+    max_output_tokens: REALTIME_MAX_OUTPUT_TOKENS,
     instructions: traditionalChinese
-      ? "你是 Time Sovereignty 的高擬真語音層，只負責忠實朗讀應用程式提供的文字。不要自行制定、修改或確認承諾，不要使用工具，也不要補充建議。使用自然、溫暖、簡潔的臺灣繁體中文。"
-      : "You are the natural voice layer for Time Sovereignty. Only speak the exact application-provided meaning. Never create, change, or confirm commitments, use tools, or add advice. Speak naturally, warmly, and concisely in English.",
+      ? "你是 Time Sovereignty 的高擬真語音層，只負責從第一個字到最後一個字，逐字完整朗讀應用程式提供的文字。不得摘要、刪節、改寫或提前結束；只有讀完最後一個字才能停止。不要自行制定、修改或確認承諾，不要使用工具，也不要補充建議。使用自然、溫暖的臺灣繁體中文。"
+      : "You are the natural voice layer for Time Sovereignty. Read every word supplied by the application from the first word through the final word. Never summarize, omit, paraphrase, or stop early; stop only after the final word. Never create, change, or confirm commitments, use tools, or add advice. Speak naturally and warmly in English.",
     audio: {
       input: {
         noise_reduction: { type: "near_field" as const },
@@ -91,13 +92,13 @@ export async function createRealtimeCall(options: {
 
   const sdp = RealtimeSdpSchema.parse(options.sdp);
   const form = new FormData();
-  form.set("sdp", new Blob([sdp], { type: "application/sdp" }), "offer.sdp");
+  // OpenAI's unified WebRTC endpoint expects both multipart values as regular
+  // form fields. Sending Blob parts adds filenames and makes the upstream
+  // parser treat them as file uploads, which it rejects with HTTP 400.
+  form.set("sdp", sdp);
   form.set(
     "session",
-    new Blob([JSON.stringify(buildRealtimeSessionConfig(options.locale))], {
-      type: "application/json",
-    }),
-    "session.json",
+    JSON.stringify(buildRealtimeSessionConfig(options.locale)),
   );
 
   const response = await (options.fetchImpl ?? fetch)(

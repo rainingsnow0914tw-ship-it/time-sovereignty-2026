@@ -4,6 +4,7 @@ import {
   buildRealtimeSessionConfig,
   createRealtimeCall,
   createRealtimeSafetyIdentifier,
+  REALTIME_MAX_OUTPUT_TOKENS,
   REALTIME_MODEL,
   REALTIME_TRANSCRIPTION_MODEL,
   RealtimeSdpSchema,
@@ -18,6 +19,9 @@ describe("Realtime session boundary", () => {
     const config = buildRealtimeSessionConfig("zh-TW");
 
     expect(config.model).toBe(REALTIME_MODEL);
+    expect(config.max_output_tokens).toBe(REALTIME_MAX_OUTPUT_TOKENS);
+    expect(config.instructions).toContain("逐字完整朗讀");
+    expect(config.instructions).toContain("讀完最後一個字才能停止");
     expect(config.audio.input.transcription).toEqual({
       model: REALTIME_TRANSCRIPTION_MODEL,
       language: "zh",
@@ -55,8 +59,9 @@ describe("Realtime session boundary", () => {
         Authorization: "Bearer test-server-key",
       });
       const form = init?.body as FormData;
-      expect(await (form.get("sdp") as Blob).text()).toBe(offer);
-      const session = JSON.parse(await (form.get("session") as Blob).text()) as Record<
+      expect(form.get("sdp")).toBe(offer);
+      expect(typeof form.get("session")).toBe("string");
+      const session = JSON.parse(String(form.get("session"))) as Record<
         string,
         unknown
       >;

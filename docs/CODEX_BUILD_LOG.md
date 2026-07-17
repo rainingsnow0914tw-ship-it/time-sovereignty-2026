@@ -433,3 +433,40 @@
   version 5. Stable revision `time-sovereignty-00012-7gn` still has 100%.
 - Full evidence:
   `docs/evidence/live-mobile-vertical-path-2026-07-17.md` and matching JSON.
+
+## 2026-07-18 — Android Realtime acceptance and production promotion
+
+- Completed the full protected phone path on a physical Android PWA: a real
+  Cloud Task became a pending check-in, Chloe replied through the live mobile
+  surface, Commitment Recovery and Chief of Staff returned real GPT-5.6
+  structured decisions, and the confirmed decision, memory, safe traces, and
+  next follow-up persisted in Firestore.
+- The accepted decision used exactly two Agent calls: Commitment Recovery 687
+  tokens and Chief of Staff 1,037 tokens, 1,724 total. No duplicate iteration
+  or SDK retry was made.
+- Fixed the Realtime WebRTC multipart boundary after the OpenAI unified endpoint
+  rejected SDP and session JSON sent as file parts. Both values now use regular
+  multipart string fields and are contract-tested.
+- Physical playback exposed a deterministic 240-token cutoff. Sanitized
+  data-channel evidence showed the phone sent 240, the response ended
+  `incomplete` with `reason=max_output_tokens`, and all 240 output tokens were
+  consumed. Session and response limits now use 1,024.
+- A second diagnostic separated a stale installed-PWA document from the new
+  server session: the server advertised 1,024 while the cached phone client
+  still sent 240. An ignore-cache reload preserved pairing and journey data
+  while loading the current bundle.
+- Strengthened both session and per-response voice contracts to read every word
+  through the final word without summary, omission, paraphrase, or early stop.
+- Chloe's final physical playback completed with natural question intonation.
+  The Realtime response reported `completed`, no error, and 480 output tokens
+  (356 audio, 124 text). This voice-only check did not call GPT-5.6 Agents.
+- Reverified 79 tests with five live-only skips, ESLint, TypeScript, and the
+  production Next.js build.
+- Deployed `time-sovereignty-00024-dih`, first as the zero-normal-traffic
+  `live-mobile` preview. After Chloe's explicit approval, promoted it to 100%
+  production traffic. The production health endpoint returned HTTP 200 and the
+  same revision.
+- Official Devpost timing was rechecked on 2026-07-18: July 21 at 5:00 PM PDT,
+  equivalent to July 21 at 8:00 PM EDT and July 22 at 8:00 AM Taiwan time.
+- Remaining delivery: public narrated video under three minutes, final Devpost
+  review/submit, then recording-session revocation and test cleanup.

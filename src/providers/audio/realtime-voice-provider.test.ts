@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildRealtimeSpeakEvent,
   parseRealtimeVoiceEvent,
+  REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS,
 } from "./realtime-voice-provider";
 
 describe("Realtime voice provider", () => {
@@ -41,6 +42,11 @@ describe("Realtime voice provider", () => {
     expect(event.type).toBe("response.create");
     expect(event.response.conversation).toBe("none");
     expect(event.response.output_modalities).toEqual(["audio"]);
+    expect(event.response.max_output_tokens).toBe(
+      REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS,
+    );
+    expect(event.response.instructions).toContain("逐字完整朗讀");
+    expect(event.response.instructions).toContain("讀完最後一個字才能停止");
     expect(event.response.input[0]?.content[0]).toEqual({
       type: "input_text",
       text: "請告訴我現在的情況。",

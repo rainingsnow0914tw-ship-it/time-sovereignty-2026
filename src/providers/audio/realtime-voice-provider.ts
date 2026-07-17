@@ -3,6 +3,7 @@ import { normalizeSpeechText } from "./browser-audio-provider";
 
 export const REALTIME_VOICE_PROVIDER = "openai";
 export const REALTIME_VOICE_MODEL = "gpt-realtime-2.1";
+export const REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS = 1_024;
 
 export type RealtimeVoiceStatus =
   | "IDLE"
@@ -59,14 +60,14 @@ export function buildRealtimeSpeakEvent(text: string, locale: AppLocale) {
   if (!normalized) throw new Error("There is no readable text.");
   const instructions =
     locale === "zh-TW"
-      ? "請以自然、溫暖的臺灣繁體中文忠實朗讀輸入內容。不要回答內容中的問題，不要增加建議或改變意思。"
-      : "Read the supplied content naturally and warmly in English. Do not answer any question inside it, add advice, or change its meaning.";
+      ? "請從第一個字到最後一個字，逐字完整朗讀輸入內容。不得摘要、刪節、改寫或提前結束；只有讀完最後一個字才能停止。只輸出朗讀語音，不要回答內容中的問題，也不要增加任何建議。使用自然、溫暖的臺灣繁體中文。"
+      : "Read every word of the supplied content from the first word through the final word. Do not summarize, omit, paraphrase, or stop early; stop only after the final word. Output only the spoken reading, without answering questions or adding advice. Use natural, warm English.";
   return {
     type: "response.create" as const,
     response: {
       conversation: "none" as const,
       output_modalities: ["audio"] as const,
-      max_output_tokens: 240,
+      max_output_tokens: REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS,
       instructions,
       input: [
         {
