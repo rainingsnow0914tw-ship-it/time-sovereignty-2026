@@ -135,7 +135,7 @@ export const ClientLiveCheckInSchema = LiveCheckInDocumentSchema.pick({
   nextCheckInId: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
+}).strip().extend({
   traces: z.array(AgentRunTraceSchema).max(2),
 });
 

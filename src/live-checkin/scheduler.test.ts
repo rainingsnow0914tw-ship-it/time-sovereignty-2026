@@ -7,6 +7,7 @@ import {
   createLiveCheckInScheduler,
   type LiveCloudTasksClientLike,
 } from "./scheduler";
+import { taskIdentityMatches } from "./firestore-repository";
 
 const config: CloudConfig = {
   projectId: "time-sovereignty-2026",
@@ -55,6 +56,14 @@ const checkIn = LiveCheckInDocumentSchema.parse({
 });
 
 describe("live check-in scheduler", () => {
+  it("accepts the Cloud Tasks header as either a full name or task id", () => {
+    const full =
+      "projects/p/locations/asia-east1/queues/q/tasks/live-live-proof";
+    expect(taskIdentityMatches(full, full)).toBe(true);
+    expect(taskIdentityMatches(full, "live-live-proof")).toBe(true);
+    expect(taskIdentityMatches(full, "another-task")).toBe(false);
+  });
+
   it("targets the preview callback with the existing OIDC identity", () => {
     const queue = "projects/p/locations/asia-east1/queues/q";
     const request = buildLiveCheckInTaskRequest(checkIn, config, queue);

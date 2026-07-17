@@ -320,7 +320,11 @@ export function createLiveCheckInRepository(
         if (current.status !== "SCHEDULED") {
           return { checkIn: current, duplicate: true };
         }
-        if (current.taskName && taskName && current.taskName !== taskName) {
+        if (
+          current.taskName &&
+          taskName &&
+          !taskIdentityMatches(current.taskName, taskName)
+        ) {
           throw new LiveCheckInStateError("Cloud Task identity does not match.");
         }
         const timestamp = now().toISOString();
@@ -530,6 +534,13 @@ export function createLiveCheckInRepository(
       });
     },
   };
+}
+
+export function taskIdentityMatches(stored: string, delivered: string): boolean {
+  if (stored === delivered) return true;
+  const storedId = stored.split("/").at(-1);
+  const deliveredId = delivered.split("/").at(-1);
+  return Boolean(storedId && deliveredId && storedId === deliveredId);
 }
 
 async function updateOwnedReply(
