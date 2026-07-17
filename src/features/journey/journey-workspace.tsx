@@ -9,6 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
+import {
+  LanguageToggle,
+  Localized,
+  speechLanguageForLocale,
+  useLocale,
+} from "../../i18n/locale";
 
 import type { LocalOnboardingRecord } from "../../repositories/local-onboarding-repository";
 import { createLocalJourneyRepository } from "../../repositories/local-journey-repository";
@@ -45,9 +51,9 @@ const cardClass =
 const darkCardClass =
   "rounded-[1.6rem] border border-[#173f35] bg-[#173f35] p-5 text-white shadow-[0_14px_45px_rgba(23,63,53,0.12)] sm:p-6";
 const primaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-full bg-[#173f35] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0e3329] focus:outline-none focus:ring-4 focus:ring-[#bcd5c6] disabled:cursor-not-allowed disabled:opacity-45";
+  "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full bg-[#173f35] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0e3329] focus:outline-none focus:ring-4 focus:ring-[#bcd5c6] disabled:cursor-not-allowed disabled:opacity-45";
 const secondaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-full border border-[#cfd9d2] bg-white px-5 py-2.5 text-sm font-semibold text-[#28443a] transition hover:border-[#8aa99a] hover:bg-[#f6faf6] focus:outline-none focus:ring-4 focus:ring-[#dce9df] disabled:cursor-not-allowed disabled:opacity-45";
+  "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-[#cfd9d2] bg-white px-5 py-2.5 text-sm font-semibold text-[#28443a] transition hover:border-[#8aa99a] hover:bg-[#f6faf6] focus:outline-none focus:ring-4 focus:ring-[#dce9df] disabled:cursor-not-allowed disabled:opacity-45";
 const inputClass =
   "w-full rounded-2xl border border-[#d9e0da] bg-[#fbfcf9] px-4 py-3 text-sm text-[#17211d] outline-none focus:border-[#5a8271] focus:ring-4 focus:ring-[#dce9df]/70";
 
@@ -66,6 +72,7 @@ export function JourneyWorkspace({
   record: LocalOnboardingRecord;
   onReset: () => void;
 }) {
+  const { locale, t } = useLocale();
   const [state, setState] = useState<JourneyState>(() =>
     createInitialJourneyState(record),
   );
@@ -164,7 +171,10 @@ export function JourneyWorkspace({
     record.supportAgreement.quietHours.start,
     record.supportAgreement.quietHours.end,
   );
-  const checkInMessage = `You planned to continue “${state.currentAction}”. Are you still at the same checkpoint?`;
+  const speechLanguage = speechLanguageForLocale(locale);
+  const checkInMessage = t(
+    `You planned to continue “${state.currentAction}”. Are you still at the same checkpoint?`,
+  );
   const safeDebugState = useMemo(
     () => ({
       simulatedDay: state.simulatedDay,
@@ -216,7 +226,9 @@ export function JourneyWorkspace({
   };
 
   const playCheckIn = async () => {
-    const result = await speakBrowserText(checkInMessage);
+    const result = await speakBrowserText(checkInMessage, {
+      language: speechLanguage,
+    });
     setNotice(result.message);
   };
 
@@ -226,7 +238,7 @@ export function JourneyWorkspace({
       return;
     }
     const result = await showBrowserNotification(
-      "Time Sovereignty check-in",
+      t("Time Sovereignty check-in"),
       checkInMessage,
     );
     setNotice(result.message);
@@ -235,9 +247,7 @@ export function JourneyWorkspace({
   const listenForReply = async () => {
     setListening(true);
     setNotice("Listening for one reply…");
-    const transcript = await transcribeBrowserSpeech(
-      /\p{Script=Han}/u.test(record.goal.title) ? "zh-TW" : "en-US",
-    );
+    const transcript = await transcribeBrowserSpeech(speechLanguage);
     setListening(false);
     if (!transcript) {
       setNotice(
@@ -605,6 +615,7 @@ export function JourneyWorkspace({
   };
 
   return (
+    <Localized>
     <div className="min-h-[760px] overflow-hidden rounded-[1.7rem] bg-[#f5f7f2]">
       <header className="border-b border-[#dfe5df] bg-[#173f35] px-5 py-5 text-white sm:px-7">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -618,7 +629,8 @@ export function JourneyWorkspace({
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-white/10 px-3 py-2">Simulated Day {state.simulatedDay}</span>
+            <LanguageToggle dark />
+            <span className="rounded-full bg-white/10 px-3 py-2">{`Simulated Day ${state.simulatedDay}`}</span>
             <span className="rounded-full bg-[#d8f48a] px-3 py-2 font-bold text-[#173f35]">
               {state.simulationComplete ? "30-day proof ready" : "Accelerated time"}
             </span>
@@ -825,14 +837,14 @@ export function JourneyWorkspace({
                   <Eyebrow>Journey timeline</Eyebrow>
                   <h2 className="mt-2 text-2xl font-semibold text-[#173f35]">A plan that remembers real life.</h2>
                 </div>
-                <span className="rounded-full bg-[#eef4ec] px-3 py-2 text-xs font-bold text-[#446457]">{state.events.length} events</span>
+                <span className="rounded-full bg-[#eef4ec] px-3 py-2 text-xs font-bold text-[#446457]">{`${state.events.length} events`}</span>
               </div>
               <div className="mt-6 space-y-1">
                 {[...state.events].reverse().map((event) => (
                   <article key={event.id} className="relative border-l border-[#b7c9bd] py-3 pl-6">
                     <span className="absolute -left-1.5 top-5 size-3 rounded-full border-2 border-white bg-[#5d8974]" />
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#52675c]">Day {event.simulatedDay}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#52675c]">{`Day ${event.simulatedDay}`}</span>
                       <span className="rounded-full bg-[#f0f4ef] px-2 py-1 text-[10px] text-[#66756e]">{event.kind.replaceAll("_", " ")}</span>
                     </div>
                     <h3 className="mt-1 text-sm font-bold text-[#263d33]">{event.title}</h3>
@@ -949,6 +961,7 @@ export function JourneyWorkspace({
         <button type="button" onClick={resetAll} className="font-bold text-[#49675a] hover:text-[#173f35]">Reset this journey</button>
       </footer>
     </div>
+    </Localized>
   );
 }
 
@@ -971,7 +984,9 @@ function TodayView({
   onFullSimulation: () => void;
   onRate: (rating: number) => void;
 }) {
+  const { formatDateTime } = useLocale();
   return (
+    <Localized>
     <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-5">
         <div className={darkCardClass}>
@@ -1018,13 +1033,13 @@ function TodayView({
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#e8ede8]">
             <div className="h-full rounded-full bg-[#6c967f] transition-all" style={{ width: `${Math.max(4, (state.simulatedDay / 30) * 100)}%` }} />
           </div>
-          <p className="mt-2 text-right text-xs font-bold text-[#5d7469]">Day {state.simulatedDay} / 30</p>
+          <p className="mt-2 text-right text-xs font-bold text-[#5d7469]">{`Day ${state.simulatedDay} / 30`}</p>
         </div>
         <div className={cardClass}>
           <Eyebrow>Protection status</Eyebrow>
           <div className="mt-4 space-y-3 text-sm">
             <StatusRow label="Quiet hours" value={quietHours ? "Protected now" : `${record.supportAgreement.quietHours.start}–${record.supportAgreement.quietHours.end}`} good />
-            <StatusRow label="Check-in" value={new Date(state.nextCheckAt).toLocaleString()} />
+            <StatusRow label="Check-in" value={formatDateTime(state.nextCheckAt)} />
             <StatusRow label="Repeated delays" value={String(state.delayCount)} good={state.delayCount < 2} />
             <StatusRow label="Stored memories" value={String(state.memories.length)} good />
           </div>
@@ -1039,6 +1054,7 @@ function TodayView({
         </div>
       </div>
     </section>
+    </Localized>
   );
 }
 

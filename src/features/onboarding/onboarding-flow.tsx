@@ -4,6 +4,11 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import type { AgentRunTrace } from "../../domain/agents/schemas";
 import type { GoalPlan } from "../../domain/goals/schemas";
+import {
+  LanguageToggle,
+  Localized,
+  useLocale,
+} from "../../i18n/locale";
 import { JourneyWorkspace } from "../journey/journey-workspace";
 import {
   createConfirmedOnboardingRecord,
@@ -72,10 +77,10 @@ const inputClass =
   "w-full rounded-2xl border border-[#d9dfda] bg-[#fbfbf8] px-4 py-3.5 text-[15px] text-[#17211d] outline-none transition placeholder:text-[#9aa39f] focus:border-[#527b6b] focus:bg-white focus:ring-4 focus:ring-[#dce9df]/70";
 
 const primaryButtonClass =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#173f35] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(23,63,53,0.18)] transition hover:-translate-y-0.5 hover:bg-[#0f332a] focus:outline-none focus:ring-4 focus:ring-[#bcd5c6] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0";
+  "inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#173f35] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(23,63,53,0.18)] transition hover:-translate-y-0.5 hover:bg-[#0f332a] focus:outline-none focus:ring-4 focus:ring-[#bcd5c6] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0";
 
 const secondaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#d5dcd7] bg-white px-5 py-2.5 text-sm font-semibold text-[#30443c] transition hover:border-[#9eb6aa] hover:bg-[#f8faf7] focus:outline-none focus:ring-4 focus:ring-[#dce9df]/70";
+  "inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#d5dcd7] bg-white px-5 py-2.5 text-sm font-semibold text-[#30443c] transition hover:border-[#9eb6aa] hover:bg-[#f8faf7] focus:outline-none focus:ring-4 focus:ring-[#dce9df]/70";
 
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -131,6 +136,7 @@ function ProgressHeader({ stage }: { stage: Stage }) {
           : "Setup complete";
 
   return (
+    <Localized>
     <div className="border-b border-[#e5e8e4] px-5 py-4 sm:px-8">
       <div className="mb-2.5 flex items-center justify-between gap-4 text-xs font-semibold tracking-wide text-[#52615a]">
         <span>{label}</span>
@@ -143,12 +149,14 @@ function ProgressHeader({ stage }: { stage: Stage }) {
         />
       </div>
     </div>
+    </Localized>
   );
 }
 
 function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
   const workspace = stage === "complete";
   return (
+    <Localized>
     <main className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <div className={`mx-auto min-h-[calc(100vh-2rem)] overflow-hidden rounded-[2rem] border border-[#173f35]/10 bg-white shadow-[0_28px_90px_rgba(31,63,50,0.12)] sm:min-h-[calc(100vh-3rem)] ${workspace ? "max-w-[1480px]" : "grid max-w-[1180px] lg:grid-cols-[0.72fr_1.28fr]"}`}>
         {!workspace ? (
@@ -161,6 +169,7 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
               <p className="text-sm font-semibold tracking-wide">Time Sovereignty</p>
               <p className="text-xs text-white/55">AI Chief of Staff</p>
             </div>
+            <span className="ml-auto"><LanguageToggle dark /></span>
           </div>
 
           <div className="relative my-auto py-14">
@@ -198,9 +207,10 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
                 <p className="text-[11px] text-[#5f6964]">AI Chief of Staff</p>
               </div>
             </div>
-            <span className="rounded-full bg-[#edf4ee] px-3 py-1.5 text-[11px] font-semibold text-[#436457]">
-              Private setup
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="hidden rounded-full bg-[#edf4ee] px-3 py-1.5 text-[11px] font-semibold text-[#436457] sm:inline">Private setup</span>
+              <LanguageToggle />
+            </div>
             </header>
           ) : null}
           {!workspace ? <ProgressHeader stage={stage} /> : null}
@@ -216,6 +226,7 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
         </section>
       </div>
     </main>
+    </Localized>
   );
 }
 
@@ -241,6 +252,7 @@ function QuestionScreen({
   busy?: boolean;
 }) {
   return (
+    <Localized>
     <form
       onSubmit={(event) => {
         event.preventDefault();
@@ -308,6 +320,7 @@ function QuestionScreen({
         </button>
       </div>
     </form>
+    </Localized>
   );
 }
 
@@ -335,6 +348,7 @@ function PlanReview({
   onConfirm: () => void;
 }) {
   return (
+    <Localized>
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -474,6 +488,7 @@ function PlanReview({
         </div>
       </div>
     </div>
+    </Localized>
   );
 }
 
@@ -572,6 +587,7 @@ function SupportAgreementForm({
   };
 
   return (
+    <Localized>
     <form onSubmit={onSubmit}>
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4f6d5e]">
         Your boundaries
@@ -773,6 +789,7 @@ function SupportAgreementForm({
         </button>
       </div>
     </form>
+    </Localized>
   );
 }
 
@@ -880,7 +897,8 @@ function CompletedJourney({
   record: LocalOnboardingRecord;
   onReset: () => void;
 }) {
-  const nextCheckIn = new Intl.DateTimeFormat("en", {
+  const { locale, formatDateTime } = useLocale();
+  const nextCheckIn = new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : "en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -889,6 +907,7 @@ function CompletedJourney({
   }).format(new Date(record.action.nextCheckAt ?? record.savedAt));
 
   return (
+    <Localized>
     <div>
       <div className="flex items-start gap-4">
         <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#d8f48a] text-[#173f35] shadow-[0_8px_24px_rgba(80,111,65,0.18)]">
@@ -959,7 +978,7 @@ function CompletedJourney({
         <span>
           Agent trace: {record.agentTrace.agent.replaceAll("_", " ")} · {record.agentTrace.provider} · validated
         </span>
-        <span>Saved {new Date(record.savedAt).toLocaleString()}</span>
+        <span>Saved {formatDateTime(record.savedAt)}</span>
       </div>
 
       <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
@@ -975,6 +994,7 @@ function CompletedJourney({
         <JourneyWorkspace record={record} onReset={onReset} />
       </div>
     </div>
+    </Localized>
   );
 }
 

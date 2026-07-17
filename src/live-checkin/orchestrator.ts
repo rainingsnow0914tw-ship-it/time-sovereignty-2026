@@ -46,7 +46,7 @@ export async function runLiveCheckInAgents(options: {
           context: checkIn.context,
           userReply: reply,
           instruction:
-            "Infer carefully, distinguish hypotheses from facts, and recommend a recovery path without shame.",
+            `Infer carefully, distinguish hypotheses from facts, and recommend a recovery path without shame. Reply in ${checkIn.context.locale === "zh-TW" ? "Traditional Chinese" : "English"}.`,
         },
       },
       CommitmentRecoveryOutputSchema,
@@ -70,7 +70,7 @@ export async function runLiveCheckInAgents(options: {
         dispatchedAgents: ["COMMITMENT_RECOVERY"],
         currentTime: new Date().toISOString(),
         instruction:
-          "Return one humane, immediately actionable adaptation. The follow-up must be in the future. Memory remains a proposal until confirmation.",
+          `Return one humane, immediately actionable adaptation. The follow-up must be in the future. Memory remains a proposal until confirmation. Reply in ${checkIn.context.locale === "zh-TW" ? "Traditional Chinese" : "English"}.`,
       },
     },
     LiveChiefOfStaffDecisionSchema,

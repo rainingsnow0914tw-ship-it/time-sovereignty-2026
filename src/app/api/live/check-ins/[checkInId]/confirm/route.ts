@@ -9,6 +9,7 @@ import {
 import { LiveConfirmRequestSchema } from "@/live-checkin/schemas";
 import { createLiveCheckInScheduler } from "@/live-checkin/scheduler";
 import { assertAllowedOrigin } from "@/live-checkin/session-auth";
+import { selectLiveFollowUpTime } from "@/live-checkin/quiet-hours";
 
 export const runtime = "nodejs";
 
@@ -30,13 +31,11 @@ export async function POST(
     if (!decision) throw new Error("Confirmed live check-in has no decision.");
 
     const nextCheckInId = `follow-${checkInId}`.slice(0, 128);
-    const proposed = new Date(decision.nextFollowUpAt).getTime();
-    const now = Date.now();
-    const scheduledFor = new Date(
-      proposed >= now + 60_000 && proposed <= now + 24 * 60 * 60 * 1_000
-        ? proposed
-        : now + 60 * 60 * 1_000,
-    ).toISOString();
+    const scheduledFor = selectLiveFollowUpTime({
+      proposedAt: decision.nextFollowUpAt,
+      now: new Date(),
+      quietHours: confirmation.checkIn.context.quietHours,
+    });
     const next = await auth.repository.createScheduled({
       id: nextCheckInId,
       sessionId: auth.session.id,

@@ -4,7 +4,10 @@ import {
   AgentRunTraceSchema,
   CommitmentRecoveryOutputSchema,
 } from "../domain/agents/schemas";
-import { StrategyOutcomeSchema } from "../domain/goals/schemas";
+import {
+  QuietHoursSchema,
+  StrategyOutcomeSchema,
+} from "../domain/goals/schemas";
 import { EntityIdSchema, IsoDateTimeSchema } from "../domain/shared";
 
 export const LiveCheckInStatusSchema = z.enum([
@@ -24,8 +27,15 @@ export const LiveCheckInContextSchema = z
     currentAction: z.string().trim().min(1).max(500),
     minimumAction: z.string().trim().min(1).max(500),
     preferredTone: z.string().trim().min(1).max(240),
+    locale: z.enum(["zh-TW", "en"]).optional(),
+    quietHours: QuietHoursSchema.optional(),
   })
   .strict();
+
+export const LiveScheduleContextSchema = LiveCheckInContextSchema.extend({
+  locale: z.enum(["zh-TW", "en"]),
+  quietHours: QuietHoursSchema,
+});
 
 export const LiveMemoryProposalSchema = z
   .object({
@@ -102,7 +112,7 @@ export const LiveScheduleRequestSchema = z
   .object({
     scheduleId: EntityIdSchema,
     message: z.string().trim().min(1).max(1_000),
-    context: LiveCheckInContextSchema,
+    context: LiveScheduleContextSchema,
     scheduledFor: IsoDateTimeSchema,
   })
   .strict();
