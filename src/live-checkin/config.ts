@@ -31,8 +31,8 @@ export function readLiveCheckInConfig(
 
   const live = LiveConfigSchema.parse({
     enabled: true,
-    pairingSecret: env.LIVE_CHECKIN_PAIRING_SECRET,
-    sessionSecret: env.LIVE_CHECKIN_SESSION_SECRET,
+    pairingSecret: env.LIVE_CHECKIN_PAIRING_SECRET?.trim(),
+    sessionSecret: env.LIVE_CHECKIN_SESSION_SECRET?.trim(),
     sessionHours: Number(env.LIVE_CHECKIN_SESSION_HOURS ?? "12"),
     allowedOrigins: (env.LIVE_CHECKIN_ALLOWED_ORIGINS ?? "")
       .split(",")
