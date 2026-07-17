@@ -20,6 +20,9 @@ RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# @google-cloud/tasks loads this generated descriptor at runtime. Next.js
+# standalone tracing omits it because the package resolves the path dynamically.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@google-cloud/tasks/build/protos/protos.json ./node_modules/@google-cloud/tasks/build/protos/protos.json
 USER nextjs
 EXPOSE 8080
 CMD ["node", "server.js"]
