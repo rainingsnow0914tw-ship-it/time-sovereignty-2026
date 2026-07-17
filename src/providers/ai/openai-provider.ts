@@ -82,7 +82,7 @@ export class OpenAiResponsesProvider implements AiProvider {
     const startedAt = this.now().toISOString();
     const response = await this.parseResponse({
       model: this.model,
-      instructions: instructionsFor(request.agent),
+      instructions: instructionsFor(request.agent, request.outputSchemaName),
       input: JSON.stringify({
         inputSummary: request.inputSummary,
         payload: request.input,
@@ -123,12 +123,18 @@ export class OpenAiResponsesProvider implements AiProvider {
   }
 }
 
-export function instructionsFor(agent: ImplementedAgentRole): string {
+export function instructionsFor(
+  agent: ImplementedAgentRole,
+  outputSchemaName = "",
+): string {
   const common =
     "You are part of Time Sovereignty, an AI Chief of Staff for long-term goal execution. Return only the requested structured output. Respect the support agreement, avoid invented facts, and never expose private chain-of-thought.";
 
   if (agent === "CHIEF_OF_STAFF") {
-    return `${common} Synthesize one unified user-facing decision. Decide from the supplied specialist outputs and context. Copy the supplied dispatchedAgents array exactly; do not claim an agent was called when it was not. Propose memory changes as proposals, never as silently confirmed facts.`;
+    const liveCheckIn = outputSchemaName === "LiveChiefOfStaffDecision"
+      ? " For a live check-in, produce a concrete adaptedCommitment the user can confirm, choose exactly one supplied recovery strategy, set a future nextFollowUpAt, and include at most one tentative memoryProposal."
+      : "";
+    return `${common} Synthesize one unified user-facing decision. Decide from the supplied specialist outputs and context. Copy the supplied dispatchedAgents array exactly; do not claim an agent was called when it was not. Propose memory changes as proposals, never as silently confirmed facts.${liveCheckIn}`;
   }
 
   if (agent === "GOAL_ARCHITECT") {

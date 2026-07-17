@@ -29,6 +29,8 @@ import {
   type JourneyView,
   type ProgressEvidence,
 } from "./model";
+import { LiveCheckInPanel } from "./live-check-in-panel";
+import type { LiveChiefOfStaffDecision } from "../../live-checkin/schemas";
 
 const tabs: Array<{ value: JourneyView; label: string; hint: string }> = [
   { value: "TODAY", label: "Today", hint: "Your protected next move" },
@@ -581,6 +583,27 @@ export function JourneyWorkspace({
     onReset();
   };
 
+  const applyLiveCommitment = (decision: LiveChiefOfStaffDecision) => {
+    setState((current) =>
+      addJourneyEvent(
+        JourneyStateSchema.parse({
+          ...current,
+          currentAction: decision.adaptedCommitment,
+          minimumAction: decision.adaptedCommitment,
+          nextCheckAt: decision.nextFollowUpAt,
+          latestFeedback: decision.userMessage,
+          interventionState: "CONFIRMED",
+        }),
+        {
+          kind: "RECOVERY",
+          title: "Live adapted commitment confirmed",
+          detail: decision.adaptedCommitment,
+        },
+      ),
+    );
+    setNotice("The real adapted commitment is now reflected in Today and Journey.");
+  };
+
   return (
     <div className="min-h-[760px] overflow-hidden rounded-[1.7rem] bg-[#f5f7f2]">
       <header className="border-b border-[#dfe5df] bg-[#173f35] px-5 py-5 text-white sm:px-7">
@@ -643,7 +666,15 @@ export function JourneyWorkspace({
         ) : null}
 
         {state.activeView === "CHECK_IN" ? (
-          <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          <>
+          <LiveCheckInPanel
+            mode="check-in"
+            record={record}
+            currentAction={state.currentAction}
+            minimumAction={state.minimumAction}
+            onCommitmentConfirmed={applyLiveCommitment}
+          />
+          <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className={`${cardClass} border-[#9eb9aa] bg-[#f7fbf7]`}>
               <Eyebrow>Incoming check-in</Eyebrow>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#173f35]">
@@ -705,6 +736,7 @@ export function JourneyWorkspace({
               </button>
             </div>
           </section>
+          </>
         ) : null}
 
         {state.activeView === "PROGRESS" ? (
@@ -841,7 +873,14 @@ export function JourneyWorkspace({
         ) : null}
 
         {state.activeView === "DEVELOPER" ? (
-          <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+          <>
+          <LiveCheckInPanel
+            mode="developer"
+            record={record}
+            currentAction={state.currentAction}
+            minimumAction={state.minimumAction}
+          />
+          <section className="mt-5 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
             <div className={cardClass}>
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
@@ -901,6 +940,7 @@ export function JourneyWorkspace({
               </details>
             </div>
           </section>
+          </>
         ) : null}
       </section>
 

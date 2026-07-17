@@ -1,0 +1,382 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type { AgentRunTrace } from "../../domain/agents/schemas";
+import type { LocalOnboardingRecord } from "../../repositories/local-onboarding-repository";
+import type {
+  ClientLiveCheckIn,
+  LiveChiefOfStaffDecision,
+} from "../../live-checkin/schemas";
+import {
+  isSpeechRecognitionSupported,
+  speakBrowserText,
+  transcribeBrowserSpeech,
+} from "../../providers/audio/browser-audio-provider";
+
+const card =
+  "rounded-[1.6rem] border border-[#9eb9aa] bg-[#f7fbf7] p-5 shadow-[0_14px_45px_rgba(23,63,53,0.06)] sm:p-6";
+const primary =
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-[#173f35] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0e3329] focus:outline-none focus:ring-4 focus:ring-[#bcd5c6] disabled:cursor-not-allowed disabled:opacity-45";
+const secondary =
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-[#cfd9d2] bg-white px-5 py-2.5 text-sm font-semibold text-[#28443a] hover:border-[#8aa99a] hover:bg-[#f6faf6] focus:outline-none focus:ring-4 focus:ring-[#dce9df] disabled:cursor-not-allowed disabled:opacity-45";
+const input =
+  "w-full rounded-2xl border border-[#d9e0da] bg-white px-4 py-3 text-sm text-[#17211d] outline-none focus:border-[#5a8271] focus:ring-4 focus:ring-[#dce9df]/70";
+
+type Connection = "CHECKING" | "DISABLED" | "UNPAIRED" | "PAIRED" | "ERROR";
+type CurrentPayload = {
+  checkIn: ClientLiveCheckIn | null;
+  lastConfirmedCheckIn: ClientLiveCheckIn | null;
+};
+
+export function LiveCheckInPanel({
+  mode,
+  record,
+  currentAction,
+  minimumAction,
+  onCommitmentConfirmed,
+}: {
+  mode: "check-in" | "developer";
+  record: LocalOnboardingRecord;
+  currentAction: string;
+  minimumAction: string;
+  onCommitmentConfirmed?: (decision: LiveChiefOfStaffDecision) => void;
+}) {
+  const [connection, setConnection] = useState<Connection>("CHECKING");
+  const [current, setCurrent] = useState<ClientLiveCheckIn | null>(null);
+  const [lastConfirmed, setLastConfirmed] =
+    useState<ClientLiveCheckIn | null>(null);
+  const [pairingCode, setPairingCode] = useState("");
+  const [deviceLabel, setDeviceLabel] = useState("Chloe Android demo");
+  const [reply, setReply] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [pausePolling, setPausePolling] = useState(false);
+  const scheduleIdRef = useRef<string | null>(null);
+  const replyIdRef = useRef<string | null>(null);
+  const confirmationIdRef = useRef<string | null>(null);
+
+  const refreshCurrent = useCallback(async () => {
+    const response = await fetch("/api/live/check-ins/current", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    if (response.status === 401) {
+      setConnection("UNPAIRED");
+      setCurrent(null);
+      return;
+    }
+    if (!response.ok) throw new Error("current_unavailable");
+    const payload = (await response.json()) as CurrentPayload;
+    setConnection("PAIRED");
+    setCurrent(payload.checkIn);
+    setLastConfirmed(payload.lastConfirmedCheckIn);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/live/session", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        if (response.status === 404) {
+          setConnection("DISABLED");
+          return;
+        }
+        if (response.status === 401) {
+          setConnection("UNPAIRED");
+          return;
+        }
+        if (!response.ok) throw new Error("session_unavailable");
+        setConnection("PAIRED");
+        await refreshCurrent();
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setConnection("ERROR");
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, [refreshCurrent]);
+
+  useEffect(() => {
+    if (connection !== "PAIRED" || pausePolling) return;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshCurrent().catch(() => setNotice("Live polling will retry."));
+      }
+    };
+    const timer = window.setInterval(refreshIfVisible, 5_000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [connection, pausePolling, refreshCurrent]);
+
+  const pairDevice = async () => {
+    setBusy(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/live/pair", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pairingCode, deviceLabel }),
+      });
+      if (!response.ok) throw new Error("pairing_failed");
+      setPairingCode("");
+      setConnection("PAIRED");
+      setNotice("This device is paired for twelve hours.");
+      await refreshCurrent();
+    } catch {
+      setNotice("Pairing was denied or this one-time code is already used.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const scheduleDemo = async () => {
+    setBusy(true);
+    setNotice("Scheduling a real Cloud Task…");
+    try {
+      scheduleIdRef.current ??=
+        `live-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+      const response = await fetch("/api/live/check-ins/schedule", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleId: scheduleIdRef.current,
+          message: `You planned to continue “${currentAction}”. What is true right now?`,
+          context: {
+            goal: record.goal.title,
+            motivation: record.goal.motivation,
+            targetWindow: record.goal.targetWindow,
+            currentAction,
+            minimumAction,
+            preferredTone: record.supportAgreement.preferredTone,
+          },
+          scheduledFor: new Date(Date.now() + 15_000).toISOString(),
+        }),
+      });
+      const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
+      if (!response.ok || !payload.checkIn) throw new Error("schedule_failed");
+      setCurrent(payload.checkIn);
+      setNotice("Scheduled. The open PWA is polling for the pending check-in.");
+      scheduleIdRef.current = null;
+    } catch {
+      setNotice("The cloud schedule did not complete. The same request can be retried safely.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const listen = async () => {
+    setListening(true);
+    setNotice("Listening for one reply…");
+    const transcript = await transcribeBrowserSpeech(
+      /\p{Script=Han}/u.test(record.goal.title) ? "zh-TW" : "en-US",
+    );
+    setListening(false);
+    if (transcript) {
+      setReply(transcript);
+      setNotice("Voice reply transcribed. Review it before sending.");
+    } else {
+      setNotice(
+        isSpeechRecognitionSupported()
+          ? "No clear transcript was captured. Try again or type."
+          : "Speech transcription is unavailable here; text still works.",
+      );
+    }
+  };
+
+  const submitReply = async () => {
+    if (!current || !reply.trim()) return;
+    setBusy(true);
+    setNotice("GPT-5.6 is asking Recovery and Chief of Staff…");
+    try {
+      replyIdRef.current ??= current.replyId ?? crypto.randomUUID();
+      const response = await fetch(
+        `/api/live/check-ins/${encodeURIComponent(current.id)}/reply`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ replyId: replyIdRef.current, reply: reply.trim() }),
+        },
+      );
+      const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
+      if (!response.ok || !payload.checkIn) throw new Error("reply_failed");
+      setCurrent(payload.checkIn);
+      setNotice("Real structured decision received. Review it before confirming.");
+      setReply("");
+    } catch {
+      await refreshCurrent().catch(() => undefined);
+      setNotice("The live reply stopped safely. Retry uses the same reply identity.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirm = async () => {
+    if (!current?.decision) return;
+    setBusy(true);
+    setNotice("Persisting confirmation, memory, and next follow-up…");
+    try {
+      confirmationIdRef.current ??= crypto.randomUUID();
+      const response = await fetch(
+        `/api/live/check-ins/${encodeURIComponent(current.id)}/confirm`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirmationId: confirmationIdRef.current }),
+        },
+      );
+      const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
+      if (!response.ok || !payload.checkIn) throw new Error("confirm_failed");
+      setCurrent(payload.checkIn);
+      setLastConfirmed(payload.checkIn);
+      setPausePolling(true);
+      setNotice("Confirmed. The next real follow-up is scheduled.");
+      onCommitmentConfirmed?.(payload.checkIn.decision!);
+    } catch {
+      setNotice("Confirmation did not finish. Repeating it is safe and idempotent.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const revoke = async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/live/session", {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error("revoke_failed");
+      setConnection("UNPAIRED");
+      setCurrent(null);
+      setLastConfirmed(null);
+      setNotice("This device session is revoked.");
+    } catch {
+      setNotice("Session revocation needs another attempt.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (connection === "DISABLED") {
+    return (
+      <section className={card}>
+        <LiveBadge>Private live path</LiveBadge>
+        <p className="mt-3 text-sm leading-6 text-[#596b62]">
+          This stable public revision keeps the single-device path disabled. It is
+          activated only in the protected recording preview.
+        </p>
+      </section>
+    );
+  }
+
+  if (connection === "CHECKING") {
+    return <section className={card}><p className="text-sm text-[#596b62]">Checking private live connection…</p></section>;
+  }
+
+  if (connection === "ERROR") {
+    return <section className={card}><LiveBadge>Private live path</LiveBadge><p className="mt-3 text-sm text-[#7b4b3f]">The protected connection is temporarily unavailable.</p></section>;
+  }
+
+  if (connection === "UNPAIRED") {
+    return (
+      <section className={card}>
+        <LiveBadge>Single-device pairing · 12 hours</LiveBadge>
+        <h2 className="mt-3 text-2xl font-semibold text-[#173f35]">Connect this PWA without exposing the API key.</h2>
+        {mode === "check-in" ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">
+              One-time pairing code
+              <input className={`${input} mt-2`} type="password" autoComplete="one-time-code" value={pairingCode} onChange={(event) => setPairingCode(event.target.value)} />
+            </label>
+            <label className="text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">
+              Device label
+              <input className={`${input} mt-2`} value={deviceLabel} onChange={(event) => setDeviceLabel(event.target.value)} />
+            </label>
+            <button type="button" className={`${primary} sm:col-span-2`} disabled={busy || pairingCode.length < 12 || !deviceLabel.trim()} onClick={pairDevice}>Pair this device</button>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-[#596b62]">Pair from Check-in mode to reveal real provider, model, tokens, and trace IDs.</p>
+        )}
+        {notice ? <p className="mt-3 text-sm text-[#596b62]" role="status">{notice}</p> : null}
+      </section>
+    );
+  }
+
+  const traceSource = current?.traces.length ? current : lastConfirmed;
+  if (mode === "developer") {
+    return (
+      <section className={card}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><LiveBadge>Real mobile trace</LiveBadge><h2 className="mt-2 text-2xl font-semibold text-[#173f35]">Provider evidence from the user-facing path</h2></div>
+          <button type="button" className={secondary} disabled={busy} onClick={revoke}>Revoke device</button>
+        </div>
+        {traceSource?.traces.length ? <TraceTable traces={traceSource.traces} /> : <p className="mt-4 text-sm text-[#596b62]">No live mobile Agent call has completed yet.</p>}
+        <p className="mt-4 text-xs leading-5 text-[#5f6a64]">Raw reply, prompt, secrets, and private reasoning are excluded. These rows come from Firestore, not the local simulation.</p>
+        {notice ? <p className="mt-3 text-sm text-[#596b62]" role="status">{notice}</p> : null}
+      </section>
+    );
+  }
+
+  return (
+    <section className={card}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><LiveBadge>Real Cloud Tasks + GPT-5.6</LiveBadge><h2 className="mt-2 text-2xl font-semibold text-[#173f35]">Private incoming check-in</h2></div>
+        <button type="button" className={secondary} disabled={busy} onClick={revoke}>Revoke device</button>
+      </div>
+      {!current ? (
+        <div className="mt-5"><p className="text-sm leading-6 text-[#596b62]">No active live check-in. Start the recorded story with one real scheduled callback.</p><button type="button" className={`${primary} mt-4`} disabled={busy} onClick={scheduleDemo}>Schedule demo check-in · 15 sec</button></div>
+      ) : null}
+      {current?.status === "SCHEDULED" ? <p className="mt-5 rounded-2xl bg-white p-4 text-sm text-[#49675a]">Scheduled for {new Date(current.scheduledFor).toLocaleTimeString()}. Polling only while this PWA is open.</p> : null}
+      {current && ["PENDING", "FAILED"].includes(current.status) ? (
+        <div className="mt-5">
+          <h3 className="text-xl font-semibold text-[#173f35]">{current.message}</h3>
+          <div className="mt-4 flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => void speakBrowserText(current.message)}>▶ Play voice</button><button type="button" className={secondary} disabled={listening} onClick={listen}>{listening ? "Listening…" : "🎙 Reply by voice"}</button></div>
+          <label className="mt-4 block text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">Voice transcript or text reply<textarea className={`${input} mt-2 min-h-28 resize-y`} value={reply} onChange={(event) => setReply(event.target.value)} placeholder="What changed, in your own words…" /></label>
+          <button type="button" className={`${primary} mt-4`} disabled={busy || !reply.trim()} onClick={submitReply}>{current.status === "FAILED" ? "Retry the same live decision" : "Send to real Agents"}</button>
+        </div>
+      ) : null}
+      {current?.status === "PROCESSING" ? <p className="mt-5 rounded-2xl bg-[#fff2cc] p-4 text-sm font-semibold text-[#6f5310]">Recovery and Chief of Staff are producing one structured decision. Polling is active.</p> : null}
+      {current?.decision ? <DecisionCard checkIn={current} busy={busy} onConfirm={confirm} /> : null}
+      {notice ? <p className="mt-4 text-sm text-[#596b62]" role="status">{notice}</p> : null}
+    </section>
+  );
+}
+
+function DecisionCard({ checkIn, busy, onConfirm }: { checkIn: ClientLiveCheckIn; busy: boolean; onConfirm: () => void }) {
+  const decision = checkIn.decision!;
+  return (
+    <div className="mt-5 rounded-2xl border border-[#c9d9cd] bg-white p-5">
+      <LiveBadge>{checkIn.status === "CONFIRMED" ? "Confirmed live decision" : "Review before persistence"}</LiveBadge>
+      <p className="mt-3 text-sm leading-6 text-[#40594e]">{decision.userMessage}</p>
+      <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">Adapted commitment</p>
+      <p className="mt-1 text-lg font-semibold text-[#173f35]">{decision.adaptedCommitment}</p>
+      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-[#6b786f]">Strategy</dt><dd className="font-bold text-[#28443a]">{decision.selectedStrategy}</dd></div><div><dt className="text-[#6b786f]">Next follow-up</dt><dd className="font-bold text-[#28443a]">{new Date(decision.nextFollowUpAt).toLocaleString()}</dd></div></dl>
+      {decision.memoryProposal ? <p className="mt-4 rounded-2xl bg-[#edf5e8] p-3 text-sm text-[#40594e]">Memory proposal: {decision.memoryProposal.summary}</p> : null}
+      {checkIn.status === "DECISION_READY" ? <button type="button" className={`${primary} mt-5 w-full`} disabled={busy} onClick={onConfirm}>Confirm adapted commitment</button> : <p className="mt-5 text-sm font-bold text-[#4c765f]">✓ Decision, memory, and next follow-up persisted</p>}
+    </div>
+  );
+}
+
+function TraceTable({ traces }: { traces: AgentRunTrace[] }) {
+  return (
+    <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[680px] border-collapse text-left text-xs"><thead><tr className="border-b border-[#dfe5df] text-[#59665f]"><th className="py-3 pr-4">Agent</th><th className="py-3 pr-4">Provider / returned model</th><th className="py-3 pr-4">Tokens</th><th className="py-3">Trace ID</th></tr></thead><tbody>{traces.map((trace) => <tr key={trace.runId} className="border-b border-[#e3e9e4] align-top"><td className="py-3 pr-4 font-bold text-[#2e493d]">{trace.agent.replaceAll("_", " ")}</td><td className="py-3 pr-4 text-[#5f7068]">{trace.provider} · {trace.model}</td><td className="py-3 pr-4 text-[#5f7068]">{trace.tokenUsage?.totalTokens ?? "—"}</td><td className="break-all py-3 text-[#5f7068]">{trace.runId}</td></tr>)}</tbody></table></div>
+  );
+}
+
+function LiveBadge({ children }: { children: React.ReactNode }) {
+  return <span className="inline-flex rounded-full bg-[#dfeee2] px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-[#315447]">{children}</span>;
+}

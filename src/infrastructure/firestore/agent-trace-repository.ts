@@ -36,6 +36,19 @@ export class FirestoreAgentTraceRepository implements AgentTraceRepository {
     });
     await this.firestore.collection("agent_runs").doc(trace.runId).set(document);
   }
+
+  async findMany(runIds: readonly string[]): Promise<AgentRunTrace[]> {
+    if (runIds.length === 0) return [];
+    const references = runIds.map((runId) => {
+      if (runId.includes("/")) throw new InvalidAgentRunDocumentIdError(runId);
+      return this.firestore.collection("agent_runs").doc(runId);
+    });
+    const snapshots = await this.firestore.getAll(...references);
+    return snapshots
+      .filter((snapshot) => snapshot.exists)
+      .map((snapshot) => PersistedAgentRunSchema.parse(snapshot.data()))
+      .map((persisted) => AgentRunTraceSchema.parse(persisted));
+  }
 }
 
 let sharedFirestore: Firestore | null = null;
