@@ -1,37 +1,34 @@
-%%{init: {"theme": "base", "themeVariables": {"fontSize": "22px", "primaryColor": "#F4F0FF", "primaryBorderColor": "#6E5BC7", "lineColor": "#474151", "clusterBkg": "#FFFDF3", "clusterBorder": "#B9A86C"}, "flowchart": {"nodeSpacing": 48, "rankSpacing": 62, "curve": "basis"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"fontSize": "20px", "primaryColor": "#F4F0FF", "primaryBorderColor": "#6E5BC7", "lineColor": "#474151", "clusterBkg": "#FFFDF3", "clusterBorder": "#B9A86C"}, "flowchart": {"nodeSpacing": 38, "rankSpacing": 54, "curve": "basis"}}}%%
 flowchart TB
-    USER(["User"])
+    USER(["Chloe · one paired device"])
 
-    subgraph BROWSER["Mobile-first browser experience"]
+    subgraph PWA["Mobile-first PWA"]
         direction LR
         UI["Onboarding · Today · Check-in<br/>Progress · Journey · Developer"]
-        LOCAL["Local journey repository<br/>two state machines · memories · resume point"]
-        MEDIA["Text · photo · voice<br/>TTS with text fallback"]
-        SIM["Clearly labeled<br/>30-day accelerated simulation"]
+        LIVE["Private live check-in<br/>poll while visible · text / voice transcript<br/>tap-to-play TTS · confirm · revoke"]
+        COOKIE["12-hour signed cookie<br/>HttpOnly · Secure · SameSite=Strict"]
+        LOCAL["Local journey repository<br/>two state machines · memories · resume point<br/>30-day accelerated simulation"]
+
         UI <--> LOCAL
-        UI <--> MEDIA
-        UI --> SIM --> LOCAL
+        UI --> LIVE --- COOKIE
     end
 
-    subgraph GCP["Google Cloud · asia-east1"]
+    subgraph CLOUD["Google Cloud · asia-east1"]
         direction LR
-        CALLER["Task-caller<br/>service account"]
-        TASKS["Cloud Tasks<br/>OIDC · 1/sec<br/>1 concurrent · 1 attempt"]
-        RUN["Cloud Run<br/>PWA + protected callback<br/>min 1 · max 1"]
-        DB["Firestore<br/>lease · completed receipt<br/>safe Agent traces"]
-        SECRET["Secret Manager<br/>OpenAI key"]
-        RUNTIME["Runtime<br/>service account"]
+        RUN["Cloud Run<br/>PWA + protected endpoints<br/>runtime SA · min/max 1 · concurrency 1"]
+        TASKS["Cloud Tasks<br/>caller SA + Google OIDC<br/>1/sec · 1 concurrent · 1 attempt"]
+        DB["Firestore<br/>session · pending check-in · lease<br/>decision · memory · safe traces"]
+        SECRETS["Secret Manager<br/>OpenAI key · pairing value<br/>session signing value"]
 
-        CALLER --> TASKS
-        TASKS -->|"Google-signed OIDC"| RUN
-        RUNTIME --> RUN
+        RUN -->|"enqueue deterministic task"| TASKS
+        TASKS -->|"OIDC callback<br/>SCHEDULED → PENDING"| RUN
         RUN <--> DB
-        RUN --> SECRET
+        RUN --> SECRETS
     end
 
-    subgraph ORCH["Live structured-output orchestration"]
+    subgraph AGENTS["Structured-output Agent system"]
         direction LR
-        DISPATCH["Need-based<br/>dispatcher"]
+        DISPATCH["Need-based dispatcher"]
         GOAL["Goal Architect"]
         RECOVERY["Commitment Recovery"]
         MEMORY["Memory Curator"]
@@ -42,14 +39,14 @@ flowchart TB
         DISPATCH --> MEMORY --> CHIEF
     end
 
-    OPENAI["OpenAI Responses API · GPT-5.6<br/>strict Zod schemas · store false · SDK retries 0"]
+    OPENAI["OpenAI Responses API · GPT-5.6<br/>strict Zod · store false · SDK retries 0"]
 
     USER --> UI
-    RUN -->|"serves PWA + /api/health"| UI
-    RUN --> DISPATCH
+    LIVE -->|"pair once · poll · protected reply · confirm"| RUN
+    RUN -->|"general need signals"| DISPATCH
+    RUN -->|"live recovery path: exactly two Agents"| RECOVERY
     LOCAL -. "same deterministic mock contracts" .-> DISPATCH
     GOAL <--> OPENAI
     RECOVERY <--> OPENAI
     MEMORY <--> OPENAI
     CHIEF <--> OPENAI
-    CHIEF -->|"safe result + usage only"| DB

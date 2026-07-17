@@ -1,0 +1,82 @@
+{
+  "date": "2026-07-17",
+  "project": "time-sovereignty-2026",
+  "region": "asia-east1",
+  "stable_revision": "time-sovereignty-00012-7gn",
+  "stable_traffic_percent": 100,
+  "final_preview_revision": "time-sovereignty-00017-dif",
+  "preview_tag": "live-mobile",
+  "preview_traffic_percent": 0,
+  "backend_acceptance": {
+    "revision": "time-sovereignty-00015-lal",
+    "check_in_id": "live-cloud-1784287295",
+    "scheduled_status": "SCHEDULED",
+    "cloud_task_status": "PENDING",
+    "decision_status": "DECISION_READY",
+    "duration_seconds": 8.482,
+    "traces": [
+      {
+        "agent": "COMMITMENT_RECOVERY",
+        "provider": "openai",
+        "model": "gpt-5.6-sol",
+        "total_tokens": 464
+      },
+      {
+        "agent": "CHIEF_OF_STAFF",
+        "provider": "openai",
+        "model": "gpt-5.6-sol",
+        "total_tokens": 762
+      }
+    ],
+    "total_tokens": 1226,
+    "duplicate": {
+      "same_reply_id": true,
+      "duplicate_flag": true,
+      "duration_seconds": 0.11,
+      "trace_ids_unchanged": true,
+      "additional_model_calls": 0
+    },
+    "confirmation_status": "CONFIRMED",
+    "memory_document_present": true,
+    "next_check_in_linked": true,
+    "session_revoked": true,
+    "post_revoke_http_status": 401
+  },
+  "browser_acceptance": {
+    "revision": "time-sovereignty-00016-yim",
+    "viewport": "390x844",
+    "check_in_id": "live-1784287703774-6a51f025",
+    "cloud_task_polling_reached_pending": true,
+    "tap_to_play_tts_triggered": true,
+    "audible_completion_verified": false,
+    "text_reply_sent_to_live_agents": true,
+    "traces": [
+      {
+        "agent": "COMMITMENT_RECOVERY",
+        "provider": "openai",
+        "model": "gpt-5.6-sol",
+        "total_tokens": 461
+      },
+      {
+        "agent": "CHIEF_OF_STAFF",
+        "provider": "openai",
+        "model": "gpt-5.6-sol",
+        "total_tokens": 750
+      }
+    ],
+    "total_tokens": 1211,
+    "decision_confirmed": true,
+    "today_surface_updated": true,
+    "developer_trace_visible": true,
+    "browser_console_errors": 0,
+    "browser_console_warnings": 0,
+    "session_revoked": true
+  },
+  "combined_live_calls": 4,
+  "combined_total_tokens": 2437,
+  "sdk_retries": 0,
+  "cloud_tasks_queue_profile": "1 dispatch/sec, 1 concurrent, 1 max attempt",
+  "raw_reply_persisted": false,
+  "secrets_exposed_to_client_or_git": false,
+  "remaining_human_boundary": "Install/pair the Android PWA, hear TTS on the phone, try voice transcription, record the demo, then revoke the session."
+}

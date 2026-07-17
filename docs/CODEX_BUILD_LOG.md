@@ -389,3 +389,47 @@
   match.
 - Repository publication is complete. Remaining submission work is the public
   narrated YouTube demo and final Devpost review/submit.
+
+## 2026-07-17 — Protected single-device live mobile vertical path
+
+- Chloe approved a single-device, twelve-hour, recording-only connection that
+  keeps the OpenAI key server-side and preserves all existing OIDC, Firestore,
+  cost, idempotency, and safe-trace controls. Decision 0011 records the gate.
+- Added server-only one-time pairing, an HMAC-signed HttpOnly/Secure/
+  SameSite=Strict cookie, Firestore session revocation, and exact allowed-origin
+  checks. Pairing and session values are separate Secret Manager resources;
+  only the dedicated runtime service account may access them.
+- Added a real Cloud Tasks path from `SCHEDULED` to `PENDING`, open-page PWA
+  polling, text plus tap-to-play TTS, browser speech transcription with text
+  fallback, live reply and confirmation endpoints, confirmed memory, and a
+  deterministic next follow-up task.
+- The user-facing reply runs only Commitment Recovery and Chief of Staff. Each
+  reply has a Firestore lease; Agent output and its safe trace are committed in
+  one transaction; a persisted Recovery result is reused if Chief fails; and
+  the same reply ID returns the stored decision without another model call.
+- Local verification finished at 60 passed tests with five live-only tests
+  skipped, plus TypeScript, ESLint, and a complete production build.
+- Cloud-first debugging exposed three concrete deployment/runtime issues before
+  any new OpenAI request: PowerShell serialized the first secret read as an
+  array; Next standalone omitted the Cloud Tasks `protos.json`; and strict
+  client projection plus short/full task-name comparison caused 400/409. Each
+  fix is preserved in a separate commit/revision and covered by tests.
+- Backend acceptance on revision `time-sovereignty-00015-lal` used two real
+  GPT-5.6 calls: Commitment Recovery 464 tokens and Chief of Staff 762 tokens,
+  1,226 total in 8.482 seconds. The same reply ID returned duplicate in 0.110
+  seconds with unchanged traces and zero additional model call.
+- A 390x844 PWA browser acceptance on revision
+  `time-sovereignty-00016-yim` scheduled a real 15-second task, visibly polled
+  to pending, sent a real text reply, confirmed the returned `REDUCE` decision,
+  updated Today, and displayed two Firestore traces in Developer: 461 and 750
+  tokens, 1,211 total. Console errors and warnings were both zero.
+- Tap-to-play TTS was triggered through the live UI, but the background browser
+  did not expose audible completion. Physical Android TTS and speech
+  transcription remain the honest human boundary.
+- Both test sessions were visibly or administratively revoked; test follow-up
+  tasks were removed after evidence; pairing versions used by tests cannot be
+  reused. Final phone-ready preview `time-sovereignty-00017-dif` is tagged
+  `live-mobile`, serves 0% normal traffic, and binds fresh unused pairing secret
+  version 5. Stable revision `time-sovereignty-00012-7gn` still has 100%.
+- Full evidence:
+  `docs/evidence/live-mobile-vertical-path-2026-07-17.md` and matching JSON.

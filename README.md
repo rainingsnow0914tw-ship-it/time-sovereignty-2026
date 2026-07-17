@@ -25,6 +25,15 @@ journey passed at 390x844 with zero console errors and zero failed requests.
 Four focused live accessibility screens passed with zero axe violations and
 zero incomplete findings after the judging-readiness fixes.
 
+A protected single-device path is also implemented on a 0%-traffic Cloud Run
+preview. It schedules a real pending check-in, lets the open PWA poll it, sends
+a real text or browser speech transcript to Commitment Recovery and Chief of
+Staff on GPT-5.6, persists the confirmed decision/memory/follow-up, and shows
+real Firestore traces in Developer. It requires a one-time server-side pairing
+value and a twelve-hour signed HttpOnly cookie; the OpenAI key never reaches
+the browser. Physical Android pairing remains a deliberate recording step, not
+a public feature.
+
 ## Source of truth
 
 Read these files in order:
@@ -84,9 +93,32 @@ complete 390x844 Chrome user flow with zero console errors. See
   alerts;
 - OpenAI key: local plaintext remains ignored; Cloud Run reads only the
   Secret Manager binding, accessible to the dedicated runtime identity.
+- private phone preview: revision `time-sovereignty-00017-dif`, tag
+  `live-mobile`, 0% normal traffic, fresh unused one-time pairing version bound
+  through Secret Manager.
 
 Phase 3 evidence:
 `docs/evidence/phase-3-real-cloud-task-2026-07-16.md`.
+
+## Protected live mobile check-in
+
+- one paired device at a time, twelve-hour signed HttpOnly/Secure/
+  SameSite=Strict session, explicit origin allowlist, visible revoke control;
+- real OIDC Cloud Task changes a scheduled check-in to pending;
+- the PWA polls only while open and visible, then offers text, tap-to-play TTS,
+  and browser speech transcription with text fallback;
+- the reply calls real Commitment Recovery and Chief of Staff through
+  `gpt-5.6`, with SDK retries zero;
+- Agent output and safe trace are atomically stored; a partial Recovery result
+  is reused and the same reply ID cannot repeat cost;
+- confirmation persists the adapted commitment, confirmed memory, and next
+  follow-up task;
+- Developer shows the real provider, returned model, tokens, and trace IDs.
+
+Backend and 390x844 browser acceptance used four deliberate GPT-5.6 calls,
+2,437 tokens total, with zero browser console errors or warnings. Full evidence
+and the honest physical-phone boundary are in
+`docs/evidence/live-mobile-vertical-path-2026-07-17.md`.
 
 ## Phase 4 four-agent orchestration
 
@@ -192,6 +224,10 @@ The local plaintext OpenAI API key belongs only in `.env.local` and must never
 be printed or committed. The deployed value is read from Secret Manager
 resource `openai-api-key`; only the dedicated runtime service account may
 access it. `.env.example` contains names and safe defaults only.
+
+The live-device pairing and session signing values are separate Secret Manager
+resources. They must remain server-only, be rotated after a recording session,
+and never be committed, embedded in the PWA, or placed in a demo URL.
 
 A first minimal real `gpt-5.6` Responses API request was blocked by
 `insufficient_quota`. After API billing was funded, the same one-request check

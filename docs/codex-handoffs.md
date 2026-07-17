@@ -294,14 +294,57 @@ Full evidence:
   exact first-release local/remote match at commit `29f67a5`. Current and
   historical key-pattern scans were clear before publication.
 
+## Protected live mobile path checkpoint
+
+- Decision 0011 adds one private user-facing vertical path without replacing
+  the existing journey UI or creating a native Android app.
+- Final stable traffic is unchanged: `time-sovereignty-00012-7gn` remains at
+  100%. Final phone-ready preview `time-sovereignty-00017-dif` is the 0%
+  `live-mobile` tag at
+  `https://live-mobile---time-sovereignty-defqnamrrq-de.a.run.app`.
+- Single-device access uses a one-time pairing value and a twelve-hour signed
+  HttpOnly/Secure/SameSite=Strict cookie. Used pairing versions cannot be
+  reused; all automated sessions are revoked. Fresh secret version 5 is bound
+  to `00017-dif` and has not been used.
+- A real task creates a pending check-in. The open PWA polls every five seconds
+  only while visible. Text and browser speech transcription feed the same
+  reply endpoint; tap-to-play browser TTS keeps autoplay and key exposure out
+  of scope.
+- The reply path calls exactly Commitment Recovery and Chief of Staff through
+  GPT-5.6. Agent output and safe trace are atomically persisted. A partial
+  Recovery success is reused; the same reply ID cannot repeat model cost.
+- Backend acceptance on `00015-lal`: real Cloud Task to pending, two
+  `gpt-5.6-sol` traces, 464 + 762 = 1,226 tokens, 8.482 seconds; duplicate was
+  0.110 seconds with unchanged trace IDs and zero extra model call; confirmation,
+  memory, next follow-up, and revocation all passed.
+- 390x844 PWA acceptance on `00016-yim`: visible scheduled-to-pending polling,
+  real text reply, real `REDUCE` decision, confirmation, Today update, and
+  Developer Firestore traces, 461 + 750 = 1,211 tokens. Browser console errors
+  and warnings were zero.
+- Cloud-only defects and fixes: Next standalone needed the Cloud Tasks
+  `protos.json`; client-safe projection needed `.strip()`; delivered task ID
+  matching must accept the same final ID whether the header is short or a full
+  resource path. All are committed and tested.
+- Evidence:
+  `docs/evidence/live-mobile-vertical-path-2026-07-17.md` and matching JSON.
+
+### Exact next action for the phone
+
+Do not create another backend feature. When Chloe is awake, open the 0%
+`live-mobile` URL on Android, install the PWA, retrieve pairing secret version
+5 without writing it to chat or a file, pair once, and run one recorded story:
+schedule, hear TTS, reply by voice transcription or text fallback, confirm the
+real decision, show Developer traces, then revoke the device. Rotate the
+pairing secret again after recording. USB is not required.
+
 ## Honest boundary: remaining submission work
 
 The production path is accepted, but do not claim these deferred items:
 
 - background notification delivery while the web app is closed;
 - Cloud Storage persistence for photo or voice media;
-- a physical-microphone voice demo; browser acceptance used Chrome's fake
-  microphone device;
+- physical Android PWA installation, audible phone TTS, and phone microphone
+  transcription; the 390x844 browser acceptance used text for the live reply;
 - a comprehensive manual WCAG audit or recorded demo video. The focused axe
   and keyboard walkthrough is complete and may be claimed as such.
 
@@ -311,7 +354,8 @@ compatibility has already been proven during Phase 4.
 
 ## Exact next action
 
-Record and upload the public under-three-minute YouTube demo, fill its URL in
+Complete the physical Android path described above, record and upload the
+public under-three-minute YouTube demo, fill its URL in
 `docs/DEVPOST_SUBMISSION.md`, review the Devpost entry, and submit it. The
 repository URL, MIT license, and `/feedback` Session ID are already complete.
 Do not rerun the live GPT-5.6 task merely for screenshots.
@@ -353,6 +397,10 @@ Do not rerun the live GPT-5.6 task merely for screenshots.
 - `329edc3` — Devpost copy, demo script, architecture, and initial contrast fix
 - `f954e90` — focused accessibility and semantic-landmark fixes
 - `29f67a5` — MIT license and public repository metadata
+- `3d589a4` — protected single-device live check-in implementation
+- `975cdaf` — Secret Manager injection normalization
+- `1a1c1cf` — Cloud Tasks standalone runtime descriptor fix
+- `0327481` — safe client projection and task identity fixes
 - `docs/evidence/openai-gpt-5.6-smoke-2026-07-16.md` — preserved quota failure
 - `docs/evidence/openai-gpt-5.6-smoke-success-2026-07-16.md` — successful live
   validation
@@ -376,6 +424,9 @@ Do not rerun the live GPT-5.6 task merely for screenshots.
 - `docs/evidence/phase-8-submission-readiness-2026-07-17.md` — warm-instance,
   final cloud snapshot, Firestore persistence, submission assets, and focused
   accessibility evidence
+- `docs/evidence/live-mobile-vertical-path-2026-07-17.md` — single-device
+  pairing, real pending check-in, two-Agent GPT-5.6 decisions, duplicate-cost
+  proof, confirmation, Developer trace, revocation, and phone handoff
 - `docs/NOTION_PHASE_5_8_CHECKPOINT_2026-07-17.md` — human-readable checkpoint
   ready to paste or sync into Notion
 - `docs/CODEX_BUILD_LOG.md` — chronological work log
