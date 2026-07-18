@@ -1,0 +1,114 @@
+{
+  "date": "2026-07-19",
+  "environment": {
+    "project": "time-sovereignty-2026",
+    "region": "asia-east1",
+    "tag": "live-mobile",
+    "acceptanceRevision": "time-sovereignty-00036-qov",
+    "acceptanceTrafficPercent": 0,
+    "stableRevision": "time-sovereignty-00024-dih",
+    "stableTrafficPercent": 100,
+    "healthHttpStatus": 200,
+    "configuredModel": "gpt-5.6"
+  },
+  "firstCheckIn": {
+    "id": "live-1784400518422-cdbd6850",
+    "status": "CONFIRMED",
+    "assessment": "PARTIAL",
+    "retrievedMemoryCount": 0,
+    "memoryDisposition": "DEFER",
+    "episodeSaved": true,
+    "resumeSaved": true,
+    "tentativeStrategySaved": true,
+    "initialStrategyConfidence": 0.35,
+    "curationStatus": "COMPLETED"
+  },
+  "secondCheckIn": {
+    "id": "follow-live-1784400518422-cdbd6850",
+    "status": "CONFIRMED",
+    "assessment": "COMPLETED",
+    "retrievedMemoryCount": 1,
+    "treatedAsLimitedEvidence": true,
+    "memoryDisposition": "DEFER",
+    "episodeSaved": true,
+    "curationStatus": "COMPLETED"
+  },
+  "strategyEffectiveness": {
+    "status": "TENTATIVE",
+    "confidenceBefore": 0.35,
+    "confidenceAfter": 0.47,
+    "attempts": 1,
+    "successes": 1,
+    "partials": 0,
+    "blocked": 0
+  },
+  "agentTraces": [
+    {
+      "checkIn": "first",
+      "role": "CHIEF_OF_STAFF",
+      "provider": "openai",
+      "returnedModel": "gpt-5.6-sol",
+      "schema": "LiveChiefOfStaffDecision",
+      "totalTokens": 1352
+    },
+    {
+      "checkIn": "first",
+      "role": "MEMORY_CURATOR",
+      "provider": "openai",
+      "returnedModel": "gpt-5.6-sol",
+      "schema": "MemoryCuratorOutput",
+      "totalTokens": 986
+    },
+    {
+      "checkIn": "second",
+      "role": "CHIEF_OF_STAFF",
+      "provider": "openai",
+      "returnedModel": "gpt-5.6-sol",
+      "schema": "LiveChiefOfStaffDecision",
+      "totalTokens": 1569
+    },
+    {
+      "checkIn": "second",
+      "role": "MEMORY_CURATOR",
+      "provider": "openai",
+      "returnedModel": "gpt-5.6-sol",
+      "schema": "MemoryCuratorOutput",
+      "totalTokens": 1540
+    }
+  ],
+  "totals": {
+    "agentCalls": 4,
+    "tokens": 5447,
+    "sdkRetries": 0,
+    "episodes": 2,
+    "retrievedMemoryRecordsOnSecondCheckIn": 1
+  },
+  "cloud": {
+    "minScale": 1,
+    "maxScale": 1,
+    "concurrency": 1,
+    "queue": "time-sovereignty-checkins",
+    "queueState": "RUNNING",
+    "maxDispatchesPerSecond": 1,
+    "maxConcurrentDispatches": 1,
+    "maxAttempts": 1,
+    "queuedTaskCountAfterAcceptance": 0
+  },
+  "privacy": {
+    "rawReplyIncluded": false,
+    "rawPhotoIncluded": false,
+    "secretIncluded": false,
+    "privateReasoningIncluded": false,
+    "externalResearchInvoked": false
+  },
+  "verification": {
+    "testFilesPassed": 31,
+    "testFilesSkipped": 5,
+    "testsPassed": 123,
+    "testsSkipped": 9,
+    "lintPassed": true,
+    "typecheckPassed": true,
+    "productionBuildPassed": true,
+    "diffCheckPassed": true
+  }
+}

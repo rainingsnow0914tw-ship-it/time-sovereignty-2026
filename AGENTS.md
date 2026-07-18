@@ -61,7 +61,7 @@ Treat those files as the current product source of truth. Preserve them unchange
 - `docs/decisions/`: accepted architecture, scope, cost, and fallback decisions.
 - `docs/evidence/`: timestamped verification evidence; never claim evidence that was not actually produced.
 - `docs/PROJECT_STATE.md`: short current-state handoff card; update at verified milestones only.
-- `CODEX_BUILD_LOG.md`: chronological build evidence and larger checkpoints.
+- `docs/CODEX_BUILD_LOG.md`: chronological build evidence and larger checkpoints.
 
 ## Start and verification commands
 
@@ -109,3 +109,5 @@ A phase is complete only when its intended user flow works, its contracts and de
 - Never commit `.env.local`, `GPTAPIKEY.txt`, plaintext secrets, raw replies, raw prompts, media, or private reasoning.
 - Keep `docs/EMERGENCY_HANDOFF_ANDROID_FINAL_2026-07-17.md` and `docs/LOCAL_CHEATSHEET_*.md` local-only unless Chloe explicitly changes that rule.
 - Do not weaken mock/live schema parity, zero SDK retries, origin checks, one-device session expiry, revocation, or cleanup safeguards to make a demo pass.
+- Decision 0016 freezes the accepted private core at revision `time-sovereignty-00036-qov`. Before submission, do not broadly change onboarding, live check-in, Cloud Tasks, Firestore, Agent, Realtime, or memory contracts unless a verified safety, data-loss, build, or acceptance blocker requires it.
+- Keep Demo Lab, public guest access, video, README, and Devpost work isolated from Chloe's private session and memory data.

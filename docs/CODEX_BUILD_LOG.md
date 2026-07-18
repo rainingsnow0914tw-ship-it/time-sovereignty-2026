@@ -557,3 +557,34 @@
 - Evidence:
   `docs/evidence/private-session-recovery-and-real-focus-loop-2026-07-18.md`
   and matching JSON.
+
+## 2026-07-19 — Real memory learning loop accepted and core frozen
+
+- Completed the required two-check-in acceptance on a physical Android PWA
+  against tag-only revision `time-sovereignty-00036-qov`. Stable revision
+  `time-sovereignty-00024-dih` remained at 100% normal traffic.
+- The first real same-goal check-in saved an immutable Episode, operational
+  Resume record, and tentative goal-scoped Strategy Card at confidence 0.35.
+  The optional durable-memory choice remained user-owned and was safely
+  deferred.
+- The application created the second real follow-up and authenticated Cloud
+  Task. GPT-5.6 retrieved exactly one related Strategy Card, treated it as
+  limited evidence, returned a completed decision, and did not generalize one
+  success into a permanent user truth.
+- Confirming the second result saved a second Episode and updated the original
+  Strategy to confidence 0.47 with one attempt and one success while preserving
+  `TENTATIVE` status.
+- Developer mode on the phone exposed the real returned model, Memory Curator
+  trace, and safe retrieved-memory count. Raw replies, photos, secrets, prompts,
+  and private reasoning remained excluded.
+- Four real calls used `gpt-5.6-sol`: Chief 1,352 tokens, Curator 986, Chief
+  1,569, Curator 1,540; 5,447 total with zero SDK retries. No external research
+  call was needed.
+- Final verification passed: 123 tests with nine live-only skips, ESLint,
+  TypeScript, production build, and diff check. Cloud health returned HTTP 200;
+  the queue was RUNNING and empty after acceptance.
+- Decision 0016 freezes the accepted private core. Submission priority is now
+  isolated Demo Lab, three-minute video, README, and Devpost. Web Search and a
+  public Guest Lane remain conditional on time.
+- Evidence: `docs/evidence/real-memory-learning-loop-2026-07-19.md` and matching
+  JSON.
