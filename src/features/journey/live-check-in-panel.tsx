@@ -12,6 +12,7 @@ import type { LocalOnboardingRecord } from "../../repositories/local-onboarding-
 import type {
   ClientLiveCheckIn,
   LiveChiefOfStaffDecision,
+  LiveMemoryDisposition,
 } from "../../live-checkin/schemas";
 import {
   isSpeechRecognitionSupported,
@@ -90,6 +91,8 @@ export function LiveCheckInPanel({
   const [realtimeStatus, setRealtimeStatus] =
     useState<RealtimeVoiceStatus>("IDLE");
   const [pausePolling, setPausePolling] = useState(false);
+  const [memoryDisposition, setMemoryDisposition] =
+    useState<LiveMemoryDisposition>("DEFER");
   const realtimeVoiceRef = useRef<RealtimeVoiceSession | null>(null);
   const scheduleIdRef = useRef<string | null>(null);
   const replyAttemptRef = useRef<{
@@ -97,6 +100,7 @@ export function LiveCheckInPanel({
     replyId: string;
   } | null>(null);
   const confirmationIdRef = useRef<string | null>(null);
+  const memoryDecisionIdRef = useRef<string | null>(null);
 
   const refreshCurrent = useCallback(async () => {
     const response = await fetch("/api/live/check-ins/current", {
@@ -113,6 +117,13 @@ export function LiveCheckInPanel({
     setConnection("PAIRED");
     setCurrent(payload.checkIn);
     setLastConfirmed(payload.lastConfirmedCheckIn);
+    if (
+      payload.checkIn?.status === "DECISION_READY" &&
+      memoryDecisionIdRef.current !== payload.checkIn.id
+    ) {
+      memoryDecisionIdRef.current = payload.checkIn.id;
+      setMemoryDisposition("DEFER");
+    }
   }, []);
 
   useEffect(() => {
@@ -247,6 +258,8 @@ export function LiveCheckInPanel({
       const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
       if (!response.ok || !payload.checkIn) throw new Error("schedule_failed");
       setCurrent(payload.checkIn);
+      memoryDecisionIdRef.current = payload.checkIn.id;
+      setMemoryDisposition("DEFER");
       setNotice(options.successNotice);
       scheduleIdRef.current = null;
       replyAttemptRef.current = null;
@@ -456,7 +469,10 @@ export function LiveCheckInPanel({
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ confirmationId: confirmationIdRef.current }),
+          body: JSON.stringify({
+            confirmationId: confirmationIdRef.current,
+            memoryDisposition,
+          }),
         },
       );
       const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
@@ -569,6 +585,14 @@ export function LiveCheckInPanel({
           <p className="mt-3 text-xs leading-5 text-[#5f6a64]">User-start only. The voice layer transcribes and speaks; GPT-5.6 remains the structured decision brain.</p>
         </div>
         {traceSource?.traces.length ? <TraceTable traces={traceSource.traces} /> : <p className="mt-4 text-sm text-[#596b62]">No live mobile Agent call has completed yet.</p>}
+        {traceSource ? (
+          <div className="mt-4 rounded-2xl border border-[#d7dfd8] bg-white p-4 text-xs leading-5 text-[#5f6a64]">
+            <p><strong>Memory retrieval:</strong> {traceSource.retrievedMemoryIds.length ? `${traceSource.retrievedMemoryIds.length} safe record ID(s)` : "No prior memory used"}</p>
+            {traceSource.retrievedMemoryIds.length ? <p className="mt-1 break-all">{traceSource.retrievedMemoryIds.join(", ")}</p> : null}
+            <p className="mt-1"><strong>Memory Curator:</strong> {traceSource.memoryCurationStatus ?? "Not started"}</p>
+            {traceSource.memoryCurationSummary ? <p className="mt-1">{traceSource.memoryCurationSummary}</p> : null}
+          </div>
+        ) : null}
         {!current ? (
           <details className="mt-5 rounded-2xl border border-[#d7dfd8] bg-white p-4">
             <summary className="cursor-pointer text-sm font-bold text-[#40564b]">
@@ -735,14 +759,14 @@ export function LiveCheckInPanel({
         </div>
       ) : null}
       {current?.status === "PROCESSING" ? <p className="mt-5 rounded-2xl bg-[#fff2cc] p-4 text-sm font-semibold text-[#6f5310]">Chief of Staff is reviewing the evidence. Recovery joins only if the situation truly needs it.</p> : null}
-      {current?.decision ? <DecisionCard checkIn={current} busy={busy} onConfirm={confirm} onSpeak={realtimeActive ? () => realtimeVoiceRef.current?.speak(`${current.decision!.userMessage} ${current.decision!.adaptedCommitment}`) : undefined} /> : null}
+      {current?.decision ? <DecisionCard checkIn={current} busy={busy} memoryDisposition={memoryDisposition} onMemoryDisposition={setMemoryDisposition} onConfirm={confirm} onSpeak={realtimeActive ? () => realtimeVoiceRef.current?.speak(`${current.decision!.userMessage} ${current.decision!.adaptedCommitment}`) : undefined} /> : null}
       {notice ? <p className="mt-4 text-sm text-[#596b62]" role="status">{notice}</p> : null}
     </section>
     </Localized>
   );
 }
 
-function DecisionCard({ checkIn, busy, onConfirm, onSpeak }: { checkIn: ClientLiveCheckIn; busy: boolean; onConfirm: () => void; onSpeak?: () => void }) {
+function DecisionCard({ checkIn, busy, memoryDisposition, onMemoryDisposition, onConfirm, onSpeak }: { checkIn: ClientLiveCheckIn; busy: boolean; memoryDisposition: LiveMemoryDisposition; onMemoryDisposition: (disposition: LiveMemoryDisposition) => void; onConfirm: () => void; onSpeak?: () => void }) {
   const { formatDateTime } = useLocale();
   const decision = checkIn.decision!;
   const assessment = decision.assessment ?? "BLOCKED";
@@ -764,7 +788,37 @@ function DecisionCard({ checkIn, busy, onConfirm, onSpeak }: { checkIn: ClientLi
         proposal, and follow-up state.
       </p>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-[#6b786f]">Strategy</dt><dd className="font-bold text-[#28443a]">{decision.selectedStrategy ?? "No recovery strategy needed"}</dd></div><div><dt className="text-[#6b786f]">Next follow-up</dt><dd className="font-bold text-[#28443a]">{decision.nextFollowUpAt ? formatDateTime(decision.nextFollowUpAt) : "No follow-up scheduled"}</dd></div></dl>
-      {decision.memoryProposal ? <p className="mt-4 rounded-2xl bg-[#edf5e8] p-3 text-sm text-[#40594e]">Memory proposal: {decision.memoryProposal.summary}</p> : null}
+      {decision.memoryProposal ? (
+        <div className="mt-4 rounded-2xl bg-[#edf5e8] p-3 text-sm text-[#40594e]">
+          <p><strong>Something I tentatively noticed:</strong> {decision.memoryProposal.summary}</p>
+          {checkIn.status === "DECISION_READY" ? (
+            <>
+              <p className="mt-2 text-xs leading-5">This is optional and does not block confirming the commitment. If you decide later, it remains limited evidence rather than a permanent truth.</p>
+              <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Memory feedback">
+                {([
+                  ["CONFIRM", "This fits me"],
+                  ["NOT_QUITE", "Not quite"],
+                  ["FORGET", "Don't remember"],
+                  ["DEFER", "Decide later"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={memoryDisposition === value ? primary : secondary}
+                    disabled={busy}
+                    aria-pressed={memoryDisposition === value}
+                    onClick={() => onMemoryDisposition(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-xs font-semibold">Memory choice: {checkIn.memoryDisposition ?? "DEFER"}</p>
+          )}
+        </div>
+      ) : null}
       {onSpeak ? <button type="button" className={`${secondary} mt-4`} onClick={onSpeak}>▶ Play with natural voice</button> : null}
       {checkIn.status === "DECISION_READY" ? <button type="button" className={`${primary} mt-5 w-full`} disabled={busy} onClick={onConfirm}>{assessment === "COMPLETED" ? "Confirm completion" : recoveryUsed ? "Confirm adapted commitment" : "Confirm next commitment"}</button> : <p className="mt-5 text-sm font-bold text-[#4c765f]">✓ Decision, memory, and follow-up state persisted</p>}
     </div>

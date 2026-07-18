@@ -6,6 +6,8 @@ import type {
   StructuredAgentRequest,
 } from "../providers/ai/types";
 import { runLiveCheckInAgents } from "./orchestrator";
+import { runLiveMemoryCurator } from "./memory-curator";
+import { LiveMemoryRecordSchema } from "./live-memory";
 import { LiveCheckInDocumentSchema } from "./schemas";
 
 const recovery = {
@@ -159,6 +161,64 @@ describe("live progress-aware Agent orchestration", () => {
     ]);
   });
 
+  it("injects a tentative Strategy Card as explicitly limited evidence", async () => {
+    const capturedRequests: StructuredAgentRequest<unknown>[] = [];
+    const baseProvider = new MockAiProvider({
+      LIVE_CHECK_IN_TRIAGE: onTrackDecision,
+    });
+    const provider: AiProvider = {
+      generateStructured: (request, schema) => {
+        capturedRequests.push(request as StructuredAgentRequest<unknown>);
+        return baseProvider.generateStructured(request, schema);
+      },
+    };
+    const memory = LiveMemoryRecordSchema.parse({
+      version: 2,
+      id: "strategy-first-phone-task",
+      sessionId: "session-proof",
+      sourceCheckInId: "first-phone-task",
+      scope: "GOAL",
+      goalKey: "2c8ac8e6821f616265b74b9a1b92cde7",
+      kind: "STRATEGY",
+      state: "ACTIVE",
+      sourceType: "OBSERVED_PATTERN",
+      confirmationState: "TENTATIVE",
+      summary: "A short live deadline may reduce repeated erasing.",
+      confidence: 0.45,
+      effectiveness: {
+        attempts: 0,
+        successes: 0,
+        partials: 0,
+        blocked: 0,
+        goalChanged: 0,
+      },
+      evidenceCheckInIds: ["first-phone-task"],
+      validFrom: "2026-07-17T11:00:00.000Z",
+      validUntil: null,
+      recheckAt: null,
+      confirmedAt: null,
+      createdAt: "2026-07-17T11:00:00.000Z",
+      updatedAt: "2026-07-17T11:00:00.000Z",
+    });
+
+    await runLiveCheckInAgents({
+      checkIn: claimedCheckIn(),
+      reply: report,
+      relevantMemories: [memory],
+      provider,
+      onTriage: async () => undefined,
+      onRecovery: async () => undefined,
+      onDecision: async () => undefined,
+    });
+
+    expect(JSON.stringify(capturedRequests[0]?.input)).toContain(
+      "LIMITED_EVIDENCE",
+    );
+    expect(capturedRequests[0]?.additionalInstructions).toContain(
+      "never as a permanent truth",
+    );
+  });
+
   it("runs Chief triage, Recovery, then Chief synthesis for a real blocker", async () => {
     const persistedTraces: unknown[] = [];
     const result = await runLiveCheckInAgents({
@@ -207,5 +267,46 @@ describe("live progress-aware Agent orchestration", () => {
 
     expect(result.traces).toHaveLength(1);
     expect(result.traces[0]?.agent).toBe("CHIEF_OF_STAFF");
+  });
+
+  it("runs Memory Curator after a confirmed user-facing decision", async () => {
+    const confirmed = LiveCheckInDocumentSchema.parse({
+      ...claimedCheckIn(),
+      status: "CONFIRMED",
+      decision: blockedDecision,
+      leaseToken: null,
+      leaseExpiresAt: null,
+      confirmedAt: "2026-07-17T12:10:00.000Z",
+      confirmationId: "confirmation-proof",
+      memoryDisposition: "DEFER",
+    });
+    const output = {
+      proposals: [
+        {
+          operation: "CREATE" as const,
+          memoryId: null,
+          kind: "STRATEGY" as const,
+          sourceType: "OBSERVED_PATTERN" as const,
+          proposedValue: {
+            summary: "A smaller recording step may restore momentum.",
+            attributes: [{ key: "scope", value: "current goal only" }],
+          },
+          confidence: 0.45,
+          rationale: "One episode is limited evidence.",
+          requiresUserConfirmation: true,
+        },
+      ],
+      summary: "One tentative goal-scoped Strategy Card was curated.",
+    };
+
+    const result = await runLiveMemoryCurator({
+      checkIn: confirmed,
+      relevantMemories: [],
+      disposition: "DEFER",
+      provider: new MockAiProvider({ LIVE_MEMORY_CURATION: output }),
+    });
+
+    expect(result.output).toEqual(output);
+    expect(result.trace.agent).toBe("MEMORY_CURATOR");
   });
 });

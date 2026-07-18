@@ -5,9 +5,20 @@ import { Firestore } from "@google-cloud/firestore";
 import type {
   AgentRunTrace,
   CommitmentRecoveryOutput,
+  MemoryCuratorOutput,
 } from "../domain/agents/schemas";
 import { PersistedAgentRunSchema } from "../infrastructure/firestore/agent-trace-repository";
 import type { CloudConfig } from "../infrastructure/gcp/config";
+import {
+  applyMemoryOutcome,
+  buildLiveEpisode,
+  buildResumeMemory,
+  buildStrategyMemory,
+  LiveMemoryRecordSchema,
+  memoryDocumentId,
+  selectRelevantLiveMemories,
+  type LiveMemoryRecord,
+} from "./live-memory";
 import {
   LiveCheckInDocumentSchema,
   LiveDeviceSessionSchema,
@@ -15,10 +26,12 @@ import {
   type LiveCheckInDocument,
   type LiveChiefOfStaffDecision,
   type LiveDeviceSession,
+  type LiveMemoryDisposition,
 } from "./schemas";
 
 const SESSION_DOCUMENT_ID = "single-device";
 const REPLY_LEASE_SECONDS = 300;
+const MEMORY_CURATION_LEASE_SECONDS = 300;
 
 export class LivePairingAlreadyUsedError extends Error {
   constructor() {
@@ -53,6 +66,11 @@ export type LiveReplyClaim =
   | { kind: "DUPLICATE"; checkIn: LiveCheckInDocument }
   | { kind: "BUSY"; retryAfterSeconds: number };
 
+export type LiveMemoryCurationClaim =
+  | { kind: "CLAIMED"; checkIn: LiveCheckInDocument; leaseToken: string }
+  | { kind: "DUPLICATE"; checkIn: LiveCheckInDocument }
+  | { kind: "BUSY"; checkIn: LiveCheckInDocument; retryAfterSeconds: number };
+
 export interface LiveCheckInRepository {
   pair(options: {
     pairingFingerprint: string;
@@ -71,6 +89,11 @@ export interface LiveCheckInRepository {
   attachTask(checkInId: string, taskName: string): Promise<LiveCheckInDocument>;
   findCurrent(sessionId: string): Promise<LiveCheckInDocument | null>;
   findById(checkInId: string): Promise<LiveCheckInDocument | null>;
+  findRelevantMemories(options: {
+    sessionId: string;
+    context: LiveCheckInContext;
+    limit?: number;
+  }): Promise<LiveMemoryRecord[]>;
   markPending(options: {
     checkInId: string;
     taskName: string | null;
@@ -80,6 +103,7 @@ export interface LiveCheckInRepository {
     sessionId: string;
     replyId: string;
     replyFingerprint: string;
+    evidenceKinds: Array<"TEXT" | "PHOTO">;
   }): Promise<LiveReplyClaim>;
   saveTriage(options: {
     checkInId: string;
@@ -97,6 +121,7 @@ export interface LiveCheckInRepository {
     checkInId: string;
     leaseToken: string;
     decision: LiveChiefOfStaffDecision;
+    retrievedMemoryIds: string[];
     trace?: AgentRunTrace;
   }): Promise<LiveCheckInDocument>;
   failReply(options: {
@@ -108,7 +133,22 @@ export interface LiveCheckInRepository {
     checkInId: string;
     sessionId: string;
     confirmationId: string;
+    memoryDisposition: LiveMemoryDisposition;
   }): Promise<{ checkIn: LiveCheckInDocument; duplicate: boolean }>;
+  claimMemoryCuration(options: {
+    checkInId: string;
+    sessionId: string;
+  }): Promise<LiveMemoryCurationClaim>;
+  finishMemoryCuration(options: {
+    checkInId: string;
+    leaseToken: string;
+    output: MemoryCuratorOutput;
+    trace: AgentRunTrace;
+  }): Promise<LiveCheckInDocument>;
+  failMemoryCuration(options: {
+    checkInId: string;
+    leaseToken: string;
+  }): Promise<LiveCheckInDocument>;
   attachNextTask(options: {
     checkInId: string;
     nextCheckInId: string;
@@ -315,6 +355,23 @@ export function createLiveCheckInRepository(
         : null;
     },
 
+    async findRelevantMemories({ sessionId, context, limit }) {
+      const snapshot = await firestore
+        .collection("live_memories")
+        .where("sessionId", "==", sessionId)
+        .get();
+      const memories = snapshot.docs.flatMap((document) => {
+        const parsed = LiveMemoryRecordSchema.safeParse(document.data());
+        return parsed.success ? [parsed.data] : [];
+      });
+      return selectRelevantLiveMemories({
+        memories,
+        context,
+        now: now(),
+        limit,
+      });
+    },
+
     async markPending({ checkInId, taskName }) {
       const ref = firestore.collection("live_checkins").doc(checkInId);
       return firestore.runTransaction(async (transaction) => {
@@ -357,7 +414,13 @@ export function createLiveCheckInRepository(
       });
     },
 
-    async claimReply({ checkInId, sessionId, replyId, replyFingerprint }) {
+    async claimReply({
+      checkInId,
+      sessionId,
+      replyId,
+      replyFingerprint,
+      evidenceKinds,
+    }) {
       const ref = firestore.collection("live_checkins").doc(checkInId);
       return firestore.runTransaction(async (transaction) => {
         const snapshot = await transaction.get(ref);
@@ -405,6 +468,7 @@ export function createLiveCheckInRepository(
           status: "PROCESSING",
           replyId,
           replyFingerprint,
+          evidenceKinds,
           attemptCount: current.attemptCount + 1,
           leaseToken,
           leaseExpiresAt: new Date(
@@ -434,11 +498,18 @@ export function createLiveCheckInRepository(
       }), trace);
     },
 
-    async completeDecision({ checkInId, leaseToken, decision, trace }) {
+    async completeDecision({
+      checkInId,
+      leaseToken,
+      decision,
+      retrievedMemoryIds,
+      trace,
+    }) {
       return updateOwnedReply(firestore, checkInId, leaseToken, now, (current) => ({
         ...current,
         status: "DECISION_READY",
         decision,
+        retrievedMemoryIds,
         traceRunIds: trace
           ? [...new Set([...current.traceRunIds, trace.runId])]
           : current.traceRunIds,
@@ -461,12 +532,21 @@ export function createLiveCheckInRepository(
       }
     },
 
-    async confirm({ checkInId, sessionId, confirmationId }) {
+    async confirm({
+      checkInId,
+      sessionId,
+      confirmationId,
+      memoryDisposition,
+    }) {
       const ref = firestore.collection("live_checkins").doc(checkInId);
       return firestore.runTransaction(async (transaction) => {
-        const [snapshot, sessionSnapshot] = await Promise.all([
+        const episodeRef = firestore
+          .collection("live_episodes")
+          .doc(memoryDocumentId("episode", checkInId));
+        const [snapshot, sessionSnapshot, episodeSnapshot] = await Promise.all([
           transaction.get(ref),
           transaction.get(sessionRef),
+          transaction.get(episodeRef),
         ]);
         if (!snapshot.exists || !sessionSnapshot.exists) {
           throw new LiveCheckInStateError("Check-in or session not found.");
@@ -482,6 +562,14 @@ export function createLiveCheckInRepository(
               "Confirmation id does not match the completed confirmation.",
             );
           }
+          if (
+            current.memoryDisposition &&
+            current.memoryDisposition !== memoryDisposition
+          ) {
+            throw new LiveCheckInStateError(
+              "Memory disposition does not match the completed confirmation.",
+            );
+          }
           return { checkIn: current, duplicate: true };
         }
         if (current.status !== "DECISION_READY" || !current.decision) {
@@ -489,12 +577,22 @@ export function createLiveCheckInRepository(
             `Check-in cannot be confirmed from ${current.status}.`,
           );
         }
+        const retrievedMemoryRefs = current.retrievedMemoryIds.map((memoryId) =>
+          firestore.collection("live_memories").doc(memoryId),
+        );
+        const retrievedMemorySnapshots = await Promise.all(
+          retrievedMemoryRefs.map((memoryRef) => transaction.get(memoryRef)),
+        );
         const timestamp = now().toISOString();
         const updated = LiveCheckInDocumentSchema.parse({
           ...current,
           status: "CONFIRMED",
           confirmedAt: timestamp,
           confirmationId,
+          memoryDisposition,
+          memoryCurationStatus: "PENDING",
+          memoryCurationLeaseToken: null,
+          memoryCurationLeaseExpiresAt: null,
           updatedAt: timestamp,
         });
         transaction.set(ref, updated);
@@ -503,24 +601,182 @@ export function createLiveCheckInRepository(
           lastConfirmedCheckInId: current.id,
           updatedAt: timestamp,
         });
-        if (current.decision.memoryProposal) {
+        if (!episodeSnapshot.exists) {
           transaction.set(
-            firestore.collection("live_memories").doc(`memory-${current.id}`),
-            {
-              version: 1,
-              id: `memory-${current.id}`,
-              sessionId,
-              checkInId: current.id,
-              sourceType: "CONFIRMED_BY_USER",
-              kind: "STRATEGY",
-              summary: current.decision.memoryProposal.summary,
-              confidence: current.decision.memoryProposal.confidence,
-              confirmedAt: timestamp,
-              createdAt: timestamp,
-            },
+            episodeRef,
+            buildLiveEpisode({
+              checkIn: current,
+              disposition: memoryDisposition,
+              timestamp,
+            }),
           );
         }
+        const resume = buildResumeMemory({ checkIn: current, timestamp });
+        transaction.set(
+          firestore.collection("live_memories").doc(resume.id),
+          resume,
+        );
+        const strategy = buildStrategyMemory({
+          checkIn: current,
+          disposition: memoryDisposition,
+          timestamp,
+        });
+        if (strategy) {
+          transaction.set(
+            firestore.collection("live_memories").doc(strategy.id),
+            strategy,
+          );
+        }
+        for (const memorySnapshot of retrievedMemorySnapshots) {
+          if (!memorySnapshot.exists) continue;
+          const parsed = LiveMemoryRecordSchema.safeParse(memorySnapshot.data());
+          if (!parsed.success || parsed.data.sessionId !== sessionId) continue;
+          const effective = applyMemoryOutcome({
+            memory: parsed.data,
+            assessment: current.decision.assessment,
+            checkInId: current.id,
+            timestamp,
+          });
+          if (effective !== parsed.data) {
+            transaction.set(memorySnapshot.ref, effective);
+          }
+        }
         return { checkIn: updated, duplicate: false };
+      });
+    },
+
+    async claimMemoryCuration({ checkInId, sessionId }) {
+      const ref = firestore.collection("live_checkins").doc(checkInId);
+      return firestore.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists) throw new LiveCheckInStateError("Check-in not found.");
+        const current = LiveCheckInDocumentSchema.parse(snapshot.data());
+        if (current.sessionId !== sessionId || current.status !== "CONFIRMED") {
+          throw new LiveCheckInStateError(
+            "Only the confirmed session may curate this memory.",
+          );
+        }
+        if (current.memoryCurationStatus === "COMPLETED") {
+          return { kind: "DUPLICATE" as const, checkIn: current };
+        }
+        if (
+          current.memoryCurationStatus === "PROCESSING" &&
+          current.memoryCurationLeaseExpiresAt &&
+          new Date(current.memoryCurationLeaseExpiresAt).getTime() > now().getTime()
+        ) {
+          return {
+            kind: "BUSY" as const,
+            checkIn: current,
+            retryAfterSeconds: Math.max(
+              1,
+              Math.ceil(
+                (new Date(current.memoryCurationLeaseExpiresAt).getTime() -
+                  now().getTime()) /
+                  1_000,
+              ),
+            ),
+          };
+        }
+        const leaseToken = idFactory();
+        const timestamp = now();
+        const claimed = LiveCheckInDocumentSchema.parse({
+          ...current,
+          memoryCurationStatus: "PROCESSING",
+          memoryCurationLeaseToken: leaseToken,
+          memoryCurationLeaseExpiresAt: new Date(
+            timestamp.getTime() + MEMORY_CURATION_LEASE_SECONDS * 1_000,
+          ).toISOString(),
+          updatedAt: timestamp.toISOString(),
+        });
+        transaction.set(ref, claimed);
+        return { kind: "CLAIMED" as const, checkIn: claimed, leaseToken };
+      });
+    },
+
+    async finishMemoryCuration({ checkInId, leaseToken, output, trace }) {
+      const ref = firestore.collection("live_checkins").doc(checkInId);
+      const strategyRef = firestore
+        .collection("live_memories")
+        .doc(memoryDocumentId("strategy", checkInId));
+      return firestore.runTransaction(async (transaction) => {
+        const [snapshot, strategySnapshot] = await Promise.all([
+          transaction.get(ref),
+          transaction.get(strategyRef),
+        ]);
+        if (!snapshot.exists) throw new LiveCheckInStateError("Check-in not found.");
+        const current = LiveCheckInDocumentSchema.parse(snapshot.data());
+        if (
+          current.memoryCurationStatus !== "PROCESSING" ||
+          current.memoryCurationLeaseToken !== leaseToken
+        ) {
+          throw new LiveCheckInStateError("Memory curation lease is not owned.");
+        }
+        const timestamp = now().toISOString();
+        const strategyProposal = output.proposals.find(
+          (proposal) =>
+            proposal.kind === "STRATEGY" &&
+            proposal.proposedValue &&
+            ["CREATE", "UPDATE"].includes(proposal.operation),
+        );
+        if (strategyProposal && strategySnapshot.exists) {
+          const parsed = LiveMemoryRecordSchema.safeParse(strategySnapshot.data());
+          if (parsed.success) {
+            const confirmed = current.memoryDisposition === "CONFIRM";
+            const refined = LiveMemoryRecordSchema.parse({
+              ...parsed.data,
+              summary: strategyProposal.proposedValue!.summary,
+              confidence: confirmed
+                ? strategyProposal.confidence
+                : Math.min(strategyProposal.confidence, 0.45),
+              sourceType: confirmed
+                ? "CONFIRMED_BY_USER"
+                : "OBSERVED_PATTERN",
+              confirmationState: confirmed ? "CONFIRMED" : "TENTATIVE",
+              confirmedAt: confirmed ? current.confirmedAt : null,
+              updatedAt: timestamp,
+            });
+            transaction.set(strategyRef, refined);
+          }
+        }
+        const updated = LiveCheckInDocumentSchema.parse({
+          ...current,
+          memoryCurationStatus: "COMPLETED",
+          memoryCurationLeaseToken: null,
+          memoryCurationLeaseExpiresAt: null,
+          memoryCurationSummary: output.summary,
+          traceRunIds: [...new Set([...current.traceRunIds, trace.runId])],
+          updatedAt: timestamp,
+        });
+        transaction.set(ref, updated);
+        transaction.set(
+          firestore.collection("agent_runs").doc(trace.runId),
+          PersistedAgentRunSchema.parse({ version: 1, ...trace }),
+        );
+        return updated;
+      });
+    },
+
+    async failMemoryCuration({ checkInId, leaseToken }) {
+      const ref = firestore.collection("live_checkins").doc(checkInId);
+      return firestore.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists) throw new LiveCheckInStateError("Check-in not found.");
+        const current = LiveCheckInDocumentSchema.parse(snapshot.data());
+        if (
+          current.memoryCurationStatus !== "PROCESSING" ||
+          current.memoryCurationLeaseToken !== leaseToken
+        ) {
+          return current;
+        }
+        const updated = LiveCheckInDocumentSchema.parse({
+          ...current,
+          memoryCurationStatus: "FAILED",
+          memoryCurationLeaseToken: null,
+          memoryCurationLeaseExpiresAt: null,
+          updatedAt: now().toISOString(),
+        });
+        transaction.set(ref, updated);
+        return updated;
       });
     },
 

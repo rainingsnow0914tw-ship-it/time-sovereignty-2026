@@ -7,9 +7,11 @@ import {
   liveJson,
 } from "@/live-checkin/route-helpers";
 import { LiveConfirmRequestSchema } from "@/live-checkin/schemas";
+import { runLiveMemoryCurator } from "@/live-checkin/memory-curator";
 import { createLiveCheckInScheduler } from "@/live-checkin/scheduler";
 import { assertAllowedOrigin } from "@/live-checkin/session-auth";
 import { selectLiveFollowUpTime } from "@/live-checkin/quiet-hours";
+import { OpenAiResponsesProvider } from "@/providers/ai/openai-provider";
 
 export const runtime = "nodejs";
 
@@ -26,15 +28,53 @@ export async function POST(
       checkInId,
       sessionId: auth.session.id,
       confirmationId: body.confirmationId,
+      memoryDisposition: body.memoryDisposition,
     });
-    const decision = confirmation.checkIn.decision;
+    let confirmedCheckIn = confirmation.checkIn;
+    const curationClaim = await auth.repository.claimMemoryCuration({
+      checkInId,
+      sessionId: auth.session.id,
+    });
+    if (curationClaim.kind === "CLAIMED") {
+      try {
+        const relevantMemories = await auth.repository.findRelevantMemories({
+          sessionId: auth.session.id,
+          context: curationClaim.checkIn.context,
+          limit: 8,
+        });
+        const curated = await runLiveMemoryCurator({
+          checkIn: curationClaim.checkIn,
+          relevantMemories,
+          disposition: body.memoryDisposition,
+          provider: new OpenAiResponsesProvider(),
+        });
+        confirmedCheckIn = await auth.repository.finishMemoryCuration({
+          checkInId,
+          leaseToken: curationClaim.leaseToken,
+          output: curated.output,
+          trace: curated.trace,
+        });
+      } catch (error) {
+        confirmedCheckIn = await auth.repository.failMemoryCuration({
+          checkInId,
+          leaseToken: curationClaim.leaseToken,
+        });
+        console.error("[live-check-in] memory curation failed", {
+          checkInId,
+          name: error instanceof Error ? error.name : "UnknownError",
+        });
+      }
+    } else {
+      confirmedCheckIn = curationClaim.checkIn;
+    }
+    const decision = confirmedCheckIn.decision;
     if (!decision) throw new Error("Confirmed live check-in has no decision.");
 
     if (decision.assessment === "COMPLETED" || !decision.nextFollowUpAt) {
       return liveJson({
         ok: true,
         duplicate: confirmation.duplicate,
-        checkIn: await clientCheckIn(confirmation.checkIn, auth.config),
+        checkIn: await clientCheckIn(confirmedCheckIn, auth.config),
         nextCheckIn: null,
       });
     }
@@ -43,14 +83,14 @@ export async function POST(
     const scheduledFor = selectLiveFollowUpTime({
       proposedAt: decision.nextFollowUpAt,
       now: new Date(),
-      quietHours: confirmation.checkIn.context.quietHours,
+      quietHours: confirmedCheckIn.context.quietHours,
     });
     const next = await auth.repository.createScheduled({
       id: nextCheckInId,
       sessionId: auth.session.id,
       message: `How did “${decision.adaptedCommitment}” go?`,
       context: {
-        ...confirmation.checkIn.context,
+        ...confirmedCheckIn.context,
         currentAction: decision.adaptedCommitment,
         minimumAction: decision.adaptedCommitment,
       },

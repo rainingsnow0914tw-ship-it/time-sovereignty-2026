@@ -41,6 +41,10 @@ export async function POST(
       sessionId: auth.session.id,
       replyId: body.replyId,
       replyFingerprint,
+      evidenceKinds: [
+        ...(body.reply ? (["TEXT"] as const) : []),
+        ...(body.image ? (["PHOTO"] as const) : []),
+      ],
     });
     if (claim.kind === "DUPLICATE") {
       return liveJson({
@@ -64,10 +68,16 @@ export async function POST(
       checkInId,
       leaseToken: claim.leaseToken,
     };
+    const relevantMemories = await auth.repository.findRelevantMemories({
+      sessionId: auth.session.id,
+      context: claim.checkIn.context,
+      limit: 8,
+    });
     let completedCheckIn: typeof claim.checkIn | null = null;
     const result = await runLiveCheckInAgents({
       checkIn: claim.checkIn,
       reply: body,
+      relevantMemories,
       provider: new OpenAiResponsesProvider(),
       onTriage: async (triage, trace) => {
         await auth.repository.saveTriage({
@@ -90,6 +100,7 @@ export async function POST(
           checkInId,
           leaseToken: claim.leaseToken,
           decision,
+          retrievedMemoryIds: relevantMemories.map((memory) => memory.id),
           trace,
         });
       },
@@ -108,6 +119,7 @@ export async function POST(
         (total, trace) => total + (trace.tokenUsage?.totalTokens ?? 0),
         0,
       ),
+      retrievedMemoryCount: relevantMemories.length,
     });
     return liveJson({
       ok: true,

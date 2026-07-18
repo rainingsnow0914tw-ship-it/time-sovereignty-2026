@@ -61,6 +61,20 @@ export const LiveReplyIntentSchema = z.enum([
   "SOMETHING_CHANGED",
 ]);
 
+export const LiveMemoryDispositionSchema = z.enum([
+  "DEFER",
+  "CONFIRM",
+  "NOT_QUITE",
+  "FORGET",
+]);
+
+export const LiveMemoryCurationStatusSchema = z.enum([
+  "PENDING",
+  "PROCESSING",
+  "COMPLETED",
+  "FAILED",
+]);
+
 export const LiveChiefOfStaffDecisionOutputSchema = z
   .object({
     assessment: LiveCheckInAssessmentSchema,
@@ -125,7 +139,17 @@ export const LiveCheckInDocumentSchema = z
     triage: LiveChiefOfStaffDecisionSchema.nullable().optional(),
     recovery: CommitmentRecoveryOutputSchema.nullable(),
     decision: LiveChiefOfStaffDecisionSchema.nullable(),
-    traceRunIds: z.array(EntityIdSchema).max(3),
+    traceRunIds: z.array(EntityIdSchema).max(4),
+    evidenceKinds: z
+      .array(z.enum(["TEXT", "PHOTO"]))
+      .max(2)
+      .default([]),
+    retrievedMemoryIds: z.array(EntityIdSchema).max(8).default([]),
+    memoryDisposition: LiveMemoryDispositionSchema.nullable().default(null),
+    memoryCurationStatus: LiveMemoryCurationStatusSchema.nullable().default(null),
+    memoryCurationLeaseToken: z.string().uuid().nullable().default(null),
+    memoryCurationLeaseExpiresAt: IsoDateTimeSchema.nullable().default(null),
+    memoryCurationSummary: z.string().trim().min(1).max(2_000).nullable().default(null),
     confirmedAt: IsoDateTimeSchema.nullable(),
     confirmationId: EntityIdSchema.nullable(),
     nextCheckInId: EntityIdSchema.nullable(),
@@ -201,6 +225,7 @@ export const LiveReplyRequestSchema = z
 export const LiveConfirmRequestSchema = z
   .object({
     confirmationId: EntityIdSchema,
+    memoryDisposition: LiveMemoryDispositionSchema.default("DEFER"),
   })
   .strict();
 
@@ -215,6 +240,10 @@ export const ClientLiveCheckInSchema = LiveCheckInDocumentSchema.pick({
   attemptCount: true,
   decision: true,
   traceRunIds: true,
+  retrievedMemoryIds: true,
+  memoryDisposition: true,
+  memoryCurationStatus: true,
+  memoryCurationSummary: true,
   confirmedAt: true,
   nextCheckInId: true,
   createdAt: true,
@@ -231,5 +260,6 @@ export type LiveChiefOfStaffDecision = z.infer<
   typeof LiveChiefOfStaffDecisionSchema
 >;
 export type LiveReplyRequest = z.infer<typeof LiveReplyRequestSchema>;
+export type LiveMemoryDisposition = z.infer<typeof LiveMemoryDispositionSchema>;
 export type LiveDeviceSession = z.infer<typeof LiveDeviceSessionSchema>;
 export type ClientLiveCheckIn = z.infer<typeof ClientLiveCheckInSchema>;
