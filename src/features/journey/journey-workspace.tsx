@@ -71,12 +71,14 @@ export function JourneyWorkspace({
   onReset,
   liveCheckInEnabled = true,
   showLocalSimulation = true,
+  demoLab = false,
   onLiveCheckInSummaryChange,
 }: {
   record: LocalOnboardingRecord;
   onReset: () => void;
   liveCheckInEnabled?: boolean;
   showLocalSimulation?: boolean;
+  demoLab?: boolean;
   onLiveCheckInSummaryChange?: (summary: LiveCheckInSummary) => void;
 }) {
   const { locale, t } = useLocale();
@@ -115,6 +117,7 @@ export function JourneyWorkspace({
   }, [record.goal.id]);
 
   useEffect(() => {
+    if (demoLab) return;
     const controller = new AbortController();
     void (async () => {
       try {
@@ -142,7 +145,7 @@ export function JourneyWorkspace({
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [demoLab]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -210,7 +213,11 @@ export function JourneyWorkspace({
 
   const runNextSimulationDay = () => {
     setState((current) => advanceSimulation(current, record));
-    setNotice("Simulated time advanced. Product behavior stayed on the real state path.");
+    setNotice(
+      demoLab
+        ? "Scripted time advanced. No API or private data was used."
+        : "Simulated time advanced. Product behavior stayed on the real state path.",
+    );
   };
 
   const runFullSimulation = () => {
@@ -229,7 +236,11 @@ export function JourneyWorkspace({
       }
       return next;
     });
-    setNotice("Thirty simulated days are now visible in Journey and Developer mode.");
+    setNotice(
+      demoLab
+        ? "The complete scripted 30-day story is now visible in Journey and Developer."
+        : "Thirty simulated days are now visible in Journey and Developer mode.",
+    );
   };
 
   const playCheckIn = async () => {
@@ -647,16 +658,20 @@ export function JourneyWorkspace({
               Time Sovereignty
             </div>
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-              Your Chief of Staff command center
+              {demoLab ? "30-day story lab" : "Your Chief of Staff command center"}
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <LanguageToggle dark />
             {showLocalSimulation ? (
               <>
-                <span className="rounded-full bg-white/10 px-3 py-2">{`Simulated Day ${state.simulatedDay}`}</span>
+                <span className="rounded-full bg-white/10 px-3 py-2">{`${demoLab ? "Scripted" : "Simulated"} Day ${state.simulatedDay}`}</span>
                 <span className="rounded-full bg-[#d8f48a] px-3 py-2 font-bold text-[#173f35]">
-                  {state.simulationComplete ? "30-day proof ready" : "Accelerated time"}
+                  {demoLab
+                    ? "Demo Lab · no API"
+                    : state.simulationComplete
+                      ? "30-day proof ready"
+                      : "Accelerated time"}
                 </span>
               </>
             ) : (
@@ -721,7 +736,9 @@ export function JourneyWorkspace({
             />
           ) : (
             <div className="rounded-2xl border border-[#bed0c5] bg-[#eef5ef] px-4 py-3 text-sm text-[#496a5b]">
-              Play profile · real Goal Architect is active. The recording check-in lane remains separate.
+              {demoLab
+                ? "Demo Lab check-in · scripted locally with mock traces. No API, Cloud Task, Firestore, or private session is used."
+                : "Play profile · real Goal Architect is active. The recording check-in lane remains separate."}
             </div>
           )}
           {showLocalSimulation ? <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
@@ -941,7 +958,9 @@ export function JourneyWorkspace({
                   <h2 className="mt-2 text-2xl font-semibold text-[#173f35]">Auditable orchestration</h2>
                 </div>
                 <span className="rounded-full bg-[#fff2cc] px-3 py-2 text-xs font-bold text-[#6f5310]">
-                  {runtimeHealth?.providerMode === "live"
+                  {demoLab
+                    ? "Scripted simulation · mock traces · no API"
+                    : runtimeHealth?.providerMode === "live"
                     ? `Local simulation · cloud live · ${runtimeHealth.model}`
                     : "Local simulation · cloud health pending"}
                 </span>
@@ -973,7 +992,9 @@ export function JourneyWorkspace({
                 <Eyebrow>Acceptance path</Eyebrow>
                 <ul className="mt-4 space-y-2 text-sm text-[#4f6259]">
                   <li>
-                    {runtimeHealth?.providerMode === "live"
+                    {demoLab
+                      ? "✓ Demo isolation: no API or private session"
+                      : runtimeHealth?.providerMode === "live"
                       ? `✓ Cloud runtime: ${runtimeHealth.model} · ${runtimeHealth.revision}`
                       : "○ Cloud runtime health pending"}
                   </li>
@@ -998,7 +1019,7 @@ export function JourneyWorkspace({
       </section>
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#dfe5df] bg-white px-5 py-4 text-xs text-[#56645d] sm:px-7">
-        <span>{showLocalSimulation ? "Saved in this browser · media stays local until cloud upload is activated" : "Private live journey · photos are analyzed transiently and are not persisted"}</span>
+        <span>{demoLab ? "Isolated scripted story · browser-only · no API or private data" : showLocalSimulation ? "Saved in this browser · media stays local until cloud upload is activated" : "Private live journey · photos are analyzed transiently and are not persisted"}</span>
         <button type="button" onClick={resetAll} className="font-bold text-[#49675a] hover:text-[#173f35]">Reset this journey</button>
       </footer>
     </div>

@@ -1,0 +1,53 @@
+{
+  "date": "2026-07-19",
+  "surface": "/demo",
+  "boundary": {
+    "scripted": true,
+    "apiCalls": false,
+    "cloudTasks": false,
+    "firestore": false,
+    "privateSession": false,
+    "traceProvider": "mock"
+  },
+  "story": {
+    "goalType": "HABIT",
+    "domain": "illustration practice",
+    "milestoneDays": [1, 2, 3, 4, 5, 8, 14, 30],
+    "recoveryVisible": true,
+    "memoryVisible": true,
+    "progressWitnessVisible": true,
+    "calibrationVisible": true,
+    "fourAgentContractsVisible": true
+  },
+  "browser": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "locale": "zh-TW",
+    "httpStatus": 200,
+    "meaningfulContent": true,
+    "honestBoundaryVisible": true,
+    "fullStoryButtonCount": 1,
+    "reachedDay30": true,
+    "journeyHasRecovery": true,
+    "journeyHasCalibration": true,
+    "developerShowsMock": true,
+    "developerShowsNoApi": true,
+    "errorOverlayCount": 0,
+    "consoleErrorCount": 0,
+    "mobileScreenshotInspected": true
+  },
+  "verification": {
+    "focusedTestsPassed": 2,
+    "testFilesPassed": 32,
+    "testFilesSkipped": 5,
+    "testsPassed": 125,
+    "testsSkipped": 9,
+    "lintPassed": true,
+    "typecheckPassed": true,
+    "productionBuildPassed": true,
+    "staticDemoRouteBuilt": true,
+    "diffCheckPassed": true
+  }
+}

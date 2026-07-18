@@ -588,3 +588,27 @@
   public Guest Lane remain conditional on time.
 - Evidence: `docs/evidence/real-memory-learning-loop-2026-07-19.md` and matching
   JSON.
+
+## 2026-07-19 — Isolated 30-day Demo Lab
+
+- Added a dedicated static `/demo` route instead of putting the thirty-day
+  competition story back into Chloe's private real journey.
+- The bilingual scripted fixture uses a thirty-day illustration-practice habit
+  and the same validated local record, journey, Agent trace, event, memory, and
+  effectiveness schemas. It shares no private storage key or phone session.
+- The story advances through Days 1, 2, 3, 4, 5, 8, 14, and 30, exposing first
+  check-in, repeated delay, Commitment Recovery, a smaller action, tentative
+  strategy memory, progress witness, calibration, resume point, and all four
+  Agent contracts.
+- The page explicitly states `no API`, `no private phone session`, and
+  `provider: mock`. Demo mode skips even the cloud health request; it cannot
+  touch OpenAI, Cloud Tasks, Firestore, or protected live routes.
+- A fresh 390×844 `zh-TW` Chrome profile opened `/demo`, clicked the one-click
+  full story, reached Day 30, inspected Journey and Developer, and found zero
+  framework overlays or console errors. The full mobile screenshot was visually
+  inspected.
+- Full verification passed: 125 tests with nine live-only skips, ESLint,
+  TypeScript, production build, and diff check. Next built `/demo` as a static
+  route.
+- Evidence: `docs/evidence/demo-lab-browser-acceptance-2026-07-19.md` and
+  matching JSON.

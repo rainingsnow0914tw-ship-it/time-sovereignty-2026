@@ -293,7 +293,7 @@ export function advanceSimulation(
     const memory: JourneyMemory = {
       id: `strategy-day-5-${record.goal.id}`,
       kind: "STRATEGY",
-      summary: "Reducing the action restored continuity after infrastructure work ran long.",
+      summary: "Reducing the action restored continuity after the original plan no longer fit the available window.",
       sourceType: "OBSERVED_PATTERN",
       requiresConfirmation: true,
       updatedAt: timestamp,
@@ -392,7 +392,7 @@ export function advanceSimulation(
         {
           id: `calibration-day-14-${record.goal.id}`,
           kind: "CALIBRATION",
-          summary: "The goal still fits; the method should stay adaptable.",
+          summary: `The North Star still fits: ${record.goal.title}. The current practice method can change without discarding the deeper direction.`,
           sourceType: "CONFIRMED_BY_USER",
           requiresConfirmation: false,
           updatedAt: timestamp,
@@ -402,7 +402,7 @@ export function advanceSimulation(
     return addJourneyEvent(next, {
       kind: "CALIBRATION",
       title: "Goal calibration",
-      detail: "Direction retained; method adjusted around the user's real constraints.",
+      detail: "North Star retained; the current goal and practice method were recalibrated around real constraints.",
       now,
     });
   }

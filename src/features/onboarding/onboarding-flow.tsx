@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import Link from "next/link";
 
 import type { AgentRunTrace } from "../../domain/agents/schemas";
 import type { GoalPlan } from "../../domain/goals/schemas";
@@ -355,7 +356,12 @@ function Shell({
                   ? "Private play profile · live GPT-5.6"
                   : "Mock mode · no API usage"}
             </span>
-            <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
+            <span className="flex items-center gap-3">
+              <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
+              <Link href="/demo" className="font-bold text-[#365f50] underline decoration-[#8fb09e] underline-offset-4 hover:text-[#173f35]">
+                Open 30-day Demo Lab
+              </Link>
+            </span>
           </footer>
         </section>
       </div>
