@@ -132,7 +132,11 @@ export function LiveCheckInPanel({
     if (connection !== "PAIRED" || pausePolling) return;
     const refreshIfVisible = () => {
       if (document.visibilityState === "visible") {
-        void refreshCurrent().catch(() => setNotice("Live polling will retry."));
+        void refreshCurrent().catch(() =>
+          setNotice(
+            "The phone could not refresh the live result. It will retry automatically; do not send the same update again.",
+          ),
+        );
       }
     };
     const timer = window.setInterval(refreshIfVisible, 5_000);
@@ -338,8 +342,13 @@ export function LiveCheckInPanel({
           }),
         },
       );
-      const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
-      if (!response.ok || !payload.checkIn) throw new Error("reply_failed");
+      const payload = (await response.json()) as {
+        checkIn?: ClientLiveCheckIn;
+        error?: string;
+      };
+      if (!response.ok || !payload.checkIn) {
+        throw new Error(payload.error ?? `reply_failed_${response.status}`);
+      }
       setCurrent(payload.checkIn);
       if (payload.checkIn.decision && realtimeVoiceRef.current) {
         realtimeVoiceRef.current.speak(
@@ -355,9 +364,15 @@ export function LiveCheckInPanel({
       setReply("");
       setPhoto(null);
       replyAttemptRef.current = null;
-    } catch {
-      await refreshCurrent().catch(() => undefined);
-      setNotice("The live reply stopped safely. Retry uses the same reply identity.");
+    } catch (error) {
+      const refreshed = await refreshCurrent()
+        .then(() => true)
+        .catch(() => false);
+      setNotice(
+        refreshed
+          ? "The direct reply was interrupted, but the phone recovered the latest safe result. Review it below before retrying."
+          : `The live reply was not returned (${error instanceof Error ? error.message : "unknown_error"}). Do not resend yet; automatic refresh will keep trying with the same reply identity.`,
+      );
     } finally {
       setBusy(false);
     }

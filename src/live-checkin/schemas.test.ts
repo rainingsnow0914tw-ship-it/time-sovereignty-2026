@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ClientLiveCheckInSchema,
   LiveChiefOfStaffDecisionSchema,
   LiveReplyRequestSchema,
 } from "./schemas";
@@ -63,6 +64,63 @@ describe("live decision compatibility", () => {
       nextFollowUpAt: null,
       memoryProposal: null,
     });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("client-safe recovery trace", () => {
+  it("accepts the full Chief, Recovery, Chief trace returned by a blocked check-in", () => {
+    const trace = (runId: string, agent: "CHIEF_OF_STAFF" | "COMMITMENT_RECOVERY") => ({
+      runId,
+      agent,
+      provider: "openai" as const,
+      model: "gpt-5.6-sol",
+      outputSchemaName: `${agent}Output`,
+      inputSummary: "Safe summary",
+      tokenUsage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+      status: "COMPLETED" as const,
+      startedAt: "2026-07-18T02:32:39.000Z",
+      completedAt: "2026-07-18T02:32:40.000Z",
+    });
+    const traces = [
+      trace("trace-chief-triage", "CHIEF_OF_STAFF"),
+      trace("trace-recovery", "COMMITMENT_RECOVERY"),
+      trace("trace-chief-final", "CHIEF_OF_STAFF"),
+    ];
+
+    const result = ClientLiveCheckInSchema.safeParse({
+      id: "live-three-traces",
+      status: "DECISION_READY",
+      message: "What is true?",
+      context: {
+        goal: "Ship",
+        motivation: "Use it",
+        targetWindow: "Tonight",
+        currentAction: "Test the live loop",
+        minimumAction: "Open the app",
+        preferredTone: "Warm",
+      },
+      scheduledFor: "2026-07-18T02:30:00.000Z",
+      pendingAt: "2026-07-18T02:30:00.000Z",
+      replyId: "reply-three-traces",
+      attemptCount: 1,
+      decision: {
+        assessment: "BLOCKED",
+        userMessage: "The plan needs to change.",
+        adaptedCommitment: "Take the smallest useful next step.",
+        dispatchedAgents: ["COMMITMENT_RECOVERY"],
+        selectedStrategy: "REDUCE",
+        nextFollowUpAt: "2026-07-18T03:30:00.000Z",
+        memoryProposal: null,
+      },
+      traceRunIds: traces.map(({ runId }) => runId),
+      traces,
+      confirmedAt: null,
+      nextCheckInId: null,
+      createdAt: "2026-07-18T02:29:00.000Z",
+      updatedAt: "2026-07-18T02:32:55.000Z",
+    });
+
     expect(result.success).toBe(true);
   });
 });

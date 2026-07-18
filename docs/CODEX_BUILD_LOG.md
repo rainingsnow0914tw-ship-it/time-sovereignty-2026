@@ -470,3 +470,27 @@
   equivalent to July 21 at 8:00 PM EDT and July 22 at 8:00 AM Taiwan time.
 - Remaining delivery: public narrated video under three minutes, final Devpost
   review/submit, then recording-session revocation and test cleanup.
+
+## 2026-07-18 — Real multimodal Android loop and three-trace correction
+
+- A physical Android PWA sent a real text report plus an ephemeral progress
+  photo through the protected reply endpoint. GPT-5.6 completed the decision,
+  classified the situation as blocked, and ran the intended three-step Chief
+  triage → Commitment Recovery → final Chief path for 3,336 total tokens.
+- The phone exposed a post-model contract defect: Firestore correctly stored
+  three trace IDs, but the client projection accepted at most two trace rows.
+  The reply and every following poll therefore returned HTTP 400 even though
+  the structured decision was already safe in Firestore.
+- Aligned the client trace bound with the persisted three-trace contract,
+  added a complete regression fixture, and made reply/poll failures explicit
+  so the UI no longer appears to ignore the user.
+- Reverified 94 tests with eight live-only skips, ESLint, TypeScript, and the
+  production build. Deployed `time-sovereignty-00028-yec` only to the
+  `live-mobile` tag; stable `00024-dih` remains at 100% normal traffic.
+- The corrected Android PWA recovered the already-persisted decision without a
+  second model call. Chloe confirmed it; the confirm endpoint returned HTTP
+  200, the UI showed decision/memory/follow-up persistence, and Cloud Tasks
+  contained the next scheduled follow-up. At its due time the task called the
+  preview endpoint exactly once and returned HTTP 200 in 0.143 seconds.
+- Detailed safe evidence:
+  `docs/evidence/live-multimodal-android-acceptance-2026-07-18.md`.
