@@ -347,6 +347,7 @@ const zhTW: Record<string, string> = {
   "This creates a real Cloud Task after 15 seconds. It proves the infrastructure only and is not the user journey.": "這會建立一筆 15 秒後觸發的真實 Cloud Task，只用來驗證基礎設施，不是使用者旅程。",
   "Schedule 15-second infrastructure test": "排程 15 秒基礎設施測試",
   "Start your real work block": "開始你的真實行動時段",
+  "Start your next real work block": "開始下一個真實行動時段",
   "Choose how long you want to work. Cloud Tasks will bring the check-in back at the end, when text, voice, and photo reporting become available.": "選擇這次要投入多久。時間一到，Cloud Tasks 會把報到帶回來，並開啟文字、語音與照片回報。",
   "The earlier proposed time expired while setup was being confirmed. Starting here creates a fresh real schedule instead of silently moving it to tomorrow.": "先前建議的時間在確認設定時已經過期。從這裡開始會建立一筆新的真實排程，不會偷偷把它挪到明天。",
   "Focus minutes": "行動分鐘數",

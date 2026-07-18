@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canStartLiveFocusBlock,
   cadenceForScheduledCheckIn,
   inferFocusMinutes,
   planTimingNeedsRestart,
@@ -18,6 +19,22 @@ const cadence = {
 };
 
 describe("live focus scheduling", () => {
+  it("allows a new real block only after a confirmed path has no linked follow-up", () => {
+    expect(canStartLiveFocusBlock(null)).toBe(true);
+    expect(
+      canStartLiveFocusBlock({ status: "CONFIRMED", nextCheckInId: null }),
+    ).toBe(true);
+    expect(
+      canStartLiveFocusBlock({
+        status: "CONFIRMED",
+        nextCheckInId: "follow-existing",
+      }),
+    ).toBe(false);
+    expect(
+      canStartLiveFocusBlock({ status: "SCHEDULED", nextCheckInId: null }),
+    ).toBe(false);
+  });
+
   it("uses the user's explicit Chinese minute window", () => {
     expect(inferFocusMinutes("從現在起20分鐘內", "SPRINT")).toBe(20);
   });

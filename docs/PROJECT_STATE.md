@@ -9,10 +9,11 @@
 - 使用者入口已改為真實工作時段；15 秒 Cloud Tasks 驗收移入 Developer，過期時間不再假裝有效，上方摘要同步受保護的即時狀態。
 - `gpt-realtime-2.1` 已完成 Android 高擬真朗讀與語音轉錄驗收；GPT-5.6 保持結構化決策大腦。
 - 私人預覽 `time-sovereignty-00034-rok` 健康 200、0% 正式流量；正式 `time-sovereignty-00024-dih` 仍為 100%。
+- 記憶版預覽 `time-sovereignty-00035-gup` 健康 200、0% 正式流量；實機發現「完成後無法開始下一段」並已在本機補上受測續跑入口。
 
 # 正在做
 
-- 記憶閉環本機 checkpoint 已通過；正在準備 0% 流量 tag-only 雲端預覽與兩次同目標手機驗收。
+- 完成後續跑入口已通過本機測試；正在建立替代 `00035` 的 tag-only revision，再做兩次同目標手機驗收。
 
 # 下一步
 
@@ -32,8 +33,8 @@
 
 # 最近測試結果
 
-- 2026-07-19 02:28 +08:00：122 passed／9 skipped；lint、typecheck、production build、diff check 通過。真實 Memory Curator 837 tokens；回傳 `gpt-5.6-sol`，schema 與有限證據邊界通過。
+- 2026-07-19 02:41 +08:00：續跑入口 7 tests passed；lint、typecheck、production build 通過。完整基線為 122 passed／9 skipped；真實 Memory Curator 837 tokens。
 
 # 最後更新時間
 
-- 2026-07-19 02:29 +08:00
+- 2026-07-19 02:42 +08:00

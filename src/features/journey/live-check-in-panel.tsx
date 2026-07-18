@@ -30,6 +30,7 @@ import {
   type PreparedPhotoEvidence,
 } from "./photo-evidence";
 import {
+  canStartLiveFocusBlock,
   cadenceForScheduledCheckIn,
   inferFocusMinutes,
   normalizeFocusMinutes,
@@ -626,10 +627,10 @@ export function LiveCheckInPanel({
         <div><LiveBadge>Real Cloud Tasks + GPT-5.6</LiveBadge><h2 className="mt-2 text-2xl font-semibold text-[#173f35]">Private incoming check-in</h2></div>
         <button type="button" className={secondary} disabled={busy} onClick={revoke}>Revoke device</button>
       </div>
-      {!current ? (
+      {canStartLiveFocusBlock(current) ? (
         <div className="mt-5 rounded-2xl border border-[#c9d9cd] bg-white p-5">
           <h3 className="text-xl font-semibold text-[#173f35]">
-            Start your real work block
+            {current ? "Start your next real work block" : "Start your real work block"}
           </h3>
           <p className="mt-2 text-sm leading-6 text-[#596b62]">
             Choose how long you want to work. Cloud Tasks will bring the

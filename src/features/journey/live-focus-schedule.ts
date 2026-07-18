@@ -1,4 +1,5 @@
 import type { GoalCadence } from "../../domain/goals/schemas";
+import type { ClientLiveCheckIn } from "../../live-checkin/schemas";
 
 const MIN_MINUTES = 2;
 const MAX_MINUTES = 24 * 60;
@@ -67,4 +68,13 @@ export function planTimingNeedsRestart(
 ): boolean {
   if (!proposedAt) return true;
   return new Date(proposedAt).getTime() <= new Date(confirmedAt).getTime();
+}
+
+export function canStartLiveFocusBlock(
+  current: Pick<ClientLiveCheckIn, "status" | "nextCheckInId"> | null,
+): boolean {
+  return (
+    current === null ||
+    (current.status === "CONFIRMED" && current.nextCheckInId === null)
+  );
 }
