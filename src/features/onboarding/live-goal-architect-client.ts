@@ -1,4 +1,5 @@
 import type { AppLocale } from "../../i18n/locale";
+import { z } from "zod";
 import {
   LiveGoalArchitectResponseSchema,
 } from "../../live-checkin/goal-architect-schemas";
@@ -16,6 +17,57 @@ export class LiveGoalArchitectClientError extends Error {
   }
 }
 
+export class LivePairingClientError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+  ) {
+    super(`Live pairing request failed: ${code}`);
+    this.name = "LivePairingClientError";
+  }
+}
+
+const LivePairingResponseSchema = z
+  .object({
+    ok: z.literal(true),
+    paired: z.literal(true),
+    expiresAt: z.string().datetime({ offset: true }),
+    deviceLabel: z.string().trim().min(1).max(120),
+  })
+  .strict();
+
+type Fetcher = typeof fetch;
+
+async function readFailureCode(response: Response): Promise<string> {
+  const payload: unknown = await response.json().catch(() => null);
+  return payload &&
+    typeof payload === "object" &&
+    "error" in payload &&
+    typeof payload.error === "string"
+    ? payload.error
+    : "live_request_failed";
+}
+
+export async function pairLiveGoalArchitectDevice(
+  options: { pairingCode: string; deviceLabel: string },
+  fetcher: Fetcher = fetch,
+): Promise<z.infer<typeof LivePairingResponseSchema>> {
+  const response = await fetcher("/api/live/pair", {
+    method: "POST",
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options),
+  });
+  if (!response.ok) {
+    throw new LivePairingClientError(
+      response.status,
+      await readFailureCode(response),
+    );
+  }
+  return LivePairingResponseSchema.parse(await response.json());
+}
+
 export async function createLiveGoalArchitectResult(options: {
   answers: OnboardingAnswers;
   locale: AppLocale;
@@ -29,17 +81,13 @@ export async function createLiveGoalArchitectResult(options: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(options),
   });
-  const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const code =
-      payload &&
-      typeof payload === "object" &&
-      "error" in payload &&
-      typeof payload.error === "string"
-        ? payload.error
-        : "live_goal_architect_failed";
-    throw new LiveGoalArchitectClientError(response.status, code);
+    throw new LiveGoalArchitectClientError(
+      response.status,
+      await readFailureCode(response),
+    );
   }
+  const payload: unknown = await response.json();
   const parsed = LiveGoalArchitectResponseSchema.parse(payload);
   return { output: parsed.plan, trace: parsed.trace };
 }

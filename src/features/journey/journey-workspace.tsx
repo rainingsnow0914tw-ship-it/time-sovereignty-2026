@@ -36,6 +36,7 @@ import {
   type ProgressEvidence,
 } from "./model";
 import { LiveCheckInPanel } from "./live-check-in-panel";
+import type { LiveCheckInSummary } from "./live-check-in-summary";
 import type { LiveChiefOfStaffDecision } from "../../live-checkin/schemas";
 
 const tabs: Array<{ value: JourneyView; label: string; hint: string }> = [
@@ -70,11 +71,13 @@ export function JourneyWorkspace({
   onReset,
   liveCheckInEnabled = true,
   showLocalSimulation = true,
+  onLiveCheckInSummaryChange,
 }: {
   record: LocalOnboardingRecord;
   onReset: () => void;
   liveCheckInEnabled?: boolean;
   showLocalSimulation?: boolean;
+  onLiveCheckInSummaryChange?: (summary: LiveCheckInSummary) => void;
 }) {
   const { locale, t } = useLocale();
   const [state, setState] = useState<JourneyState>(() =>
@@ -714,6 +717,7 @@ export function JourneyWorkspace({
               currentAction={state.currentAction}
               minimumAction={state.minimumAction}
               onCommitmentConfirmed={applyLiveCommitment}
+              onSummaryChange={onLiveCheckInSummaryChange}
             />
           ) : (
             <div className="rounded-2xl border border-[#bed0c5] bg-[#eef5ef] px-4 py-3 text-sm text-[#496a5b]">
@@ -926,6 +930,7 @@ export function JourneyWorkspace({
               record={record}
               currentAction={state.currentAction}
               minimumAction={state.minimumAction}
+              onSummaryChange={onLiveCheckInSummaryChange}
             />
           ) : null}
           {showLocalSimulation ? <section className="mt-5 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">

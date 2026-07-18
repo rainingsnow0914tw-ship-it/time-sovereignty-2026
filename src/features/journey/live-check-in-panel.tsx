@@ -28,6 +28,17 @@ import {
   preparePhotoEvidence,
   type PreparedPhotoEvidence,
 } from "./photo-evidence";
+import {
+  cadenceForScheduledCheckIn,
+  inferFocusMinutes,
+  normalizeFocusMinutes,
+  planTimingNeedsRestart,
+  scheduleAtFromMinutes,
+} from "./live-focus-schedule";
+import {
+  summarizeLiveCheckIn,
+  type LiveCheckInSummary,
+} from "./live-check-in-summary";
 
 const card =
   "rounded-[1.6rem] border border-[#9eb9aa] bg-[#f7fbf7] p-5 shadow-[0_14px_45px_rgba(23,63,53,0.06)] sm:p-6";
@@ -50,14 +61,16 @@ export function LiveCheckInPanel({
   currentAction,
   minimumAction,
   onCommitmentConfirmed,
+  onSummaryChange,
 }: {
   mode: "check-in" | "developer";
   record: LocalOnboardingRecord;
   currentAction: string;
   minimumAction: string;
   onCommitmentConfirmed?: (decision: LiveChiefOfStaffDecision) => void;
+  onSummaryChange?: (summary: LiveCheckInSummary) => void;
 }) {
-  const { formatTime, locale, t } = useLocale();
+  const { formatDateTime, locale, t } = useLocale();
   const speechLanguage = speechLanguageForLocale(locale);
   const [connection, setConnection] = useState<Connection>("CHECKING");
   const [current, setCurrent] = useState<ClientLiveCheckIn | null>(null);
@@ -70,6 +83,9 @@ export function LiveCheckInPanel({
   const [preparingPhoto, setPreparingPhoto] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [focusMinutes, setFocusMinutes] = useState(() =>
+    inferFocusMinutes(record.goal.targetWindow, record.plan.cadence.kind),
+  );
   const [listening, setListening] = useState(false);
   const [realtimeStatus, setRealtimeStatus] =
     useState<RealtimeVoiceStatus>("IDLE");
@@ -148,6 +164,11 @@ export function LiveCheckInPanel({
   }, [connection, pausePolling, refreshCurrent]);
 
   useEffect(() => {
+    if (connection !== "PAIRED") return;
+    onSummaryChange?.(summarizeLiveCheckIn(current, lastConfirmed));
+  }, [connection, current, lastConfirmed, onSummaryChange]);
+
+  useEffect(() => {
     return () => {
       realtimeVoiceRef.current?.disconnect(false);
       realtimeVoiceRef.current = null;
@@ -173,9 +194,15 @@ export function LiveCheckInPanel({
         body: JSON.stringify({ pairingCode, deviceLabel }),
       });
       if (!response.ok) throw new Error("pairing_failed");
+      const payload = (await response.json()) as { expiresAt?: unknown };
+      if (typeof payload.expiresAt !== "string") {
+        throw new Error("pairing_response_invalid");
+      }
       setPairingCode("");
       setConnection("PAIRED");
-      setNotice("This device is paired for twelve hours.");
+      setNotice(
+        `${t("This device is paired until")} ${formatDateTime(payload.expiresAt)}.`,
+      );
       await refreshCurrent();
     } catch {
       setNotice("Pairing was denied or this one-time code is already used.");
@@ -184,9 +211,15 @@ export function LiveCheckInPanel({
     }
   };
 
-  const scheduleDemo = async () => {
+  const scheduleCheckIn = async (options: {
+    scheduledFor: string;
+    cadence: typeof record.plan.cadence;
+    message: string;
+    pendingNotice: string;
+    successNotice: string;
+  }) => {
     setBusy(true);
-    setNotice("Scheduling a real Cloud Task…");
+    setNotice(options.pendingNotice);
     try {
       scheduleIdRef.current ??=
         `live-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
@@ -196,27 +229,25 @@ export function LiveCheckInPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scheduleId: scheduleIdRef.current,
-          message: t(
-            `You planned to continue “${currentAction}”. What is true right now?`,
-          ),
+          message: options.message,
           context: {
             goal: record.goal.title,
             motivation: record.goal.motivation,
             targetWindow: record.goal.targetWindow,
-            cadence: record.plan.cadence,
+            cadence: options.cadence,
             currentAction,
             minimumAction,
             preferredTone: record.supportAgreement.preferredTone,
             locale,
             quietHours: record.supportAgreement.quietHours,
           },
-          scheduledFor: new Date(Date.now() + 15_000).toISOString(),
+          scheduledFor: options.scheduledFor,
         }),
       });
       const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
       if (!response.ok || !payload.checkIn) throw new Error("schedule_failed");
       setCurrent(payload.checkIn);
-      setNotice("Scheduled. The open PWA is polling for the pending check-in.");
+      setNotice(options.successNotice);
       scheduleIdRef.current = null;
       replyAttemptRef.current = null;
       confirmationIdRef.current = null;
@@ -227,6 +258,40 @@ export function LiveCheckInPanel({
     } finally {
       setBusy(false);
     }
+  };
+
+  const startFocusBlock = async () => {
+    const minutes = normalizeFocusMinutes(focusMinutes);
+    setFocusMinutes(minutes);
+    const scheduledFor = scheduleAtFromMinutes(minutes);
+    const cadence = cadenceForScheduledCheckIn(
+      record.plan.cadence,
+      scheduledFor,
+    );
+    await scheduleCheckIn({
+      scheduledFor,
+      cadence,
+      message:
+        locale === "zh-TW"
+          ? `你為「${currentAction}」安排的 ${minutes} 分鐘行動時間到了。你完成了什麼？可以用文字、語音或照片回報。`
+          : `Your ${minutes}-minute work block for “${currentAction}” has reached its check-in. What did you complete? You can reply with text, voice, or a photo.`,
+      pendingNotice: "Creating your real check-in with Cloud Tasks…",
+      successNotice:
+        "Your work block has started. The real check-in is scheduled and this open PWA will watch for it.",
+    });
+  };
+
+  const scheduleDemo = async () => {
+    await scheduleCheckIn({
+      scheduledFor: new Date(Date.now() + 15_000).toISOString(),
+      cadence: record.plan.cadence,
+      message: t(
+        `You planned to continue “${currentAction}”. What is true right now?`,
+      ),
+      pendingNotice: "Scheduling a 15-second infrastructure test…",
+      successNotice:
+        "Developer test scheduled. Return to Check-in to watch the pending result.",
+    });
   };
 
   const listen = async () => {
@@ -461,7 +526,7 @@ export function LiveCheckInPanel({
     return (
       <Localized>
       <section className={card}>
-        <LiveBadge>Single-device pairing · 12 hours</LiveBadge>
+        <LiveBadge>Single-device protected pairing</LiveBadge>
         <h2 className="mt-3 text-2xl font-semibold text-[#173f35]">Connect this PWA without exposing the API key.</h2>
         {mode === "check-in" ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -504,6 +569,25 @@ export function LiveCheckInPanel({
           <p className="mt-3 text-xs leading-5 text-[#5f6a64]">User-start only. The voice layer transcribes and speaks; GPT-5.6 remains the structured decision brain.</p>
         </div>
         {traceSource?.traces.length ? <TraceTable traces={traceSource.traces} /> : <p className="mt-4 text-sm text-[#596b62]">No live mobile Agent call has completed yet.</p>}
+        {!current ? (
+          <details className="mt-5 rounded-2xl border border-[#d7dfd8] bg-white p-4">
+            <summary className="cursor-pointer text-sm font-bold text-[#40564b]">
+              Developer acceptance control
+            </summary>
+            <p className="mt-3 text-xs leading-5 text-[#66736c]">
+              This creates a real Cloud Task after 15 seconds. It proves the
+              infrastructure only and is not the user journey.
+            </p>
+            <button
+              type="button"
+              className={`${secondary} mt-3`}
+              disabled={busy}
+              onClick={() => void scheduleDemo()}
+            >
+              Schedule 15-second infrastructure test
+            </button>
+          </details>
+        ) : null}
         <p className="mt-4 text-xs leading-5 text-[#5f6a64]">Raw reply, prompt, secrets, and private reasoning are excluded. These rows come from Firestore, not the local simulation.</p>
         {notice ? <p className="mt-3 text-sm text-[#596b62]" role="status">{notice}</p> : null}
       </section>
@@ -519,9 +603,65 @@ export function LiveCheckInPanel({
         <button type="button" className={secondary} disabled={busy} onClick={revoke}>Revoke device</button>
       </div>
       {!current ? (
-        <div className="mt-5"><p className="text-sm leading-6 text-[#596b62]">No active check-in. Schedule one real follow-up to exercise the live loop.</p><button type="button" className={`${primary} mt-4`} disabled={busy} onClick={scheduleDemo}>Schedule real check-in · 15 sec</button></div>
+        <div className="mt-5 rounded-2xl border border-[#c9d9cd] bg-white p-5">
+          <h3 className="text-xl font-semibold text-[#173f35]">
+            Start your real work block
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[#596b62]">
+            Choose how long you want to work. Cloud Tasks will bring the
+            check-in back at the end, when text, voice, and photo reporting
+            become available.
+          </p>
+          {planTimingNeedsRestart(record.action.nextCheckAt, record.savedAt) ? (
+            <p className="mt-3 rounded-xl bg-[#fff7dc] px-4 py-3 text-xs leading-5 text-[#705717]">
+              The earlier proposed time expired while setup was being
+              confirmed. Starting here creates a fresh real schedule instead
+              of silently moving it to tomorrow.
+            </p>
+          ) : null}
+          <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,12rem)_1fr] sm:items-end">
+            <label className="text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">
+              Focus minutes
+              <input
+                className={`${input} mt-2`}
+                type="number"
+                inputMode="numeric"
+                min={2}
+                max={1440}
+                value={focusMinutes}
+                onChange={(event) => setFocusMinutes(Number(event.target.value))}
+              />
+            </label>
+            <button
+              type="button"
+              className={primary}
+              disabled={busy}
+              onClick={() => void startFocusBlock()}
+            >
+              Start and schedule check-in
+            </button>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-[#66736c]">
+            Keep the PWA open near the check-in time. Background push and
+            lock-screen vibration are a separate capability and are not
+            claimed here yet.
+          </p>
+        </div>
       ) : null}
-      {current?.status === "SCHEDULED" ? <p className="mt-5 rounded-2xl bg-white p-4 text-sm text-[#49675a]">Scheduled for {formatTime(current.scheduledFor)}. Polling only while this PWA is open.</p> : null}
+      {current?.status === "SCHEDULED" && current.scheduledFor ? (
+        <div className="mt-5 rounded-2xl border border-[#c9d9cd] bg-white p-5">
+          <p className="text-sm font-semibold text-[#284b3d]">
+            Your real check-in is scheduled
+          </p>
+          <p className="mt-1 text-lg font-semibold text-[#173f35]">
+            {formatDateTime(current.scheduledFor)}
+          </p>
+          <p className="mt-2 text-xs leading-5 text-[#66736c]">
+            When it arrives, this card changes into the text, voice, and photo
+            report form automatically. Polling works while this PWA is open.
+          </p>
+        </div>
+      ) : null}
       {current && ["PENDING", "FAILED"].includes(current.status) ? (
         <div className="mt-5">
           <h3 className="text-xl font-semibold text-[#173f35]">{current.message}</h3>
@@ -618,6 +758,11 @@ function DecisionCard({ checkIn, busy, onConfirm, onSpeak }: { checkIn: ClientLi
       <p className="mt-3 text-sm leading-6 text-[#40594e]">{decision.userMessage}</p>
       <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">{assessment === "COMPLETED" ? "Recorded outcome" : recoveryUsed ? "Adapted commitment" : "Next commitment"}</p>
       <p className="mt-1 text-lg font-semibold text-[#173f35]">{decision.adaptedCommitment}</p>
+      <p className="mt-3 rounded-xl bg-[#f4f6f2] px-3 py-2 text-xs leading-5 text-[#5d6b64]">
+        Any photo used for this decision was temporary and is not stored. The
+        saved record contains only the structured outcome, safe trace, memory
+        proposal, and follow-up state.
+      </p>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-[#6b786f]">Strategy</dt><dd className="font-bold text-[#28443a]">{decision.selectedStrategy ?? "No recovery strategy needed"}</dd></div><div><dt className="text-[#6b786f]">Next follow-up</dt><dd className="font-bold text-[#28443a]">{decision.nextFollowUpAt ? formatDateTime(decision.nextFollowUpAt) : "No follow-up scheduled"}</dd></div></dl>
       {decision.memoryProposal ? <p className="mt-4 rounded-2xl bg-[#edf5e8] p-3 text-sm text-[#40594e]">Memory proposal: {decision.memoryProposal.summary}</p> : null}
       {onSpeak ? <button type="button" className={`${secondary} mt-4`} onClick={onSpeak}>▶ Play with natural voice</button> : null}

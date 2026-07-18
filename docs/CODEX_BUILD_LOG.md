@@ -520,3 +520,40 @@
   `00024-dih` remains at 100%.
 - Decision: `docs/decisions/0012-goal-led-cadence-and-real-journey-boundary.md`.
 - Evidence: `docs/evidence/live-goal-cadence-contract-2026-07-18.md`.
+
+## 2026-07-18 — Recoverable private session and real completed focus loop
+
+- The original twelve-hour private session expired during real onboarding and
+  correctly returned 401 before any new model call or save. Added in-place
+  re-pairing that retains all three answers, reuses the same request identity,
+  and retries automatically. Added a same-origin `/pair` recovery page.
+- Extended the approved private session to 96 hours while enforcing a
+  seven-day configuration maximum. Kept one-device revocation, exact origins,
+  signed expiring cookies, Secret Manager, idempotency, and zero SDK retries.
+- Replaced the blank no-check-in state with a real work-block start. Chloe
+  chose 20 minutes; the product created one Cloud Task and explained that the
+  text, voice, and photo report form would appear when the task became pending.
+  The 15-second infrastructure control now lives in Developer mode only.
+- The task called revision `time-sovereignty-00033-wir` at its scheduled time
+  and returned HTTP 200 in 0.162 seconds. A physical Android PWA submitted a
+  real photo plus self-assessment. Raw content is excluded from repository
+  evidence.
+- GPT-5.6 used Chief of Staff only, returned `COMPLETED`, and used 1,484 total
+  tokens with zero retries. Chloe confirmed the result; Firestore persisted the
+  structured decision, safe trace, and memory proposal. No next follow-up was
+  created and the queue was empty.
+- Verified that the client projection and Firestore document had zero media
+  fields. Added a model instruction forbidding claims of photo persistence and
+  an independent UI notice that photos are temporary model input.
+- Replaced the stale onboarding time in the top summary with protected live
+  status. The same confirmed phone record now visibly reports **Goal
+  completed** instead of **Set when you start**.
+- Reverified 118 tests with eight live-only skips, ESLint, TypeScript, and the
+  production build. Deployed privacy/status polish revision
+  `time-sovereignty-00034-rok` to the 0%-normal-traffic `live-mobile` tag;
+  stable `time-sovereignty-00024-dih` remains at 100% normal traffic.
+- Decisions: `0013-private-session-lifetime-and-public-tryout-boundary.md` and
+  `0014-real-focus-loop-and-ephemeral-photo-boundary.md`.
+- Evidence:
+  `docs/evidence/private-session-recovery-and-real-focus-loop-2026-07-18.md`
+  and matching JSON.

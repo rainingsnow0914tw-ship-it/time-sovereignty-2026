@@ -7,7 +7,7 @@ const LiveConfigSchema = z
     enabled: z.literal(true),
     pairingSecret: z.string().min(32),
     sessionSecret: z.string().min(32),
-    sessionHours: z.number().int().min(1).max(24),
+    sessionHours: z.number().int().min(1).max(168),
     allowedOrigins: z.array(z.string().url()).min(1).max(8),
   })
   .strict();

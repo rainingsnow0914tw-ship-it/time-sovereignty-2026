@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { MockAiProvider } from "../providers/ai/mock-provider";
+import type {
+  AiProvider,
+  StructuredAgentRequest,
+} from "../providers/ai/types";
 import { runLiveCheckInAgents } from "./orchestrator";
 import { LiveCheckInDocumentSchema } from "./schemas";
 
@@ -96,6 +100,44 @@ const report = {
 };
 
 describe("live progress-aware Agent orchestration", () => {
+  it("tells Chief that progress photos are ephemeral and must not be described as stored", async () => {
+    const baseProvider = new MockAiProvider({
+      LIVE_CHECK_IN_TRIAGE: onTrackDecision,
+    });
+    const capturedRequests: StructuredAgentRequest<unknown>[] = [];
+    const provider: AiProvider = {
+      generateStructured: (request, schema) => {
+        capturedRequests.push(request as StructuredAgentRequest<unknown>);
+        return baseProvider.generateStructured(request, schema);
+      },
+    };
+
+    await runLiveCheckInAgents({
+      checkIn: claimedCheckIn(),
+      reply: {
+        ...report,
+        reply: "I finished the sketch.",
+        image: {
+          mimeType: "image/jpeg",
+          dataUrl: "data:image/jpeg;base64,AA==",
+        },
+      },
+      provider,
+      onTriage: async () => undefined,
+      onRecovery: async () => undefined,
+      onDecision: async () => undefined,
+    });
+
+    expect(capturedRequests).toHaveLength(1);
+    expect(capturedRequests[0]?.imageInputs).toHaveLength(1);
+    expect(capturedRequests[0]?.additionalInstructions).toContain(
+      "Photo input is ephemeral and is never stored by this app.",
+    );
+    expect(capturedRequests[0]?.additionalInstructions).toContain(
+      "must not imply server-side media persistence",
+    );
+  });
+
   it("lets Chief finish an on-track report without inventing a recovery", async () => {
     const result = await runLiveCheckInAgents({
       checkIn: claimedCheckIn(),

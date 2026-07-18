@@ -1,0 +1,59 @@
+{
+  "date": "2026-07-18",
+  "environment": {
+    "project": "time-sovereignty-2026",
+    "region": "asia-east1",
+    "tag": "live-mobile",
+    "stableRevision": "time-sovereignty-00024-dih",
+    "stableTrafficPercent": 100,
+    "acceptanceRevision": "time-sovereignty-00033-wir",
+    "polishRevision": "time-sovereignty-00034-rok"
+  },
+  "session": {
+    "configuredHours": 96,
+    "hardMaximumHours": 168,
+    "expiredSessionRecoveryImplemented": true,
+    "answersRetainedDuringRepair": true
+  },
+  "checkIn": {
+    "id": "live-1784382706285-ea087a8c",
+    "scheduledFor": "2026-07-18T14:11:46.283Z",
+    "pendingAt": "2026-07-18T14:11:46.157Z",
+    "confirmedAt": "2026-07-18T14:18:46.617Z",
+    "status": "CONFIRMED",
+    "assessment": "COMPLETED",
+    "nextFollowUpAt": null,
+    "queueEmptyAfterConfirmation": true
+  },
+  "cloudTask": {
+    "callbackTimestamp": "2026-07-18T14:11:46.060459Z",
+    "httpStatus": 200,
+    "latencySeconds": 0.161722726
+  },
+  "agent": {
+    "role": "CHIEF_OF_STAFF",
+    "provider": "openai",
+    "returnedModel": "gpt-5.6-sol",
+    "outputSchemaName": "LiveChiefOfStaffDecision",
+    "inputTokens": 1255,
+    "outputTokens": 229,
+    "totalTokens": 1484,
+    "traceCount": 1,
+    "sdkRetries": 0
+  },
+  "privacy": {
+    "clientMediaFields": 0,
+    "firestoreMediaFieldPaths": 0,
+    "rawReplyIncluded": false,
+    "rawPhotoIncluded": false,
+    "ephemeralPhotoNoticeVerifiedOnAndroid": true
+  },
+  "verification": {
+    "testsPassed": 118,
+    "testsSkipped": 8,
+    "lintPassed": true,
+    "typecheckPassed": true,
+    "productionBuildPassed": true,
+    "polishHealthHttpStatus": 200
+  }
+}

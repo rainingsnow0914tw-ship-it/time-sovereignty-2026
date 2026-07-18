@@ -16,6 +16,8 @@ import {
   useLocale,
 } from "../../i18n/locale";
 import { JourneyWorkspace } from "../journey/journey-workspace";
+import { planTimingNeedsRestart } from "../journey/live-focus-schedule";
+import type { LiveCheckInSummary } from "../journey/live-check-in-summary";
 import {
   createConfirmedOnboardingRecord,
   createLocalOnboardingRepository,
@@ -25,6 +27,8 @@ import {
 import {
   createLiveGoalArchitectResult,
   LiveGoalArchitectClientError,
+  LivePairingClientError,
+  pairLiveGoalArchitectDevice,
 } from "./live-goal-architect-client";
 import {
   applyGoalCadenceRecommendation,
@@ -71,6 +75,19 @@ function cadenceFrequencyLabel(
   frequency: GoalPlan["cadence"]["checkInFrequency"],
 ): string {
   return frequencies.find((item) => item.value === frequency)?.label ?? "Goal-led";
+}
+
+function interventionIntensityLabel(
+  intensity: SupportAgreementDraft["interventionIntensity"],
+): string {
+  switch (intensity) {
+    case "GENTLE":
+      return "Gentle";
+    case "BALANCED":
+      return "Balanced";
+    case "FIRM":
+      return "Firm";
+  }
 }
 
 const intensities = [
@@ -150,6 +167,79 @@ function CheckIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function PairingRecoveryCard({
+  pairingCode,
+  deviceLabel,
+  busy,
+  error,
+  onPairingCodeChange,
+  onDeviceLabelChange,
+  onSubmit,
+}: {
+  pairingCode: string;
+  deviceLabel: string;
+  busy: boolean;
+  error: string | null;
+  onPairingCodeChange: (value: string) => void;
+  onDeviceLabelChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#d9cfa8] bg-[#fffaf0] p-5 shadow-[0_12px_35px_rgba(95,76,22,0.08)]"
+    >
+      <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#80651b]">
+        Pairing expired
+      </p>
+      <h3 className="mt-2 text-xl font-semibold text-[#3f361d]">
+        Re-pair this browser and continue
+      </h3>
+      <p className="mt-2 text-sm leading-6 text-[#655b3f]">
+        Your three answers are still here. A fresh one-time code restores the
+        protected session, then retries the same plan request automatically.
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="text-xs font-bold text-[#554b32]">
+          New one-time pairing code
+          <input
+            className={`${inputClass} mt-2`}
+            type="password"
+            autoComplete="one-time-code"
+            value={pairingCode}
+            onChange={(event) => onPairingCodeChange(event.target.value)}
+          />
+        </label>
+        <label className="text-xs font-bold text-[#554b32]">
+          Device label
+          <input
+            className={`${inputClass} mt-2`}
+            value={deviceLabel}
+            maxLength={120}
+            onChange={(event) => onDeviceLabelChange(event.target.value)}
+          />
+        </label>
+      </div>
+      {error ? (
+        <p role="alert" className="mt-3 rounded-xl bg-[#fff0ea] px-4 py-3 text-sm text-[#8a432c]">
+          {error}
+        </p>
+      ) : null}
+      <button
+        type="submit"
+        className={`${primaryButtonClass} mt-4 w-full`}
+        disabled={busy || pairingCode.length < 12 || !deviceLabel.trim()}
+      >
+        {busy ? "Pairing and retrying…" : "Pair and continue"}
+      </button>
+      <p className="mt-3 text-xs leading-5 text-[#73684a]">
+        The recording profile remains unchanged. Pairing never exposes the API
+        key to this browser.
+      </p>
+    </form>
   );
 }
 
@@ -1006,6 +1096,12 @@ function CompletedJourney({
   liveProductMode: boolean;
 }) {
   const { locale, formatDateTime } = useLocale();
+  const [liveCheckInSummary, setLiveCheckInSummary] =
+    useState<LiveCheckInSummary | null>(null);
+  const timingNeedsRestart = planTimingNeedsRestart(
+    record.action.nextCheckAt,
+    record.savedAt,
+  );
   const nextCheckIn = new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : "en-US", {
     weekday: "short",
     month: "short",
@@ -1013,6 +1109,21 @@ function CompletedJourney({
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(record.action.nextCheckAt ?? record.savedAt));
+  const liveStatus = liveCheckInSummary
+    ? liveCheckInSummary.state === "SCHEDULED"
+      ? formatDateTime(liveCheckInSummary.scheduledFor)
+      : liveCheckInSummary.state === "REPORT_READY"
+        ? "Report is ready"
+        : liveCheckInSummary.state === "REVIEWING"
+          ? "GPT-5.6 is reviewing"
+          : liveCheckInSummary.state === "AWAITING_CONFIRMATION"
+            ? "Decision awaiting confirmation"
+            : liveCheckInSummary.state === "COMPLETED"
+              ? "Goal completed"
+              : liveCheckInSummary.state === "NO_FOLLOW_UP"
+                ? "No follow-up scheduled"
+                : "Set when you start"
+    : "Open Check-in for live status";
 
   return (
     <Localized>
@@ -1029,9 +1140,9 @@ function CompletedJourney({
             Your goal has a protected path.
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#69746e]">
-            Your longitudinal workspace is ready. The browser journey stays
-            local-first, while the protected Cloud Run and Cloud Tasks path is
-            verified separately with the live provider.
+            {liveProductMode
+              ? "Your goal is ready. Start the real work block below; Cloud Tasks will bring the check-in back at the time you choose."
+              : "Your longitudinal workspace is ready. The browser journey stays local-first, while the protected Cloud Run and Cloud Tasks path is verified separately with the live provider."}
           </p>
         </div>
       </div>
@@ -1075,10 +1186,21 @@ function CompletedJourney({
           label="Goal rhythm"
           value={cadenceKindLabel(record.plan.cadence.kind)}
         />
-        <SummaryItem label="Next check-in" value={nextCheckIn} />
+        <SummaryItem
+          label={liveProductMode ? "Live status" : "Next check-in"}
+          value={
+            liveProductMode
+              ? liveStatus
+              : timingNeedsRestart
+                ? "Set when you start"
+                : nextCheckIn
+          }
+        />
         <SummaryItem
           label="Support style"
-          value={record.supportAgreement.interventionIntensity.toLowerCase()}
+          value={interventionIntensityLabel(
+            record.supportAgreement.interventionIntensity,
+          )}
         />
         <SummaryItem
           label="Quiet hours"
@@ -1095,10 +1217,12 @@ function CompletedJourney({
 
       <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
         <button type="button" onClick={onReset} className={secondaryButtonClass}>
-          Start over
+          {liveProductMode ? "Change goal" : "Start over"}
         </button>
         <div className="rounded-full bg-[#edf4ee] px-4 py-2 text-xs font-semibold text-[#49675a]">
-          Phases 1–8 · integrated local build
+          {liveProductMode
+            ? "Private live journey"
+            : "Phases 1–8 · integrated local build"}
         </div>
       </div>
 
@@ -1108,6 +1232,7 @@ function CompletedJourney({
           onReset={onReset}
           liveCheckInEnabled
           showLocalSimulation={!liveProductMode}
+          onLiveCheckInSummaryChange={setLiveCheckInSummary}
         />
       </div>
     </div>
@@ -1155,6 +1280,9 @@ export function OnboardingFlow({
   const [concern, setConcern] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pairingRequired, setPairingRequired] = useState(false);
+  const [pairingCode, setPairingCode] = useState("");
+  const [deviceLabel, setDeviceLabel] = useState("Android PWA");
   const liveRequestRef = useRef<{
     fingerprint: string;
     requestId: string;
@@ -1201,6 +1329,7 @@ export function OnboardingFlow({
         : await createMockGoalArchitectResult(completedAnswers);
       setPlan(result.output);
       setTrace(result.trace);
+      setPairingRequired(false);
       setSupport((current) =>
         applyGoalCadenceRecommendation(current, result.output),
       );
@@ -1209,17 +1338,51 @@ export function OnboardingFlow({
       if (
         liveGoalArchitect &&
         caught instanceof LiveGoalArchitectClientError &&
-        (caught.status === 401 || caught.status === 403)
+        caught.status === 401
       ) {
-        setError(
-          "This private play profile needs the paired phone session. The recording profile is still safe and unchanged.",
-        );
+        setPairingRequired(true);
+        setError(null);
+      } else if (
+        liveGoalArchitect &&
+        caught instanceof LiveGoalArchitectClientError &&
+        caught.status === 403
+      ) {
+        setError("This preview address is not authorized for live requests.");
       } else {
         setError(
           liveGoalArchitect
             ? "The live Goal Architect stopped safely before saving. Retry keeps the same request identity and will not silently switch to mock."
             : "The mock plan could not be validated. Please review your answers.",
         );
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pairAndRetry = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await pairLiveGoalArchitectDevice({ pairingCode, deviceLabel });
+      setPairingCode("");
+      setPairingRequired(false);
+      await generatePlan(answers.motivation);
+    } catch (caught) {
+      setPairingRequired(true);
+      if (caught instanceof LivePairingClientError) {
+        setError(
+          caught.status === 401
+            ? "The one-time pairing code is invalid or expired."
+            : caught.status === 409
+              ? "This code was already used or another device is currently paired."
+              : caught.status === 403
+                ? "This preview address is not authorized for pairing."
+                : "The device could not be paired. Please retry safely.",
+        );
+      } else {
+        setError("The device could not be paired. Please retry safely.");
       }
     } finally {
       setBusy(false);
@@ -1241,6 +1404,8 @@ export function OnboardingFlow({
   const confirmSupport = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setPairingRequired(false);
+    setPairingCode("");
 
     if (!plan || !trace) {
       setError("The plan trace is missing. Please return and generate the plan again.");
@@ -1285,6 +1450,8 @@ export function OnboardingFlow({
     setEditingPlan(false);
     setConcern("");
     setError(null);
+    setPairingRequired(false);
+    setPairingCode("");
     liveRequestRef.current = null;
     setStage("goal");
   };
@@ -1336,11 +1503,22 @@ export function OnboardingFlow({
           multiline
           busy={busy}
         />
-        {error && (
+        {error && !pairingRequired && (
           <p role="alert" className="mx-auto mt-4 max-w-xl rounded-xl bg-[#fff0ea] px-4 py-3 text-sm text-[#8a432c]">
             {error}
           </p>
         )}
+        {pairingRequired ? (
+          <PairingRecoveryCard
+            pairingCode={pairingCode}
+            deviceLabel={deviceLabel}
+            busy={busy}
+            error={error}
+            onPairingCodeChange={setPairingCode}
+            onDeviceLabelChange={setDeviceLabel}
+            onSubmit={pairAndRetry}
+          />
+        ) : null}
       </>
     );
   } else if (stage === "plan" && plan) {
