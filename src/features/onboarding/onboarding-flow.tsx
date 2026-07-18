@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 
 import type { AgentRunTrace } from "../../domain/agents/schemas";
 import type { GoalPlan } from "../../domain/goals/schemas";
@@ -14,7 +20,12 @@ import {
   createConfirmedOnboardingRecord,
   createLocalOnboardingRepository,
   type LocalOnboardingRecord,
+  type OnboardingStorageProfile,
 } from "../../repositories/local-onboarding-repository";
+import {
+  createLiveGoalArchitectResult,
+  LiveGoalArchitectClientError,
+} from "./live-goal-architect-client";
 import {
   applyPlanFeedback,
   createMockGoalArchitectResult,
@@ -153,7 +164,15 @@ function ProgressHeader({ stage }: { stage: Stage }) {
   );
 }
 
-function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
+function Shell({
+  stage,
+  liveGoalArchitect,
+  children,
+}: {
+  stage: Stage;
+  liveGoalArchitect: boolean;
+  children: ReactNode;
+}) {
   const workspace = stage === "complete";
   return (
     <Localized>
@@ -220,7 +239,13 @@ function Shell({ stage, children }: { stage: Stage; children: ReactNode }) {
             </div>
           </div>
           <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e8ebe7] px-5 py-3 text-[11px] text-[#5f6a64] sm:px-8">
-            <span>{workspace ? "Local journey · protected cloud orchestration" : "Mock mode · no API usage"}</span>
+            <span>
+              {workspace
+                ? "Local journey · protected cloud orchestration"
+                : liveGoalArchitect
+                  ? "Private play profile · live GPT-5.6"
+                  : "Mock mode · no API usage"}
+            </span>
             <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
           </footer>
         </section>
@@ -326,6 +351,7 @@ function QuestionScreen({
 
 function PlanReview({
   plan,
+  trace,
   editing,
   concern,
   error,
@@ -337,6 +363,7 @@ function PlanReview({
   onConfirm,
 }: {
   plan: GoalPlan;
+  trace: AgentRunTrace;
   editing: boolean;
   concern: string;
   error: string | null;
@@ -353,7 +380,9 @@ function PlanReview({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4f6d5e]">
-            Goal Architect · mock preview
+            {trace.provider === "openai"
+              ? "Goal Architect · live GPT-5.6"
+              : "Goal Architect · mock preview"}
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-[#17211d] sm:text-[2.35rem]">
             Here&apos;s what I understood.
@@ -364,7 +393,9 @@ function PlanReview({
           </p>
         </div>
         <span className="rounded-full border border-[#bed0c5] bg-[#eef5ef] px-3 py-1.5 text-xs font-semibold text-[#496a5b]">
-          Schema validated
+          {trace.provider === "openai"
+            ? `Live · ${trace.model} · Schema validated`
+            : "Schema validated"}
         </span>
       </div>
 
@@ -893,9 +924,11 @@ function TimeField({
 function CompletedJourney({
   record,
   onReset,
+  liveCheckInEnabled,
 }: {
   record: LocalOnboardingRecord;
   onReset: () => void;
+  liveCheckInEnabled: boolean;
 }) {
   const { locale, formatDateTime } = useLocale();
   const nextCheckIn = new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : "en-US", {
@@ -991,7 +1024,11 @@ function CompletedJourney({
       </div>
 
       <div className="mt-8">
-        <JourneyWorkspace record={record} onReset={onReset} />
+        <JourneyWorkspace
+          record={record}
+          onReset={onReset}
+          liveCheckInEnabled={liveCheckInEnabled}
+        />
       </div>
     </div>
     </Localized>
@@ -1009,7 +1046,13 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function OnboardingFlow() {
+export function OnboardingFlow({
+  profile = "default",
+}: {
+  profile?: OnboardingStorageProfile;
+}) {
+  const { locale } = useLocale();
+  const liveGoalArchitect = profile === "play";
   const [stage, setStage] = useState<Stage>("goal");
   const [answers, setAnswers] = useState<OnboardingAnswers>({
     goal: "",
@@ -1032,9 +1075,16 @@ export function OnboardingFlow() {
   const [concern, setConcern] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const liveRequestRef = useRef<{
+    fingerprint: string;
+    requestId: string;
+  } | null>(null);
 
   useEffect(() => {
-    const saved = createLocalOnboardingRepository(window.localStorage).load();
+    const saved = createLocalOnboardingRepository(
+      window.localStorage,
+      profile,
+    ).load();
     if (!saved) return;
 
     const restoreTask = window.setTimeout(() => {
@@ -1043,7 +1093,7 @@ export function OnboardingFlow() {
     }, 0);
 
     return () => window.clearTimeout(restoreTask);
-  }, []);
+  }, [profile]);
 
   const generatePlan = async (motivation: string) => {
     const completedAnswers = { ...answers, motivation };
@@ -1052,12 +1102,42 @@ export function OnboardingFlow() {
     setError(null);
 
     try {
-      const result = await createMockGoalArchitectResult(completedAnswers);
+      const fingerprint = JSON.stringify(completedAnswers);
+      if (liveRequestRef.current?.fingerprint !== fingerprint) {
+        liveRequestRef.current = {
+          fingerprint,
+          requestId: crypto.randomUUID(),
+        };
+      }
+      const result = liveGoalArchitect
+        ? await createLiveGoalArchitectResult({
+            answers: completedAnswers,
+            locale,
+            timezone:
+              Intl.DateTimeFormat().resolvedOptions().timeZone ||
+              defaultSupportAgreementDraft.timezone,
+            requestId: liveRequestRef.current.requestId,
+          })
+        : await createMockGoalArchitectResult(completedAnswers);
       setPlan(result.output);
       setTrace(result.trace);
       setStage("plan");
-    } catch {
-      setError("The mock plan could not be validated. Please review your answers.");
+    } catch (caught) {
+      if (
+        liveGoalArchitect &&
+        caught instanceof LiveGoalArchitectClientError &&
+        (caught.status === 401 || caught.status === 403)
+      ) {
+        setError(
+          "This private play profile needs the paired phone session. The recording profile is still safe and unchanged.",
+        );
+      } else {
+        setError(
+          liveGoalArchitect
+            ? "The live Goal Architect stopped safely before saving. Retry keeps the same request identity and will not silently switch to mock."
+            : "The mock plan could not be validated. Please review your answers.",
+        );
+      }
     } finally {
       setBusy(false);
     }
@@ -1099,7 +1179,7 @@ export function OnboardingFlow() {
         support: validatedSupport.data,
         agentTrace: trace,
       });
-      createLocalOnboardingRepository(window.localStorage).save(record);
+      createLocalOnboardingRepository(window.localStorage, profile).save(record);
       setCompletedRecord(record);
       setStage("complete");
     } catch {
@@ -1108,7 +1188,7 @@ export function OnboardingFlow() {
   };
 
   const resetJourney = () => {
-    createLocalOnboardingRepository(window.localStorage).clear();
+    createLocalOnboardingRepository(window.localStorage, profile).clear();
     setAnswers({ goal: "", targetWindow: "", motivation: "" });
     setPlan(null);
     setTrace(null);
@@ -1122,6 +1202,7 @@ export function OnboardingFlow() {
     setEditingPlan(false);
     setConcern("");
     setError(null);
+    liveRequestRef.current = null;
     setStage("goal");
   };
 
@@ -1183,6 +1264,7 @@ export function OnboardingFlow() {
     content = (
       <PlanReview
         plan={plan}
+        trace={trace!}
         editing={editingPlan}
         concern={concern}
         error={error}
@@ -1209,7 +1291,11 @@ export function OnboardingFlow() {
     );
   } else if (stage === "complete" && completedRecord) {
     content = (
-      <CompletedJourney record={completedRecord} onReset={resetJourney} />
+      <CompletedJourney
+        record={completedRecord}
+        onReset={resetJourney}
+        liveCheckInEnabled={!liveGoalArchitect}
+      />
     );
   } else {
     content = (
@@ -1222,5 +1308,9 @@ export function OnboardingFlow() {
     );
   }
 
-  return <Shell stage={stage}>{content}</Shell>;
+  return (
+    <Shell stage={stage} liveGoalArchitect={liveGoalArchitect}>
+      {content}
+    </Shell>
+  );
 }

@@ -10,14 +10,12 @@ import {
   type GoalPlan,
 } from "../../domain/goals/schemas";
 import { MockAiProvider } from "../../providers/ai/mock-provider";
+import {
+  OnboardingAnswersSchema,
+  type OnboardingAnswers,
+} from "./schemas";
 
-export const OnboardingAnswersSchema = z
-  .object({
-    goal: z.string().trim().min(2).max(240),
-    targetWindow: z.string().trim().min(2).max(240),
-    motivation: z.string().trim().min(2).max(2_000),
-  })
-  .strict();
+export { OnboardingAnswersSchema, type OnboardingAnswers } from "./schemas";
 
 export const SupportAgreementDraftSchema = z
   .object({
@@ -39,7 +37,6 @@ export const SupportAgreementDraftSchema = z
   })
   .strict();
 
-export type OnboardingAnswers = z.infer<typeof OnboardingAnswersSchema>;
 export type SupportAgreementDraft = z.infer<
   typeof SupportAgreementDraftSchema
 >;

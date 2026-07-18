@@ -19,6 +19,16 @@ import type { AgentRunTrace } from "../domain/agents/schemas";
 export const LOCAL_ONBOARDING_STORAGE_KEY =
   "time-sovereignty.phase-two.onboarding.v1";
 
+export type OnboardingStorageProfile = "default" | "play";
+
+export function onboardingStorageKey(
+  profile: OnboardingStorageProfile = "default",
+): string {
+  return profile === "default"
+    ? LOCAL_ONBOARDING_STORAGE_KEY
+    : `${LOCAL_ONBOARDING_STORAGE_KEY}.${profile}`;
+}
+
 export const LocalOnboardingRecordSchema = z
   .object({
     version: z.literal(1),
@@ -120,10 +130,14 @@ export function createConfirmedOnboardingRecord({
   });
 }
 
-export function createLocalOnboardingRepository(storage: StorageLike) {
+export function createLocalOnboardingRepository(
+  storage: StorageLike,
+  profile: OnboardingStorageProfile = "default",
+) {
+  const storageKey = onboardingStorageKey(profile);
   return {
     load(): LocalOnboardingRecord | null {
-      const serialized = storage.getItem(LOCAL_ONBOARDING_STORAGE_KEY);
+      const serialized = storage.getItem(storageKey);
       if (!serialized) return null;
 
       try {
@@ -138,13 +152,13 @@ export function createLocalOnboardingRepository(storage: StorageLike) {
     save(record: LocalOnboardingRecord): void {
       const validated = LocalOnboardingRecordSchema.parse(record);
       storage.setItem(
-        LOCAL_ONBOARDING_STORAGE_KEY,
+        storageKey,
         JSON.stringify(validated),
       );
     },
 
     clear(): void {
-      storage.removeItem(LOCAL_ONBOARDING_STORAGE_KEY);
+      storage.removeItem(storageKey);
     },
   };
 }

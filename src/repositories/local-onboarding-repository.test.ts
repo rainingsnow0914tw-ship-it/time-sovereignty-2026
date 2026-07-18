@@ -5,6 +5,7 @@ import {
   createConfirmedOnboardingRecord,
   createLocalOnboardingRepository,
   LOCAL_ONBOARDING_STORAGE_KEY,
+  onboardingStorageKey,
   type StorageLike,
 } from "./local-onboarding-repository";
 
@@ -82,5 +83,19 @@ describe("local onboarding repository", () => {
     repository.clear();
 
     expect(storage.getItem(LOCAL_ONBOARDING_STORAGE_KEY)).toBeNull();
+  });
+
+  it("keeps the recording profile and private play profile isolated", () => {
+    const storage = createMemoryStorage();
+    storage.setItem(LOCAL_ONBOARDING_STORAGE_KEY, "recording-state");
+    storage.setItem(onboardingStorageKey("play"), "play-state");
+
+    createLocalOnboardingRepository(storage, "play").clear();
+
+    expect(onboardingStorageKey()).toBe(LOCAL_ONBOARDING_STORAGE_KEY);
+    expect(storage.getItem(LOCAL_ONBOARDING_STORAGE_KEY)).toBe(
+      "recording-state",
+    );
+    expect(storage.getItem(onboardingStorageKey("play"))).toBeNull();
   });
 });

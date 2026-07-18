@@ -80,9 +80,15 @@ export class OpenAiResponsesProvider implements AiProvider {
     outputSchema: z.ZodType<TOutput>,
   ): Promise<AgentRunResult<TOutput>> {
     const startedAt = this.now().toISOString();
+    const baseInstructions = instructionsFor(
+      request.agent,
+      request.outputSchemaName,
+    );
     const response = await this.parseResponse({
       model: this.model,
-      instructions: instructionsFor(request.agent, request.outputSchemaName),
+      instructions: request.additionalInstructions
+        ? `${baseInstructions} ${request.additionalInstructions}`
+        : baseInstructions,
       input: JSON.stringify({
         inputSummary: request.inputSummary,
         payload: request.input,
@@ -96,6 +102,7 @@ export class OpenAiResponsesProvider implements AiProvider {
       reasoning: { effort: "none" },
       max_output_tokens: this.maxOutputTokens,
       store: false,
+      safety_identifier: request.safetyIdentifier,
     });
 
     if (response.outputParsed === null) {

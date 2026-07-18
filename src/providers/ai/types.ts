@@ -12,6 +12,8 @@ export interface StructuredAgentRequest<TInput> {
   outputSchemaName: string;
   inputSummary: string;
   input: TInput;
+  additionalInstructions?: string;
+  safetyIdentifier?: string;
 }
 
 export interface AgentRunResult<TOutput> {

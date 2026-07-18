@@ -68,9 +68,11 @@ type RuntimeHealth = {
 export function JourneyWorkspace({
   record,
   onReset,
+  liveCheckInEnabled = true,
 }: {
   record: LocalOnboardingRecord;
   onReset: () => void;
+  liveCheckInEnabled?: boolean;
 }) {
   const { locale, t } = useLocale();
   const [state, setState] = useState<JourneyState>(() =>
@@ -679,13 +681,19 @@ export function JourneyWorkspace({
 
         {state.activeView === "CHECK_IN" ? (
           <>
-          <LiveCheckInPanel
-            mode="check-in"
-            record={record}
-            currentAction={state.currentAction}
-            minimumAction={state.minimumAction}
-            onCommitmentConfirmed={applyLiveCommitment}
-          />
+          {liveCheckInEnabled ? (
+            <LiveCheckInPanel
+              mode="check-in"
+              record={record}
+              currentAction={state.currentAction}
+              minimumAction={state.minimumAction}
+              onCommitmentConfirmed={applyLiveCommitment}
+            />
+          ) : (
+            <div className="rounded-2xl border border-[#bed0c5] bg-[#eef5ef] px-4 py-3 text-sm text-[#496a5b]">
+              Play profile · real Goal Architect is active. The recording check-in lane remains separate.
+            </div>
+          )}
           <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className={`${cardClass} border-[#9eb9aa] bg-[#f7fbf7]`}>
               <Eyebrow>Incoming check-in</Eyebrow>
@@ -886,12 +894,14 @@ export function JourneyWorkspace({
 
         {state.activeView === "DEVELOPER" ? (
           <>
-          <LiveCheckInPanel
-            mode="developer"
-            record={record}
-            currentAction={state.currentAction}
-            minimumAction={state.minimumAction}
-          />
+          {liveCheckInEnabled ? (
+            <LiveCheckInPanel
+              mode="developer"
+              record={record}
+              currentAction={state.currentAction}
+              minimumAction={state.minimumAction}
+            />
+          ) : null}
           <section className="mt-5 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
             <div className={cardClass}>
               <div className="flex flex-wrap items-end justify-between gap-3">

@@ -30,6 +30,8 @@ const request = {
   outputSchemaName: "GoalArchitectOutput",
   inputSummary: "Validated onboarding context; raw answers omitted from trace",
   input: { goal: "Build Week", targetWindow: "submission day" },
+  additionalInstructions: "Write human-readable fields in Traditional Chinese.",
+  safetyIdentifier: "ts_safe_user_hash",
 };
 
 describe("OpenAiResponsesProvider", () => {
@@ -78,6 +80,10 @@ describe("OpenAiResponsesProvider", () => {
     expect(bodies).toHaveLength(1);
     expect(bodies[0]).toMatchObject({
       model: "gpt-5.6",
+      instructions: expect.stringContaining(
+        "Write human-readable fields in Traditional Chinese.",
+      ),
+      safety_identifier: "ts_safe_user_hash",
       reasoning: { effort: "none" },
       max_output_tokens: 2_000,
       store: false,
