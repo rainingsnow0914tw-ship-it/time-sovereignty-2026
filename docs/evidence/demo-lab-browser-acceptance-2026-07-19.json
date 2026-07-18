@@ -38,6 +38,20 @@
     "consoleErrorCount": 0,
     "mobileScreenshotInspected": true
   },
+  "productionHydrationRepair": {
+    "firstCloudRevision": "time-sovereignty-00037-huw",
+    "firstCloudHttpStatus": 200,
+    "firstCloudApiRequestCount": 0,
+    "firstCloudReactHydrationError": 418,
+    "rootCause": "server and phone timezone-dependent first render",
+    "deterministicFirstRenderImplemented": true,
+    "localProductionRetestHttpStatus": 200,
+    "localProductionRetestReachedDay30": true,
+    "localProductionRetestApiRequestCount": 0,
+    "localProductionRetestErrorOverlayCount": 0,
+    "localProductionRetestConsoleErrorCount": 0,
+    "replacementCloudRevisionRequired": true
+  },
   "verification": {
     "focusedTestsPassed": 2,
     "testFilesPassed": 32,

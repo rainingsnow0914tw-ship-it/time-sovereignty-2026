@@ -607,6 +607,15 @@
   full story, reached Day 30, inspected Journey and Developer, and found zero
   framework overlays or console errors. The full mobile screenshot was visually
   inspected.
+- The first tag-only production revision `time-sovereignty-00037-huw` exposed a
+  React hydration `#418` that the development browser did not show. Cloud Run
+  and the phone rendered quiet-hours and check-in time in different timezones.
+  The first render now uses deterministic agreement values and applies local
+  time only after hydration.
+- The rebuilt local production bundle passed the same fresh 390×844 flow with
+  HTTP 200, Day 30, zero `/api/*` requests, zero overlays, and zero console
+  errors. Revision `00037` is not accepted as the final preview; a clean
+  replacement is required.
 - Full verification passed: 125 tests with nine live-only skips, ESLint,
   TypeScript, production build, and diff check. Next built `/demo` as a static
   route.

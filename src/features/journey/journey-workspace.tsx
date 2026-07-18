@@ -177,10 +177,12 @@ export function JourneyWorkspace({
     [],
   );
 
-  const quietHours = isWithinQuietHours(
-    record.supportAgreement.quietHours.start,
-    record.supportAgreement.quietHours.end,
-  );
+  const quietHours =
+    hydrated &&
+    isWithinQuietHours(
+      record.supportAgreement.quietHours.start,
+      record.supportAgreement.quietHours.end,
+    );
   const speechLanguage = speechLanguageForLocale(locale);
   const checkInMessage = t(
     `You planned to continue “${state.currentAction}”. Are you still at the same checkpoint?`,
@@ -720,6 +722,7 @@ export function JourneyWorkspace({
             onFullSimulation={runFullSimulation}
             onRate={rateIntervention}
             showSimulation={showLocalSimulation}
+            hydrated={hydrated}
           />
         ) : null}
 
@@ -1037,6 +1040,7 @@ function TodayView({
   onFullSimulation,
   onRate,
   showSimulation,
+  hydrated,
 }: {
   record: LocalOnboardingRecord;
   state: JourneyState;
@@ -1047,6 +1051,7 @@ function TodayView({
   onFullSimulation: () => void;
   onRate: (rating: number) => void;
   showSimulation: boolean;
+  hydrated: boolean;
 }) {
   const { formatDateTime } = useLocale();
   return (
@@ -1103,7 +1108,14 @@ function TodayView({
           <Eyebrow>Protection status</Eyebrow>
           <div className="mt-4 space-y-3 text-sm">
             <StatusRow label="Quiet hours" value={quietHours ? "Protected now" : `${record.supportAgreement.quietHours.start}–${record.supportAgreement.quietHours.end}`} good />
-            <StatusRow label="Check-in" value={formatDateTime(state.nextCheckAt)} />
+            <StatusRow
+              label="Check-in"
+              value={
+                hydrated
+                  ? formatDateTime(state.nextCheckAt)
+                  : record.supportAgreement.preferredCheckInTime
+              }
+            />
             <StatusRow label="Repeated delays" value={String(state.delayCount)} good={state.delayCount < 2} />
             <StatusRow label="Stored memories" value={String(state.memories.length)} good />
           </div>

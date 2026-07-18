@@ -40,6 +40,23 @@ Week sprint. It advances through Days 1, 2, 3, 4, 5, 8, 14, and 30 and shows:
   Day 30 status, Developer trace, acceptance list, and browser-only footer were
   readable.
 
+## Production hydration repair
+
+- The first tag-only cloud build, `time-sovereignty-00037-huw`, served `/demo`
+  with HTTP 200, reached Day 30, produced no `/api/*` request, and showed the
+  correct mock trace. A fresh production browser nevertheless recorded React
+  hydration error `#418`.
+- Root cause: quiet-hours status and the formatted next check-in were rendered
+  once in the Cloud Run server timezone and again in the phone timezone.
+- The first server and client render now use the same deterministic agreement
+  value. Local-time quiet-hours and formatted check-in status appear only after
+  browser hydration.
+- A fresh 390 × 844 Chrome profile against the rebuilt local production bundle
+  then returned HTTP 200, reached Day 30, made zero `/api/*` requests, and
+  produced zero overlays and zero console errors.
+- Revision `00037` is evidence of the caught defect, not the accepted final
+  preview. A replacement tag-only revision is required.
+
 ## Verification
 
 - Demo Lab focused tests: 2 passed.
