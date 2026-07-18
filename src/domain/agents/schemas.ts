@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { GoalPlanSchema, StrategyOutcomeSchema } from "../goals/schemas";
+import { GoalPlanOutputSchema, StrategyOutcomeSchema } from "../goals/schemas";
 import { MemoryProposalSchema } from "../memories/schemas";
 import { EntityIdSchema, IsoDateTimeSchema } from "../shared";
 
@@ -17,7 +17,7 @@ export const SubAgentRoleSchema = z.enum([
   "MEMORY_CURATOR",
 ]);
 
-export const GoalArchitectOutputSchema = GoalPlanSchema;
+export const GoalArchitectOutputSchema = GoalPlanOutputSchema;
 
 export const CommitmentRecoveryOutputSchema = z.object({
   possibleReason: z.string().trim().min(1).max(240),

@@ -5,6 +5,7 @@ import {
   CommitmentRecoveryOutputSchema,
 } from "../domain/agents/schemas";
 import {
+  GoalCadenceSchema,
   QuietHoursSchema,
   StrategyOutcomeSchema,
 } from "../domain/goals/schemas";
@@ -24,6 +25,7 @@ export const LiveCheckInContextSchema = z
     goal: z.string().trim().min(1).max(240),
     motivation: z.string().trim().min(1).max(2_000),
     targetWindow: z.string().trim().min(1).max(240),
+    cadence: GoalCadenceSchema.optional(),
     currentAction: z.string().trim().min(1).max(500),
     minimumAction: z.string().trim().min(1).max(500),
     preferredTone: z.string().trim().min(1).max(240),

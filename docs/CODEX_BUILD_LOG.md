@@ -494,3 +494,29 @@
   preview endpoint exactly once and returned HTTP 200 in 0.143 seconds.
 - Detailed safe evidence:
   `docs/evidence/live-multimodal-android-acceptance-2026-07-18.md`.
+
+## 2026-07-18 — Goal-led cadence instead of a fixed 30-day journey
+
+- Added a shared structured cadence contract that classifies a goal as
+  `SPRINT`, `PROJECT`, or `HABIT` and returns a defensible target end,
+  check-in frequency, preferred time, agreement review interval, rationale,
+  and observable completion signal.
+- The support agreement now starts from Goal Architect's recommendation while
+  preserving every user-editable consent and boundary field. The real
+  check-in context carries cadence forward so Chief and Recovery cannot treat
+  a one-night sprint as a generic long journey.
+- Added deterministic timing guards: initial and later follow-ups must remain
+  future, precede a known target end, and stay inside 24 hours for a sprint,
+  72 hours for a habit, or seven days for a project.
+- Preserved existing browser and Firestore data through a conservative legacy
+  cadence upgrade. A dedicated test removes cadence from an old play-profile
+  record and verifies it restores as an editable sprint instead of vanishing.
+- Reverified 104 tests with eight live-only skips, ESLint, TypeScript, and the
+  production build. One deliberate GPT-5.6 call classified the same-night
+  Build Week goal as `SPRINT` with goal-led check-ins and a one-day review;
+  `gpt-5.6-sol` used 1,481 total tokens with zero SDK retries.
+- Deployed `time-sovereignty-00030-sad` to the 0%-normal-traffic
+  `live-mobile` tag. Health returned HTTP 200 in live mode; stable
+  `00024-dih` remains at 100%.
+- Decision: `docs/decisions/0012-goal-led-cadence-and-real-journey-boundary.md`.
+- Evidence: `docs/evidence/live-goal-cadence-contract-2026-07-18.md`.

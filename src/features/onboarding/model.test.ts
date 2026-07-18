@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyGoalCadenceRecommendation,
   applyPlanFeedback,
   createMockGoalArchitectResult,
+  defaultSupportAgreementDraft,
   OnboardingAnswersSchema,
 } from "./model";
 
@@ -55,5 +57,68 @@ describe("Phase 2 onboarding model", () => {
     );
 
     expect(adjusted.feasibilityNotes.at(-1)).toContain("clinic days");
+  });
+
+  it("does not stretch a tonight deadline into a generic long journey", async () => {
+    const now = new Date("2026-07-18T03:00:00.000Z");
+    const result = await createMockGoalArchitectResult(
+      {
+        goal: "今晚完成黑客松提交",
+        targetWindow: "今天晚上十一點前",
+        motivation: "我要完成真正能用的作品",
+      },
+      () => now,
+    );
+
+    expect(result.output.cadence).toMatchObject({
+      kind: "SPRINT",
+      checkInFrequency: "CUSTOM",
+      reviewFrequencyDays: 1,
+    });
+    expect(
+      new Date(result.output.initialCheckInProposal.scheduledFor).getTime() -
+        now.getTime(),
+    ).toBeLessThanOrEqual(24 * 60 * 60 * 1_000);
+  });
+
+  it("separates an ongoing practice from a finite project", async () => {
+    const now = () => new Date("2026-07-18T03:00:00.000Z");
+    const habit = await createMockGoalArchitectResult(
+      {
+        goal: "每天畫一張小插畫",
+        targetWindow: "一個月",
+        motivation: "讓畫畫成為生活的一部分",
+      },
+      now,
+    );
+    const project = await createMockGoalArchitectResult(
+      {
+        goal: "完成一本小說初稿",
+        targetWindow: "六個月",
+        motivation: "把故事真正寫完",
+      },
+      now,
+    );
+
+    expect(habit.output.cadence.kind).toBe("HABIT");
+    expect(project.output.cadence.kind).toBe("PROJECT");
+  });
+
+  it("prefills support from the recommendation without locking user control", async () => {
+    const result = await createMockGoalArchitectResult(
+      {
+        goal: "今晚完成黑客松提交",
+        targetWindow: "今天晚上十一點前",
+        motivation: "完成可提交成果",
+      },
+      () => new Date("2026-07-18T03:00:00.000Z"),
+    );
+    const support = applyGoalCadenceRecommendation(
+      { ...defaultSupportAgreementDraft, checkInFrequency: "WEEKLY" },
+      result.output,
+    );
+
+    expect(support.checkInFrequency).toBe("CUSTOM");
+    expect(support.reviewFrequencyDays).toBe(1);
   });
 });

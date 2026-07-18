@@ -4,6 +4,7 @@ import {
   ChiefOfStaffOutputSchema,
   GoalArchitectOutputSchema,
 } from "./agents/schemas";
+import { GoalPlanSchema } from "./goals/schemas";
 import { MemoryRecordSchema } from "./memories/schemas";
 
 describe("agent output contracts", () => {
@@ -12,6 +13,15 @@ describe("agent output contracts", () => {
       goalSummary: "Ship the recovery-loop MVP",
       motivation: "Protect the Build Week demo without abandoning the thesis",
       targetWindow: "By the final submission deadline",
+      cadence: {
+        kind: "PROJECT",
+        targetEndAt: "2026-07-21T23:59:00.000Z",
+        checkInFrequency: "WEEKDAYS",
+        preferredCheckInTime: "19:30",
+        reviewFrequencyDays: 7,
+        rationale: "Use milestone-scale support until submission is complete.",
+        completionSignal: "The submission is complete and verifiable.",
+      },
       feasibilityNotes: ["Use one vertical slice before visual polish"],
       firstMilestone: "Finish deterministic domain behavior",
       bestNextAction: "Implement and test both state machines",
@@ -24,6 +34,26 @@ describe("agent output contracts", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("requires cadence from new Agent output but upgrades an existing saved plan", () => {
+    const legacy = {
+      goalSummary: "Finish tonight",
+      motivation: "It matters",
+      targetWindow: "Tonight",
+      feasibilityNotes: [],
+      firstMilestone: "Create proof",
+      bestNextAction: "Start",
+      minimumViableAction: "Open the work",
+      initialCheckInProposal: {
+        scheduledFor: "2026-07-18T12:00:00.000Z",
+        rationale: "Return soon",
+      },
+      assumptionsNeedingConfirmation: [],
+    };
+
+    expect(GoalArchitectOutputSchema.safeParse(legacy).success).toBe(false);
+    expect(GoalPlanSchema.parse(legacy).cadence.kind).toBe("SPRINT");
   });
 
   it("does not let the Chief of Staff dispatch itself as a sub-agent", () => {

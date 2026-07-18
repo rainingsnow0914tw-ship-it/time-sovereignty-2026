@@ -71,6 +71,16 @@ export function buildRuntimeMockScenarios(
       goalSummary: goal,
       motivation,
       targetWindow,
+      cadence: {
+        kind: "PROJECT",
+        targetEndAt: null,
+        checkInFrequency: "WEEKDAYS",
+        preferredCheckInTime: "19:30",
+        reviewFrequencyDays: 7,
+        rationale:
+          "Use milestone-scale support for the deterministic mock journey.",
+        completionSignal: "The user confirms the intended deliverable is complete.",
+      },
       feasibilityNotes: [
         "This is a deterministic mock plan; live mode uses GPT-5.6.",
       ],

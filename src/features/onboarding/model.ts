@@ -7,6 +7,7 @@ import {
 import {
   ProgressFormatSchema,
   SupportChannelSchema,
+  type GoalCadence,
   type GoalPlan,
 } from "../../domain/goals/schemas";
 import { MockAiProvider } from "../../providers/ai/mock-provider";
@@ -67,11 +68,140 @@ export const defaultSupportAgreementDraft: SupportAgreementDraft = {
   reviewFrequencyDays: 7,
 };
 
-function nextDayAtNineteenThirty(now: Date): string {
+const DAY_MS = 24 * 60 * 60 * 1_000;
+
+function nextDayAtNineteenThirty(now: Date): Date {
   const proposed = new Date(now);
   proposed.setDate(proposed.getDate() + 1);
   proposed.setHours(19, 30, 0, 0);
+  return proposed;
+}
+
+function endOfLocalDay(now: Date, dayOffset = 0): Date {
+  const end = new Date(now);
+  end.setDate(end.getDate() + dayOffset);
+  end.setHours(23, 30, 0, 0);
+  return end;
+}
+
+function parseTargetEndAt(targetWindow: string, now: Date): Date | null {
+  const normalized = targetWindow.toLowerCase();
+  if (
+    /(?:沒有硬性期限|無硬性期限|沒有期限|no hard deadline|open[- ]ended)/u.test(
+      normalized,
+    )
+  ) {
+    return null;
+  }
+  if (/(?:今天|今晚|today|tonight)/u.test(normalized)) {
+    return endOfLocalDay(now);
+  }
+  if (/(?:明天|tomorrow)/u.test(normalized)) {
+    return endOfLocalDay(now, 1);
+  }
+
+  const isoDate = normalized.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/u);
+  if (isoDate) {
+    const end = new Date(
+      Number(isoDate[1]),
+      Number(isoDate[2]) - 1,
+      Number(isoDate[3]),
+      23,
+      30,
+      0,
+      0,
+    );
+    return end.getTime() > now.getTime() ? end : null;
+  }
+
+  const duration = normalized.match(
+    /(\d+)\s*(天|日|週|周|個月|个月|年|days?|weeks?|months?|years?)/u,
+  );
+  if (duration) {
+    const count = Number(duration[1]);
+    const unit = duration[2];
+    const days = /(?:週|周|weeks?)/u.test(unit)
+      ? count * 7
+      : /(?:個月|个月|months?)/u.test(unit)
+        ? count * 30
+        : /(?:年|years?)/u.test(unit)
+          ? count * 365
+          : count;
+    return new Date(now.getTime() + days * DAY_MS);
+  }
+  if (/(?:一個月|一个月|one month)/u.test(normalized)) {
+    return new Date(now.getTime() + 30 * DAY_MS);
+  }
+  if (/(?:一週|一周|one week|this week|本週|這週)/u.test(normalized)) {
+    return new Date(now.getTime() + 7 * DAY_MS);
+  }
+  return null;
+}
+
+function createMockCadence(
+  answers: OnboardingAnswers,
+  now: Date,
+): GoalCadence {
+  const combined = `${answers.goal} ${answers.targetWindow}`.toLowerCase();
+  const habit =
+    /(?:每天|每日|持續|習慣|規律|日課|練習|daily|every day|habit|routine|consisten|practice)/u.test(
+      combined,
+    );
+  const targetEnd = parseTargetEndAt(answers.targetWindow, now);
+  const targetDays = targetEnd
+    ? (targetEnd.getTime() - now.getTime()) / DAY_MS
+    : null;
+  const kind: GoalCadence["kind"] = habit
+    ? "HABIT"
+    : targetDays !== null && targetDays <= 14
+      ? "SPRINT"
+      : "PROJECT";
+
+  return {
+    kind,
+    targetEndAt: targetEnd?.toISOString() ?? null,
+    checkInFrequency:
+      kind === "SPRINT" ? "CUSTOM" : kind === "HABIT" ? "DAILY" : "WEEKDAYS",
+    preferredCheckInTime: kind === "SPRINT" ? "20:30" : "19:30",
+    reviewFrequencyDays: kind === "SPRINT" ? 1 : 7,
+    rationale:
+      kind === "SPRINT"
+        ? "Use milestone-led check-ins inside the short deadline instead of inventing a long journey."
+        : kind === "HABIT"
+          ? "Use light recurring support and review whether the practice remains sustainable."
+          : "Use regular progress checkpoints across the finite deliverable without checking in every hour.",
+    completionSignal:
+      kind === "HABIT"
+        ? "The agreed practice period is completed and the user chooses the next rhythm."
+        : `The user confirms the first visible outcome for “${answers.goal}” is complete.`,
+  };
+}
+
+function initialMockCheckIn(cadence: GoalCadence, now: Date): string {
+  let proposed =
+    cadence.kind === "SPRINT"
+      ? new Date(now.getTime() + 60 * 60 * 1_000)
+      : nextDayAtNineteenThirty(now);
+  if (cadence.targetEndAt) {
+    const targetEnd = new Date(cadence.targetEndAt);
+    if (proposed.getTime() >= targetEnd.getTime()) {
+      const remaining = targetEnd.getTime() - now.getTime();
+      proposed = new Date(now.getTime() + Math.max(5 * 60 * 1_000, remaining / 2));
+    }
+  }
   return proposed.toISOString();
+}
+
+export function applyGoalCadenceRecommendation(
+  current: SupportAgreementDraft,
+  plan: GoalPlan,
+): SupportAgreementDraft {
+  return SupportAgreementDraftSchema.parse({
+    ...current,
+    checkInFrequency: plan.cadence.checkInFrequency,
+    preferredCheckInTime: plan.cadence.preferredCheckInTime,
+    reviewFrequencyDays: plan.cadence.reviewFrequencyDays,
+  });
 }
 
 export async function createMockGoalArchitectResult(
@@ -80,10 +210,12 @@ export async function createMockGoalArchitectResult(
 ): Promise<MockGoalArchitectResult> {
   const answers = OnboardingAnswersSchema.parse(rawAnswers);
   const generatedAt = now();
+  const cadence = createMockCadence(answers, generatedAt);
   const plan: GoalPlan = {
     goalSummary: answers.goal,
     motivation: answers.motivation,
     targetWindow: answers.targetWindow,
+    cadence,
     feasibilityNotes: [
       "Start with one visible milestone instead of a long task inventory.",
       "Protect energy and quiet hours while keeping the goal moving.",
@@ -94,7 +226,7 @@ export async function createMockGoalArchitectResult(
     minimumViableAction:
       "Open the work and write the smallest useful next step in one sentence.",
     initialCheckInProposal: {
-      scheduledFor: nextDayAtNineteenThirty(generatedAt),
+      scheduledFor: initialMockCheckIn(cadence, generatedAt),
       rationale:
         "Check in after one protected work window, while the first decision is still fresh.",
     },

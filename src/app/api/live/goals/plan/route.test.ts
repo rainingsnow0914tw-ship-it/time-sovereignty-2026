@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { GoalPlan } from "@/domain/goals/schemas";
 import { createLiveGoalArchitectPlan } from "@/live-checkin/goal-architect";
 import { authenticateLiveRequest } from "@/live-checkin/route-helpers";
 import { assertAllowedOrigin } from "@/live-checkin/session-auth";
@@ -24,10 +25,19 @@ vi.mock("@/live-checkin/session-auth", () => ({
 
 import { POST } from "./route";
 
-const plan = {
+const plan: GoalPlan = {
   goalSummary: "每天畫一張小插畫",
   motivation: "讓創作回到生活裡",
   targetWindow: "未來三十天",
+  cadence: {
+    kind: "HABIT",
+    targetEndAt: "2026-08-17T23:59:00.000Z",
+    checkInFrequency: "DAILY",
+    preferredCheckInTime: "19:30",
+    reviewFrequencyDays: 7,
+    rationale: "保護可持續的每日創作練習。",
+    completionSignal: "與使用者一起回顧三十天的練習。",
+  },
   feasibilityNotes: ["先保護連續性，不要求每天完成作品"],
   firstMilestone: "完成第一週的七個小畫面",
   bestNextAction: "現在打開畫布，畫一個最想記住的形狀",

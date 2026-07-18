@@ -203,6 +203,7 @@ export function LiveCheckInPanel({
             goal: record.goal.title,
             motivation: record.goal.motivation,
             targetWindow: record.goal.targetWindow,
+            cadence: record.plan.cadence,
             currentAction,
             minimumAction,
             preferredTone: record.supportAgreement.preferredTone,

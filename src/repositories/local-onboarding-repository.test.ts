@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createMockGoalArchitectResult } from "../features/onboarding/model";
+import {
+  createMockGoalArchitectResult,
+  defaultSupportAgreementDraft,
+} from "../features/onboarding/model";
 import {
   createConfirmedOnboardingRecord,
   createLocalOnboardingRepository,
@@ -73,6 +76,36 @@ describe("local onboarding repository", () => {
     storage.setItem(LOCAL_ONBOARDING_STORAGE_KEY, "{not-json");
 
     expect(createLocalOnboardingRepository(storage).load()).toBeNull();
+  });
+
+  it("upgrades a saved pre-cadence journey instead of discarding it", async () => {
+    const now = () => new Date("2026-07-18T03:00:00.000Z");
+    const answers = {
+      goal: "今晚完成黑客松提交",
+      targetWindow: "今天晚上十一點前",
+      motivation: "我要交出真正能使用的作品",
+    };
+    const generated = await createMockGoalArchitectResult(answers, now);
+    const record = createConfirmedOnboardingRecord({
+      answers,
+      plan: generated.output,
+      agentTrace: generated.trace,
+      support: defaultSupportAgreementDraft,
+      now,
+      idFactory: (prefix) => `${prefix}-legacy`,
+    });
+    const legacy = JSON.parse(JSON.stringify(record)) as {
+      plan: { cadence?: unknown };
+    };
+    delete legacy.plan.cadence;
+    const storage = createMemoryStorage();
+    storage.setItem(onboardingStorageKey("play"), JSON.stringify(legacy));
+
+    const restored = createLocalOnboardingRepository(storage, "play").load();
+
+    expect(restored?.goal.title).toBe("今晚完成黑客松提交");
+    expect(restored?.plan.cadence.kind).toBe("SPRINT");
+    expect(restored?.plan.cadence.checkInFrequency).toBe("CUSTOM");
   });
 
   it("clears the saved journey", () => {

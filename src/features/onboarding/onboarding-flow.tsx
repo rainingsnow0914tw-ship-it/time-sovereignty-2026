@@ -27,6 +27,7 @@ import {
   LiveGoalArchitectClientError,
 } from "./live-goal-architect-client";
 import {
+  applyGoalCadenceRecommendation,
   applyPlanFeedback,
   createMockGoalArchitectResult,
   defaultSupportAgreementDraft,
@@ -52,7 +53,25 @@ const frequencies = [
   { value: "DAILY", label: "Every day" },
   { value: "WEEKDAYS", label: "Weekdays" },
   { value: "WEEKLY", label: "Weekly" },
+  { value: "CUSTOM", label: "Goal-led" },
 ] as const;
+
+function cadenceKindLabel(kind: GoalPlan["cadence"]["kind"]): string {
+  switch (kind) {
+    case "SPRINT":
+      return "Short sprint";
+    case "PROJECT":
+      return "Longer project";
+    case "HABIT":
+      return "Ongoing habit";
+  }
+}
+
+function cadenceFrequencyLabel(
+  frequency: GoalPlan["cadence"]["checkInFrequency"],
+): string {
+  return frequencies.find((item) => item.value === frequency)?.label ?? "Goal-led";
+}
 
 const intensities = [
   {
@@ -460,6 +479,40 @@ function PlanReview({
         </div>
       )}
 
+      <div className="mt-4 rounded-[1.4rem] border border-[#b8cdbf] bg-[#eef6ef] p-5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#4f6d5e]">
+          Goal rhythm
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs text-[#68776f]">Goal type</p>
+            <p className="mt-1 font-semibold text-[#244538]">
+              {cadenceKindLabel(plan.cadence.kind)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-[#68776f]">Recommended check-ins</p>
+            <p className="mt-1 font-semibold text-[#244538]">
+              <span>{cadenceFrequencyLabel(plan.cadence.checkInFrequency)}</span>
+              {" · "}
+              {plan.cadence.preferredCheckInTime}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-[#68776f]">Agreement review</p>
+            <p className="mt-1 font-semibold text-[#244538]">
+              {plan.cadence.reviewFrequencyDays} <span>days</span>
+            </p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-[#50675c]">
+          {plan.cadence.rationale}
+        </p>
+        <p className="mt-3 text-xs leading-5 text-[#68776f]">
+          <span>Completion signal:</span> {plan.cadence.completionSignal}
+        </p>
+      </div>
+
       <details className="mt-5 rounded-2xl border border-[#e1e5e1] bg-[#fafaf7] p-4 text-sm">
         <summary className="cursor-pointer font-semibold text-[#43554d]">
           Assumptions to confirm ({plan.assumptionsNeedingConfirmation.length})
@@ -588,12 +641,14 @@ function EditField({
 
 function SupportAgreementForm({
   value,
+  recommendation,
   onChange,
   error,
   onBack,
   onSubmit,
 }: {
   value: SupportAgreementDraft;
+  recommendation: GoalPlan["cadence"] | null;
   onChange: (value: SupportAgreementDraft) => void;
   error: string | null;
   onBack: () => void;
@@ -631,9 +686,29 @@ function SupportAgreementForm({
         and never gives the AI permission to override you.
       </p>
 
+      {recommendation ? (
+        <div className="mt-5 rounded-2xl border border-[#b8cdbf] bg-[#eef6ef] p-4 text-sm leading-6 text-[#405e50]">
+          <p className="font-semibold text-[#244538]">
+            <span>Goal Architect recommendation</span>
+            {" · "}
+            <span>{cadenceKindLabel(recommendation.kind)}</span>
+          </p>
+          <p className="mt-1">
+            <span>{cadenceFrequencyLabel(recommendation.checkInFrequency)}</span>
+            {" · "}
+            {recommendation.preferredCheckInTime}
+            {" · "}
+            <span>review every</span> {recommendation.reviewFrequencyDays} <span>days</span>
+          </p>
+          <p className="mt-1 text-xs text-[#5f7469]">
+            This is a recommendation, not permission. You can change every field below.
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-7 space-y-6">
         <Fieldset legend="Check-in rhythm" hint="When should support show up?">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {frequencies.map((frequency) => (
               <ChoiceButton
                 key={frequency.value}
@@ -995,7 +1070,11 @@ function CompletedJourney({
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 rounded-2xl border border-[#dfe4df] bg-white p-5 sm:grid-cols-3">
+      <div className="mt-3 grid gap-3 rounded-2xl border border-[#dfe4df] bg-white p-5 sm:grid-cols-4">
+        <SummaryItem
+          label="Goal rhythm"
+          value={cadenceKindLabel(record.plan.cadence.kind)}
+        />
         <SummaryItem label="Next check-in" value={nextCheckIn} />
         <SummaryItem
           label="Support style"
@@ -1122,6 +1201,9 @@ export function OnboardingFlow({
         : await createMockGoalArchitectResult(completedAnswers);
       setPlan(result.output);
       setTrace(result.trace);
+      setSupport((current) =>
+        applyGoalCadenceRecommendation(current, result.output),
+      );
       setStage("plan");
     } catch (caught) {
       if (
@@ -1284,6 +1366,7 @@ export function OnboardingFlow({
     content = (
       <SupportAgreementForm
         value={support}
+        recommendation={plan?.cadence ?? null}
         onChange={setSupport}
         error={error}
         onBack={() => setStage("plan")}
