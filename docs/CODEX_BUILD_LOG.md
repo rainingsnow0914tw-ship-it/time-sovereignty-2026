@@ -614,8 +614,15 @@
   time only after hydration.
 - The rebuilt local production bundle passed the same fresh 390×844 flow with
   HTTP 200, Day 30, zero `/api/*` requests, zero overlays, and zero console
-  errors. Revision `00037` is not accepted as the final preview; a clean
-  replacement is required.
+  errors. Revision `00037` is not accepted as the final preview.
+- Replacement revision `time-sovereignty-00038-zey` passed the fresh cloud
+  production browser: HTTP 200, Day 30, mock trace visible, zero `/api/*`
+  requests, zero overlays, and zero console errors. The final mobile screenshot
+  was visually inspected.
+- `00038` is Ready at the `live-mobile` tag with 0% normal traffic. Stable
+  `time-sovereignty-00024-dih` remains at 100%; min/max one, concurrency one,
+  runtime service account, queue safeguards, and Secret Manager references were
+  preserved.
 - Full verification passed: 125 tests with nine live-only skips, ESLint,
   TypeScript, production build, and diff check. Next built `/demo` as a static
   route.

@@ -55,7 +55,15 @@ Week sprint. It advances through Days 1, 2, 3, 4, 5, 8, 14, and 30 and shows:
   then returned HTTP 200, reached Day 30, made zero `/api/*` requests, and
   produced zero overlays and zero console errors.
 - Revision `00037` is evidence of the caught defect, not the accepted final
-  preview. A replacement tag-only revision is required.
+  preview.
+- Replacement revision `time-sovereignty-00038-zey` passed the same fresh
+  cloud-production browser flow: HTTP 200, Day 30, visible mock trace, zero
+  `/api/*` requests, zero framework overlays, and zero console errors.
+- `00038` is Ready on the `live-mobile` tag at 0% normal traffic. Stable
+  revision `time-sovereignty-00024-dih` remains at 100%. `minScale=1`,
+  `maxScale=1`, concurrency `1`, the dedicated runtime service account, and all
+  three Secret Manager references were preserved.
+- The final cloud 390-pixel mobile screenshot was visually inspected.
 
 ## Verification
 
@@ -66,3 +74,5 @@ Week sprint. It advances through Days 1, 2, 3, 4, 5, 8, 14, and 30 and shows:
 - TypeScript: passed.
 - Production build: passed; `/demo` generated as a static route.
 - `git diff --check`: passed.
+- Accepted cloud revision: `time-sovereignty-00038-zey`, tag-only, 0% normal
+  traffic.

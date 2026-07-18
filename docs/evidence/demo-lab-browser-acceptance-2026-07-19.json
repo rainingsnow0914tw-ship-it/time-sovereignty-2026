@@ -50,7 +50,18 @@
     "localProductionRetestApiRequestCount": 0,
     "localProductionRetestErrorOverlayCount": 0,
     "localProductionRetestConsoleErrorCount": 0,
-    "replacementCloudRevisionRequired": true
+    "replacementCloudRevisionRequired": false,
+    "acceptedCloudRevision": "time-sovereignty-00038-zey",
+    "acceptedCloudHttpStatus": 200,
+    "acceptedCloudReachedDay30": true,
+    "acceptedCloudShowsMockTrace": true,
+    "acceptedCloudApiRequestCount": 0,
+    "acceptedCloudErrorOverlayCount": 0,
+    "acceptedCloudConsoleErrorCount": 0,
+    "acceptedCloudScreenshotInspected": true,
+    "acceptedCloudTrafficPercent": 0,
+    "stableRevision": "time-sovereignty-00024-dih",
+    "stableTrafficPercent": 100
   },
   "verification": {
     "focusedTestsPassed": 2,
