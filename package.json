@@ -13,6 +13,7 @@
     "test:live:phase4": "node scripts/run-phase4-live.mjs",
     "test:live:phase4-contracts": "node scripts/run-phase4-contract-live.mjs",
     "test:live:goal-architect": "node scripts/run-live-goal-architect.mjs",
+    "test:live:check-in": "node scripts/run-live-check-in.mjs",
     "test:watch": "vitest",
     "smoke:openai": "node scripts/smoke-openai.mjs"
   },

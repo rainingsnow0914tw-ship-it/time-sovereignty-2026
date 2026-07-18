@@ -5,28 +5,29 @@
 - `gpt-realtime-2.1` 高擬真朗讀已修正 WebRTC multipart、輸出上限與逐字朗讀契約；Chloe 實機確認完整語音與疑問句尾音。
 - Cloud Run `time-sovereignty-00024-dih` 已承接正式流量 100%；正式健康端點 HTTP 200 並回報同一 revision。
 - 私人 `?profile=play` 已接上真實 Goal Architect；GPT-5.6 結構化目標計畫、冪等 Firestore 收據、獨立瀏覽器資料空間與安全 trace 均已驗證。
+- 私人試玩路徑已建立真實多模態報到契約：文字／語音轉錄／照片共用 Chief 判斷，只有 `BLOCKED`／`GOAL_CHANGED` 才分派 Commitment Recovery；完成目標可不建立下一次跟進。
 
 # 正在做
 
-- 把主產品的文字／語音／照片報到接上真實 GPT-5.6 判斷迴路，取代目前仍存在的本機模擬回報。
+- 將已通過本機與真實 GPT-5.6 契約的多模態報到迴路部署到 `live-mobile` tag，完成 Android 雲端實機驗收。
 
 # 下一步
 
-- 先建立 Goal Architect checkpoint；接著重用受保護的 `/api/live/check-ins/[checkInId]/reply` 路徑，加入進度分類與條件式 Recovery UI。
+- 完整檢查後建立多模態報到 checkpoint；再部署 0% 正式流量的 `live-mobile` 預覽，先做健康檢查，再由手機驗證「正常完成」與「生病受阻」兩條路徑。
 
 # 已知問題
 
-- `JourneyWorkspace` 的本機「送出更新／再次延後／情況有變」目前只改瀏覽器狀態，沒有呼叫 AI，使用者看起來像按鈕失效。
-- Recovery 區塊無條件顯示；應只在受阻、反覆延後或使用者主動表示情況改變時出現。
-- 支援頻率仍使用固定每日／每週假設，三十天模擬也混在真實旅程；後續須依衝刺／專案／習慣目標分流，並把模擬移至 Demo Lab。
+- 多模態新迴路尚未完成 Cloud Run／Android 實機驗收，不能宣稱已部署完成。
+- 支援頻率仍使用固定每日／每週假設；後續須依衝刺／專案／習慣目標分流。
+- 三十天模擬已從私人真實試玩頁隱藏，但尚未改造成獨立 AI 劇場／Demo Lab。
 - Android 已安裝 PWA 在部署後可能保留舊前端記憶；實機驗收以忽略快取重新載入後的資料通道事件為準。
 - 錄影用單裝置 session 與測試 follow-up 暫時保留；影片完成後必須撤銷與清理。
 - `docs/EMERGENCY_HANDOFF_ANDROID_FINAL_2026-07-17.md` 與三張 `docs/LOCAL_CHEATSHEET_*.md` 為 local-only，不得進公開 commit。
 
 # 最近測試結果
 
-- 2026-07-18 09:25 +08:00：86 passed／6 skipped，lint、typecheck、production build 通過；真實 Goal Architect 契約證據使用 `gpt-5.6-sol` 並通過 Zod schema。
+- 2026-07-18 10:20 +08:00：93 passed／8 skipped，lint、typecheck、production build 通過；真實 GPT-5.6 圖片進度一次 Chief 呼叫通過，生病路徑 Chief → Recovery → Chief 三次呼叫通過，全部回傳 `gpt-5.6-sol` 並通過 Zod schema。
 
 # 最後更新時間
 
-- 2026-07-18 09:25 +08:00
+- 2026-07-18 10:20 +08:00

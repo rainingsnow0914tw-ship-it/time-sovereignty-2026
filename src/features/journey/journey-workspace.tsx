@@ -69,10 +69,12 @@ export function JourneyWorkspace({
   record,
   onReset,
   liveCheckInEnabled = true,
+  showLocalSimulation = true,
 }: {
   record: LocalOnboardingRecord;
   onReset: () => void;
   liveCheckInEnabled?: boolean;
+  showLocalSimulation?: boolean;
 }) {
   const { locale, t } = useLocale();
   const [state, setState] = useState<JourneyState>(() =>
@@ -596,24 +598,39 @@ export function JourneyWorkspace({
   };
 
   const applyLiveCommitment = (decision: LiveChiefOfStaffDecision) => {
-    setState((current) =>
-      addJourneyEvent(
+    setState((current) => {
+      const assessment = decision.assessment ?? "BLOCKED";
+      return addJourneyEvent(
         JourneyStateSchema.parse({
           ...current,
           currentAction: decision.adaptedCommitment,
           minimumAction: decision.adaptedCommitment,
-          nextCheckAt: decision.nextFollowUpAt,
+          nextCheckAt: decision.nextFollowUpAt ?? current.nextCheckAt,
           latestFeedback: decision.userMessage,
-          interventionState: "CONFIRMED",
+          interventionState: assessment === "COMPLETED" ? "CLOSED" : "CONFIRMED",
+          resumePoint: {
+            ...current.resumePoint,
+            lastCompletedCheckpoint: decision.userMessage,
+            currentBlocker: ["BLOCKED", "GOAL_CHANGED"].includes(assessment)
+              ? current.resumePoint.currentBlocker
+              : null,
+            nextPhysicalAction: decision.adaptedCommitment,
+            updatedAt: new Date().toISOString(),
+          },
         }),
         {
-          kind: "RECOVERY",
-          title: "Live adapted commitment confirmed",
+          kind: ["BLOCKED", "GOAL_CHANGED"].includes(assessment)
+            ? "RECOVERY"
+            : "PROGRESS",
+          title:
+            assessment === "COMPLETED"
+              ? "Live completion confirmed"
+              : "Live progress decision confirmed",
           detail: decision.adaptedCommitment,
         },
-      ),
-    );
-    setNotice("The real adapted commitment is now reflected in Today and Journey.");
+      );
+    });
+    setNotice("The real GPT-5.6 decision is now reflected in Today.");
   };
 
   return (
@@ -632,16 +649,24 @@ export function JourneyWorkspace({
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <LanguageToggle dark />
-            <span className="rounded-full bg-white/10 px-3 py-2">{`Simulated Day ${state.simulatedDay}`}</span>
-            <span className="rounded-full bg-[#d8f48a] px-3 py-2 font-bold text-[#173f35]">
-              {state.simulationComplete ? "30-day proof ready" : "Accelerated time"}
-            </span>
+            {showLocalSimulation ? (
+              <>
+                <span className="rounded-full bg-white/10 px-3 py-2">{`Simulated Day ${state.simulatedDay}`}</span>
+                <span className="rounded-full bg-[#d8f48a] px-3 py-2 font-bold text-[#173f35]">
+                  {state.simulationComplete ? "30-day proof ready" : "Accelerated time"}
+                </span>
+              </>
+            ) : (
+              <span className="rounded-full bg-[#d8f48a] px-3 py-2 font-bold text-[#173f35]">
+                Live journey · GPT-5.6
+              </span>
+            )}
           </div>
         </div>
       </header>
 
-      <nav className="grid grid-cols-2 gap-1 border-b border-[#dfe5df] bg-white p-2 sm:grid-cols-5" aria-label="Product sections">
-        {tabs.map((tab) => (
+      <nav className={`grid grid-cols-2 gap-1 border-b border-[#dfe5df] bg-white p-2 ${showLocalSimulation ? "sm:grid-cols-5" : "sm:grid-cols-3"}`} aria-label="Product sections">
+        {tabs.filter((tab) => showLocalSimulation || ["TODAY", "CHECK_IN", "DEVELOPER"].includes(tab.value)).map((tab) => (
           <button
             type="button"
             key={tab.value}
@@ -672,10 +697,11 @@ export function JourneyWorkspace({
             state={state}
             quietHours={quietHours}
             onCheckIn={() => setView("CHECK_IN")}
-            onProgress={() => setView("PROGRESS")}
+            onProgress={() => setView(showLocalSimulation ? "PROGRESS" : "CHECK_IN")}
             onNextDay={runNextSimulationDay}
             onFullSimulation={runFullSimulation}
             onRate={rateIntervention}
+            showSimulation={showLocalSimulation}
           />
         ) : null}
 
@@ -694,7 +720,7 @@ export function JourneyWorkspace({
               Play profile · real Goal Architect is active. The recording check-in lane remains separate.
             </div>
           )}
-          <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          {showLocalSimulation ? <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className={`${cardClass} border-[#9eb9aa] bg-[#f7fbf7]`}>
               <Eyebrow>Incoming check-in</Eyebrow>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#173f35]">
@@ -755,11 +781,11 @@ export function JourneyWorkspace({
                 Confirm a new commitment
               </button>
             </div>
-          </section>
+          </section> : null}
           </>
         ) : null}
 
-        {state.activeView === "PROGRESS" ? (
+        {showLocalSimulation && state.activeView === "PROGRESS" ? (
           <section className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
             <div className={cardClass}>
               <Eyebrow>Share progress</Eyebrow>
@@ -837,7 +863,7 @@ export function JourneyWorkspace({
           </section>
         ) : null}
 
-        {state.activeView === "JOURNEY" ? (
+        {showLocalSimulation && state.activeView === "JOURNEY" ? (
           <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
             <div className={cardClass}>
               <div className="flex flex-wrap items-end justify-between gap-3">
@@ -902,7 +928,7 @@ export function JourneyWorkspace({
               minimumAction={state.minimumAction}
             />
           ) : null}
-          <section className="mt-5 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+          {showLocalSimulation ? <section className="mt-5 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
             <div className={cardClass}>
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
@@ -961,13 +987,13 @@ export function JourneyWorkspace({
                 <pre className="mt-4 overflow-auto rounded-2xl bg-[#122d25] p-4 text-[11px] leading-5 text-[#d9ebdf]">{JSON.stringify(safeDebugState, null, 2)}</pre>
               </details>
             </div>
-          </section>
+          </section> : null}
           </>
         ) : null}
       </section>
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#dfe5df] bg-white px-5 py-4 text-xs text-[#56645d] sm:px-7">
-        <span>Saved in this browser · media stays local until cloud upload is activated</span>
+        <span>{showLocalSimulation ? "Saved in this browser · media stays local until cloud upload is activated" : "Private live journey · photos are analyzed transiently and are not persisted"}</span>
         <button type="button" onClick={resetAll} className="font-bold text-[#49675a] hover:text-[#173f35]">Reset this journey</button>
       </footer>
     </div>
@@ -984,6 +1010,7 @@ function TodayView({
   onNextDay,
   onFullSimulation,
   onRate,
+  showSimulation,
 }: {
   record: LocalOnboardingRecord;
   state: JourneyState;
@@ -993,6 +1020,7 @@ function TodayView({
   onNextDay: () => void;
   onFullSimulation: () => void;
   onRate: (rating: number) => void;
+  showSimulation: boolean;
 }) {
   const { formatDateTime } = useLocale();
   return (
@@ -1032,7 +1060,7 @@ function TodayView({
       </div>
 
       <div className="space-y-5">
-        <div className={cardClass}>
+        {showSimulation ? <div className={cardClass}>
           <Eyebrow>Accelerated simulation</Eyebrow>
           <h3 className="mt-2 text-xl font-semibold text-[#243d33]">Compress time, not behavior.</h3>
           <p className="mt-2 text-sm leading-6 text-[#68766f]">The UI clearly labels simulated days while the same state, memory, recovery, and trace contracts remain visible.</p>
@@ -1044,7 +1072,7 @@ function TodayView({
             <div className="h-full rounded-full bg-[#6c967f] transition-all" style={{ width: `${Math.max(4, (state.simulatedDay / 30) * 100)}%` }} />
           </div>
           <p className="mt-2 text-right text-xs font-bold text-[#5d7469]">{`Day ${state.simulatedDay} / 30`}</p>
-        </div>
+        </div> : null}
         <div className={cardClass}>
           <Eyebrow>Protection status</Eyebrow>
           <div className="mt-4 space-y-3 text-sm">

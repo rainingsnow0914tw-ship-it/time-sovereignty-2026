@@ -45,18 +45,64 @@ export const LiveMemoryProposalSchema = z
   })
   .strict();
 
-export const LiveChiefOfStaffDecisionSchema = z
+export const LiveCheckInAssessmentSchema = z.enum([
+  "ON_TRACK",
+  "PARTIAL",
+  "BLOCKED",
+  "GOAL_CHANGED",
+  "COMPLETED",
+]);
+
+export const LiveReplyIntentSchema = z.enum([
+  "REPORT_PROGRESS",
+  "DELAY",
+  "SOMETHING_CHANGED",
+]);
+
+export const LiveChiefOfStaffDecisionOutputSchema = z
   .object({
+    assessment: LiveCheckInAssessmentSchema,
     userMessage: z.string().trim().min(1).max(3_000),
     adaptedCommitment: z.string().trim().min(1).max(500),
     dispatchedAgents: z
       .array(z.literal("COMMITMENT_RECOVERY"))
-      .length(1),
-    selectedStrategy: StrategyOutcomeSchema,
-    nextFollowUpAt: IsoDateTimeSchema,
+      .max(1),
+    selectedStrategy: StrategyOutcomeSchema.nullable(),
+    nextFollowUpAt: IsoDateTimeSchema.nullable(),
     memoryProposal: LiveMemoryProposalSchema.nullable(),
   })
-  .strict();
+  .strict()
+  .superRefine((decision, context) => {
+    const needsRecovery = ["BLOCKED", "GOAL_CHANGED"].includes(
+      decision.assessment,
+    );
+    if (needsRecovery !== (decision.dispatchedAgents.length === 1)) {
+      context.addIssue({
+        code: "custom",
+        path: ["dispatchedAgents"],
+        message:
+          "Commitment Recovery must be dispatched exactly for blocked or changed goals.",
+      });
+    }
+    if (decision.assessment !== "COMPLETED" && !decision.nextFollowUpAt) {
+      context.addIssue({
+        code: "custom",
+        path: ["nextFollowUpAt"],
+        message: "An active goal decision requires a future follow-up.",
+      });
+    }
+  });
+
+export const LiveChiefOfStaffDecisionSchema = z.preprocess((value) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !("assessment" in value)
+  ) {
+    return { ...value, assessment: "BLOCKED" };
+  }
+  return value;
+}, LiveChiefOfStaffDecisionOutputSchema);
 
 export const LiveCheckInDocumentSchema = z
   .object({
@@ -74,9 +120,10 @@ export const LiveCheckInDocumentSchema = z
     attemptCount: z.number().int().nonnegative(),
     leaseToken: z.string().uuid().nullable(),
     leaseExpiresAt: IsoDateTimeSchema.nullable(),
+    triage: LiveChiefOfStaffDecisionSchema.nullable().optional(),
     recovery: CommitmentRecoveryOutputSchema.nullable(),
     decision: LiveChiefOfStaffDecisionSchema.nullable(),
-    traceRunIds: z.array(EntityIdSchema).max(2),
+    traceRunIds: z.array(EntityIdSchema).max(3),
     confirmedAt: IsoDateTimeSchema.nullable(),
     confirmationId: EntityIdSchema.nullable(),
     nextCheckInId: EntityIdSchema.nullable(),
@@ -120,9 +167,34 @@ export const LiveScheduleRequestSchema = z
 export const LiveReplyRequestSchema = z
   .object({
     replyId: EntityIdSchema,
-    reply: z.string().trim().min(1).max(4_000),
+    intent: LiveReplyIntentSchema.default("REPORT_PROGRESS"),
+    reply: z.string().trim().max(4_000),
+    image: z
+      .object({
+        mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+        dataUrl: z
+          .string()
+          .max(2_500_000)
+          .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/u),
+      })
+      .strict()
+      .nullable()
+      .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.intent === "REPORT_PROGRESS" &&
+      !value.reply &&
+      !value.image
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["reply"],
+        message: "A progress report requires text, voice transcript, or a photo.",
+      });
+    }
+  });
 
 export const LiveConfirmRequestSchema = z
   .object({
@@ -154,5 +226,6 @@ export type LiveCheckInDocument = z.infer<typeof LiveCheckInDocumentSchema>;
 export type LiveChiefOfStaffDecision = z.infer<
   typeof LiveChiefOfStaffDecisionSchema
 >;
+export type LiveReplyRequest = z.infer<typeof LiveReplyRequestSchema>;
 export type LiveDeviceSession = z.infer<typeof LiveDeviceSessionSchema>;
 export type ClientLiveCheckIn = z.infer<typeof ClientLiveCheckInSchema>;

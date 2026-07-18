@@ -81,6 +81,12 @@ export interface LiveCheckInRepository {
     replyId: string;
     replyFingerprint: string;
   }): Promise<LiveReplyClaim>;
+  saveTriage(options: {
+    checkInId: string;
+    leaseToken: string;
+    triage: LiveChiefOfStaffDecision;
+    trace: AgentRunTrace;
+  }): Promise<LiveCheckInDocument>;
   saveRecovery(options: {
     checkInId: string;
     leaseToken: string;
@@ -91,7 +97,7 @@ export interface LiveCheckInRepository {
     checkInId: string;
     leaseToken: string;
     decision: LiveChiefOfStaffDecision;
-    trace: AgentRunTrace;
+    trace?: AgentRunTrace;
   }): Promise<LiveCheckInDocument>;
   failReply(options: {
     checkInId: string;
@@ -245,6 +251,7 @@ export function createLiveCheckInRepository(
           attemptCount: 0,
           leaseToken: null,
           leaseExpiresAt: null,
+          triage: null,
           recovery: null,
           decision: null,
           traceRunIds: [],
@@ -411,6 +418,14 @@ export function createLiveCheckInRepository(
       });
     },
 
+    async saveTriage({ checkInId, leaseToken, triage, trace }) {
+      return updateOwnedReply(firestore, checkInId, leaseToken, now, (current) => ({
+        ...current,
+        triage,
+        traceRunIds: [...new Set([...current.traceRunIds, trace.runId])],
+      }), trace);
+    },
+
     async saveRecovery({ checkInId, leaseToken, recovery, trace }) {
       return updateOwnedReply(firestore, checkInId, leaseToken, now, (current) => ({
         ...current,
@@ -424,7 +439,9 @@ export function createLiveCheckInRepository(
         ...current,
         status: "DECISION_READY",
         decision,
-        traceRunIds: [...new Set([...current.traceRunIds, trace.runId])],
+        traceRunIds: trace
+          ? [...new Set([...current.traceRunIds, trace.runId])]
+          : current.traceRunIds,
         leaseToken: null,
         leaseExpiresAt: null,
       }), trace);

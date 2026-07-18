@@ -30,6 +30,15 @@ export async function POST(
     const decision = confirmation.checkIn.decision;
     if (!decision) throw new Error("Confirmed live check-in has no decision.");
 
+    if (decision.assessment === "COMPLETED" || !decision.nextFollowUpAt) {
+      return liveJson({
+        ok: true,
+        duplicate: confirmation.duplicate,
+        checkIn: await clientCheckIn(confirmation.checkIn, auth.config),
+        nextCheckIn: null,
+      });
+    }
+
     const nextCheckInId = `follow-${checkInId}`.slice(0, 128);
     const scheduledFor = selectLiveFollowUpTime({
       proposedAt: decision.nextFollowUpAt,

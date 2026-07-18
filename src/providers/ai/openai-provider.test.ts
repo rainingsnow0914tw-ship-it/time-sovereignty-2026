@@ -111,6 +111,43 @@ describe("OpenAiResponsesProvider", () => {
     ).rejects.toThrow();
   });
 
+  it("sends photo evidence as a real Responses image input without storing it", async () => {
+    const bodies: unknown[] = [];
+    const provider = new OpenAiResponsesProvider({
+      parseResponse: async (body) => {
+        bodies.push(body);
+        return { outputParsed: goalPlan, model: "gpt-5.6-sol", usage: null };
+      },
+    });
+
+    await provider.generateStructured(
+      {
+        ...request,
+        imageInputs: [
+          { dataUrl: "data:image/jpeg;base64,YWJj", detail: "low" },
+        ],
+      },
+      GoalArchitectOutputSchema,
+    );
+
+    expect(bodies[0]).toMatchObject({
+      input: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text" },
+            {
+              type: "input_image",
+              detail: "low",
+              image_url: "data:image/jpeg;base64,YWJj",
+            },
+          ],
+        },
+      ],
+      store: false,
+    });
+  });
+
   it("fails safely when the API produces no parsed output", async () => {
     const provider = new OpenAiResponsesProvider({
       parseResponse: async () => ({
@@ -127,7 +164,7 @@ describe("OpenAiResponsesProvider", () => {
 
   it("gives the Chief of Staff an explicit dispatch-truth constraint", () => {
     expect(instructionsFor("CHIEF_OF_STAFF")).toContain(
-      "Copy the supplied dispatchedAgents array exactly",
+      "When a dispatchedAgents array is supplied, copy it exactly",
     );
     expect(instructionsFor("MEMORY_CURATOR")).toContain(
       "never silently change the user's North Star",

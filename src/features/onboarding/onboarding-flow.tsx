@@ -924,11 +924,11 @@ function TimeField({
 function CompletedJourney({
   record,
   onReset,
-  liveCheckInEnabled,
+  liveProductMode,
 }: {
   record: LocalOnboardingRecord;
   onReset: () => void;
-  liveCheckInEnabled: boolean;
+  liveProductMode: boolean;
 }) {
   const { locale, formatDateTime } = useLocale();
   const nextCheckIn = new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : "en-US", {
@@ -1027,7 +1027,8 @@ function CompletedJourney({
         <JourneyWorkspace
           record={record}
           onReset={onReset}
-          liveCheckInEnabled={liveCheckInEnabled}
+          liveCheckInEnabled
+          showLocalSimulation={!liveProductMode}
         />
       </div>
     </div>
@@ -1294,7 +1295,7 @@ export function OnboardingFlow({
       <CompletedJourney
         record={completedRecord}
         onReset={resetJourney}
-        liveCheckInEnabled={!liveGoalArchitect}
+        liveProductMode={liveGoalArchitect}
       />
     );
   } else {

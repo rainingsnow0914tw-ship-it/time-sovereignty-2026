@@ -84,15 +84,31 @@ export class OpenAiResponsesProvider implements AiProvider {
       request.agent,
       request.outputSchemaName,
     );
+    const serializedInput = JSON.stringify({
+      inputSummary: request.inputSummary,
+      payload: request.input,
+    });
+    const input = request.imageInputs?.length
+      ? [
+          {
+            role: "user" as const,
+            content: [
+              { type: "input_text" as const, text: serializedInput },
+              ...request.imageInputs.map((image) => ({
+                type: "input_image" as const,
+                detail: image.detail ?? ("low" as const),
+                image_url: image.dataUrl,
+              })),
+            ],
+          },
+        ]
+      : serializedInput;
     const response = await this.parseResponse({
       model: this.model,
       instructions: request.additionalInstructions
         ? `${baseInstructions} ${request.additionalInstructions}`
         : baseInstructions,
-      input: JSON.stringify({
-        inputSummary: request.inputSummary,
-        payload: request.input,
-      }),
+      input,
       text: {
         format: zodTextFormat(
           outputSchema,
@@ -139,9 +155,9 @@ export function instructionsFor(
 
   if (agent === "CHIEF_OF_STAFF") {
     const liveCheckIn = outputSchemaName === "LiveChiefOfStaffDecision"
-      ? " For a live check-in, produce a concrete adaptedCommitment the user can confirm, choose exactly one supplied recovery strategy, set a future nextFollowUpAt, and include at most one tentative memoryProposal."
+      ? " For a live check-in, first classify the user's real progress. Dispatch Commitment Recovery only when the report is blocked or the goal direction changed. Produce one concrete commitment the user can confirm, set a future follow-up unless the goal is completed, and include at most one tentative memory proposal."
       : "";
-    return `${common} Synthesize one unified user-facing decision. Decide from the supplied specialist outputs and context. Copy the supplied dispatchedAgents array exactly; do not claim an agent was called when it was not. Propose memory changes as proposals, never as silently confirmed facts.${liveCheckIn}`;
+    return `${common} Synthesize one unified user-facing decision. Decide from the supplied specialist outputs and context. When a dispatchedAgents array is supplied, copy it exactly; never claim an agent was called when it was not. Propose memory changes as proposals, never as silently confirmed facts.${liveCheckIn}`;
   }
 
   if (agent === "GOAL_ARCHITECT") {

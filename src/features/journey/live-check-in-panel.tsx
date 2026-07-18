@@ -24,6 +24,10 @@ import {
   RealtimeVoiceSession,
   type RealtimeVoiceStatus,
 } from "../../providers/audio/realtime-voice-provider";
+import {
+  preparePhotoEvidence,
+  type PreparedPhotoEvidence,
+} from "./photo-evidence";
 
 const card =
   "rounded-[1.6rem] border border-[#9eb9aa] bg-[#f7fbf7] p-5 shadow-[0_14px_45px_rgba(23,63,53,0.06)] sm:p-6";
@@ -62,6 +66,8 @@ export function LiveCheckInPanel({
   const [pairingCode, setPairingCode] = useState("");
   const [deviceLabel, setDeviceLabel] = useState("Chloe Android demo");
   const [reply, setReply] = useState("");
+  const [photo, setPhoto] = useState<PreparedPhotoEvidence | null>(null);
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
@@ -70,7 +76,10 @@ export function LiveCheckInPanel({
   const [pausePolling, setPausePolling] = useState(false);
   const realtimeVoiceRef = useRef<RealtimeVoiceSession | null>(null);
   const scheduleIdRef = useRef<string | null>(null);
-  const replyIdRef = useRef<string | null>(null);
+  const replyAttemptRef = useRef<{
+    fingerprint: string;
+    replyId: string;
+  } | null>(null);
   const confirmationIdRef = useRef<string | null>(null);
 
   const refreshCurrent = useCallback(async () => {
@@ -204,6 +213,10 @@ export function LiveCheckInPanel({
       setCurrent(payload.checkIn);
       setNotice("Scheduled. The open PWA is polling for the pending check-in.");
       scheduleIdRef.current = null;
+      replyAttemptRef.current = null;
+      confirmationIdRef.current = null;
+      setReply("");
+      setPhoto(null);
     } catch {
       setNotice("The cloud schedule did not complete. The same request can be retried safely.");
     } finally {
@@ -265,19 +278,64 @@ export function LiveCheckInPanel({
     setNotice("Natural voice is off. The microphone has been released.");
   };
 
-  const submitReply = async () => {
-    if (!current || !reply.trim()) return;
-    setBusy(true);
-    setNotice("GPT-5.6 is asking Recovery and Chief of Staff…");
+  const attachPhoto = async (file: File | null) => {
+    if (!file) return;
+    setPreparingPhoto(true);
+    setNotice("Preparing photo evidence on this device…");
     try {
-      replyIdRef.current ??= current.replyId ?? crypto.randomUUID();
+      const prepared = await preparePhotoEvidence(file);
+      setPhoto(prepared);
+      replyAttemptRef.current = null;
+      setNotice("Photo attached. GPT-5.6 will inspect it only when you send.");
+    } catch {
+      setPhoto(null);
+      setNotice("That photo could not be prepared. Try a JPEG, PNG, or WebP image.");
+    } finally {
+      setPreparingPhoto(false);
+    }
+  };
+
+  const submitReply = async (
+    intent: "REPORT_PROGRESS" | "DELAY" | "SOMETHING_CHANGED",
+  ) => {
+    if (!current) return;
+    const textReply = reply.trim();
+    if (intent === "REPORT_PROGRESS" && !textReply && !photo) return;
+    setBusy(true);
+    setNotice(
+      intent === "DELAY"
+        ? "GPT-5.6 is deciding what this delay means…"
+        : intent === "SOMETHING_CHANGED"
+          ? "GPT-5.6 is checking whether the commitment should change…"
+          : "GPT-5.6 is reviewing your real progress…",
+    );
+    try {
+      const fingerprint = [
+        intent,
+        textReply,
+        photo?.dataUrl.length ?? 0,
+        photo?.dataUrl.slice(-48) ?? "",
+      ].join("\u0000");
+      if (replyAttemptRef.current?.fingerprint !== fingerprint) {
+        replyAttemptRef.current = {
+          fingerprint,
+          replyId: current.replyId ?? crypto.randomUUID(),
+        };
+      }
       const response = await fetch(
         `/api/live/check-ins/${encodeURIComponent(current.id)}/reply`,
         {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ replyId: replyIdRef.current, reply: reply.trim() }),
+          body: JSON.stringify({
+            replyId: replyAttemptRef.current.replyId,
+            intent,
+            reply: textReply,
+            image: photo
+              ? { mimeType: photo.mimeType, dataUrl: photo.dataUrl }
+              : null,
+          }),
         },
       );
       const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
@@ -285,11 +343,18 @@ export function LiveCheckInPanel({
       setCurrent(payload.checkIn);
       if (payload.checkIn.decision && realtimeVoiceRef.current) {
         realtimeVoiceRef.current.speak(
-          `${payload.checkIn.decision.userMessage} ${payload.checkIn.decision.adaptedCommitment}`,
+          [
+            payload.checkIn.decision.userMessage,
+            payload.checkIn.decision.adaptedCommitment,
+          ]
+            .filter(Boolean)
+            .join(" "),
         );
       }
-      setNotice("Real structured decision received. Review it before confirming.");
+      setNotice("GPT-5.6 understood the update. Review its real decision below.");
       setReply("");
+      setPhoto(null);
+      replyAttemptRef.current = null;
     } catch {
       await refreshCurrent().catch(() => undefined);
       setNotice("The live reply stopped safely. Retry uses the same reply identity.");
@@ -320,7 +385,11 @@ export function LiveCheckInPanel({
       setCurrent(payload.checkIn);
       setLastConfirmed(payload.checkIn);
       setPausePolling(true);
-      setNotice("Confirmed. The next real follow-up is scheduled.");
+      setNotice(
+        payload.checkIn.decision?.assessment === "COMPLETED"
+          ? "Completion confirmed. No artificial thirty-day journey was created."
+          : "Confirmed. The next real follow-up is scheduled.",
+      );
       onCommitmentConfirmed?.(payload.checkIn.decision!);
     } catch {
       setNotice("Confirmation did not finish. Repeating it is safe and idempotent.");
@@ -434,7 +503,7 @@ export function LiveCheckInPanel({
         <button type="button" className={secondary} disabled={busy} onClick={revoke}>Revoke device</button>
       </div>
       {!current ? (
-        <div className="mt-5"><p className="text-sm leading-6 text-[#596b62]">No active live check-in. Start the recorded story with one real scheduled callback.</p><button type="button" className={`${primary} mt-4`} disabled={busy} onClick={scheduleDemo}>Schedule demo check-in · 15 sec</button></div>
+        <div className="mt-5"><p className="text-sm leading-6 text-[#596b62]">No active check-in. Schedule one real follow-up to exercise the live loop.</p><button type="button" className={`${primary} mt-4`} disabled={busy} onClick={scheduleDemo}>Schedule real check-in · 15 sec</button></div>
       ) : null}
       {current?.status === "SCHEDULED" ? <p className="mt-5 rounded-2xl bg-white p-4 text-sm text-[#49675a]">Scheduled for {formatTime(current.scheduledFor)}. Polling only while this PWA is open.</p> : null}
       {current && ["PENDING", "FAILED"].includes(current.status) ? (
@@ -447,10 +516,69 @@ export function LiveCheckInPanel({
           </div>
           <p className="mt-3 text-xs leading-5 text-[#5f6a64]">Natural voice: {realtimeStatusLabel(realtimeStatus)}. It starts only after your tap and releases the microphone when stopped.</p>
           <label className="mt-4 block text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">Voice transcript or text reply<textarea className={`${input} mt-2 min-h-28 resize-y`} value={reply} onChange={(event) => setReply(event.target.value)} placeholder="What changed, in your own words…" /></label>
-          <button type="button" className={`${primary} mt-4`} disabled={busy || !reply.trim()} onClick={submitReply}>{current.status === "FAILED" ? "Retry the same live decision" : "Send to real Agents"}</button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className={`${secondary} cursor-pointer`}>
+              {preparingPhoto ? "Preparing photo…" : "📷 Attach progress photo"}
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                disabled={busy || preparingPhoto}
+                onChange={(event) => {
+                  void attachPhoto(event.currentTarget.files?.[0] ?? null);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            {photo ? (
+              <>
+                <span className="max-w-full truncate rounded-full bg-[#e2efe5] px-3 py-2 text-xs font-semibold text-[#315447]">
+                  ✓ {photo.originalName}
+                </span>
+                <button
+                  type="button"
+                  className={secondary}
+                  disabled={busy}
+                  onClick={() => {
+                    setPhoto(null);
+                    replyAttemptRef.current = null;
+                  }}
+                >
+                  Remove photo
+                </button>
+              </>
+            ) : null}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={primary}
+              disabled={busy || preparingPhoto || (!reply.trim() && !photo)}
+              onClick={() => void submitReply("REPORT_PROGRESS")}
+            >
+              {current.status === "FAILED" ? "Retry the same live decision" : "Send update"}
+            </button>
+            <button
+              type="button"
+              className={secondary}
+              disabled={busy || preparingPhoto}
+              onClick={() => void submitReply("DELAY")}
+            >
+              Delay once
+            </button>
+            <button
+              type="button"
+              className={secondary}
+              disabled={busy || preparingPhoto}
+              onClick={() => void submitReply("SOMETHING_CHANGED")}
+            >
+              Something changed
+            </button>
+          </div>
         </div>
       ) : null}
-      {current?.status === "PROCESSING" ? <p className="mt-5 rounded-2xl bg-[#fff2cc] p-4 text-sm font-semibold text-[#6f5310]">Recovery and Chief of Staff are producing one structured decision. Polling is active.</p> : null}
+      {current?.status === "PROCESSING" ? <p className="mt-5 rounded-2xl bg-[#fff2cc] p-4 text-sm font-semibold text-[#6f5310]">Chief of Staff is reviewing the evidence. Recovery joins only if the situation truly needs it.</p> : null}
       {current?.decision ? <DecisionCard checkIn={current} busy={busy} onConfirm={confirm} onSpeak={realtimeActive ? () => realtimeVoiceRef.current?.speak(`${current.decision!.userMessage} ${current.decision!.adaptedCommitment}`) : undefined} /> : null}
       {notice ? <p className="mt-4 text-sm text-[#596b62]" role="status">{notice}</p> : null}
     </section>
@@ -461,17 +589,23 @@ export function LiveCheckInPanel({
 function DecisionCard({ checkIn, busy, onConfirm, onSpeak }: { checkIn: ClientLiveCheckIn; busy: boolean; onConfirm: () => void; onSpeak?: () => void }) {
   const { formatDateTime } = useLocale();
   const decision = checkIn.decision!;
+  const assessment = decision.assessment ?? "BLOCKED";
+  const recoveryUsed = decision.dispatchedAgents.includes("COMMITMENT_RECOVERY");
   return (
     <Localized>
     <div className="mt-5 rounded-2xl border border-[#c9d9cd] bg-white p-5">
-      <LiveBadge>{checkIn.status === "CONFIRMED" ? "Confirmed live decision" : "Review before persistence"}</LiveBadge>
+      <div className="flex flex-wrap gap-2">
+        <LiveBadge>{checkIn.status === "CONFIRMED" ? "Confirmed live decision" : "Review before persistence"}</LiveBadge>
+        <LiveBadge>{assessment.replaceAll("_", " ")}</LiveBadge>
+        {recoveryUsed ? <LiveBadge>Recovery joined</LiveBadge> : <LiveBadge>Progress reviewed directly</LiveBadge>}
+      </div>
       <p className="mt-3 text-sm leading-6 text-[#40594e]">{decision.userMessage}</p>
-      <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">Adapted commitment</p>
+      <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">{assessment === "COMPLETED" ? "Recorded outcome" : recoveryUsed ? "Adapted commitment" : "Next commitment"}</p>
       <p className="mt-1 text-lg font-semibold text-[#173f35]">{decision.adaptedCommitment}</p>
-      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-[#6b786f]">Strategy</dt><dd className="font-bold text-[#28443a]">{decision.selectedStrategy}</dd></div><div><dt className="text-[#6b786f]">Next follow-up</dt><dd className="font-bold text-[#28443a]">{formatDateTime(decision.nextFollowUpAt)}</dd></div></dl>
+      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-[#6b786f]">Strategy</dt><dd className="font-bold text-[#28443a]">{decision.selectedStrategy ?? "No recovery strategy needed"}</dd></div><div><dt className="text-[#6b786f]">Next follow-up</dt><dd className="font-bold text-[#28443a]">{decision.nextFollowUpAt ? formatDateTime(decision.nextFollowUpAt) : "No follow-up scheduled"}</dd></div></dl>
       {decision.memoryProposal ? <p className="mt-4 rounded-2xl bg-[#edf5e8] p-3 text-sm text-[#40594e]">Memory proposal: {decision.memoryProposal.summary}</p> : null}
       {onSpeak ? <button type="button" className={`${secondary} mt-4`} onClick={onSpeak}>▶ Play with natural voice</button> : null}
-      {checkIn.status === "DECISION_READY" ? <button type="button" className={`${primary} mt-5 w-full`} disabled={busy} onClick={onConfirm}>Confirm adapted commitment</button> : <p className="mt-5 text-sm font-bold text-[#4c765f]">✓ Decision, memory, and next follow-up persisted</p>}
+      {checkIn.status === "DECISION_READY" ? <button type="button" className={`${primary} mt-5 w-full`} disabled={busy} onClick={onConfirm}>{assessment === "COMPLETED" ? "Confirm completion" : recoveryUsed ? "Confirm adapted commitment" : "Confirm next commitment"}</button> : <p className="mt-5 text-sm font-bold text-[#4c765f]">✓ Decision, memory, and follow-up state persisted</p>}
     </div>
     </Localized>
   );

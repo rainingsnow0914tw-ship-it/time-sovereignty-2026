@@ -29,11 +29,18 @@ export async function POST(
     assertAllowedOrigin(request, auth.config);
     const { checkInId } = await context.params;
     const body = LiveReplyRequestSchema.parse(await request.json());
+    const replyFingerprint = sha256(
+      JSON.stringify({
+        intent: body.intent,
+        reply: body.reply,
+        imageFingerprint: body.image ? sha256(body.image.dataUrl) : null,
+      }),
+    );
     const claim = await auth.repository.claimReply({
       checkInId,
       sessionId: auth.session.id,
       replyId: body.replyId,
-      replyFingerprint: sha256(body.reply),
+      replyFingerprint,
     });
     if (claim.kind === "DUPLICATE") {
       return liveJson({
@@ -60,8 +67,16 @@ export async function POST(
     let completedCheckIn: typeof claim.checkIn | null = null;
     const result = await runLiveCheckInAgents({
       checkIn: claim.checkIn,
-      reply: body.reply,
+      reply: body,
       provider: new OpenAiResponsesProvider(),
+      onTriage: async (triage, trace) => {
+        await auth.repository.saveTriage({
+          checkInId,
+          leaseToken: claim.leaseToken,
+          triage,
+          trace,
+        });
+      },
       onRecovery: async (recovery, trace) => {
         await auth.repository.saveRecovery({
           checkInId,
@@ -79,16 +94,14 @@ export async function POST(
         });
       },
     });
-    const chiefTrace = result.traces.at(-1);
-    if (!chiefTrace || chiefTrace.agent !== "CHIEF_OF_STAFF") {
-      throw new Error("Live Chief of Staff trace is missing.");
-    }
     if (!completedCheckIn) throw new Error("Live decision was not persisted.");
     claimed = null;
 
     console.info("[live-check-in] agents completed", {
       checkInId,
       replyId: body.replyId,
+      assessment: result.decision.assessment,
+      dispatchedAgents: result.decision.dispatchedAgents,
       providers: [...new Set(result.traces.map((trace) => trace.provider))],
       models: [...new Set(result.traces.map((trace) => trace.model))],
       totalTokens: result.traces.reduce(

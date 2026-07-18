@@ -5,6 +5,11 @@ import type {
   ImplementedAgentRole,
 } from "../../domain/agents/schemas";
 
+export interface StructuredAgentImageInput {
+  dataUrl: string;
+  detail?: "low" | "high" | "auto" | "original";
+}
+
 export interface StructuredAgentRequest<TInput> {
   runId: string;
   agent: ImplementedAgentRole;
@@ -14,6 +19,7 @@ export interface StructuredAgentRequest<TInput> {
   input: TInput;
   additionalInstructions?: string;
   safetyIdentifier?: string;
+  imageInputs?: readonly StructuredAgentImageInput[];
 }
 
 export interface AgentRunResult<TOutput> {
