@@ -1,52 +1,55 @@
 %%{init: {"theme": "base", "themeVariables": {"fontSize": "20px", "primaryColor": "#F4F0FF", "primaryBorderColor": "#6E5BC7", "lineColor": "#474151", "clusterBkg": "#FFFDF3", "clusterBorder": "#B9A86C"}, "flowchart": {"nodeSpacing": 38, "rankSpacing": 54, "curve": "basis"}}}%%
 flowchart TB
-    USER(["Chloe · one paired device"])
+    USER(["One paired phone"])
+    JUDGE(["Judge · no login"])
 
     subgraph PWA["Mobile-first PWA"]
         direction LR
-        UI["Onboarding · Today · Check-in<br/>Progress · Journey · Developer"]
-        LIVE["Private live check-in<br/>poll while visible · text / voice transcript<br/>tap-to-play TTS · confirm · revoke"]
-        COOKIE["12-hour signed cookie<br/>HttpOnly · Secure · SameSite=Strict"]
-        LOCAL["Local journey repository<br/>two state machines · memories · resume point<br/>30-day accelerated simulation"]
+        UI["Goal · Today · Check-in<br/>Progress · Developer"]
+        LIVE["Private real journey<br/>text · ephemeral photo · voice<br/>confirm · revoke"]
+        COOKIE["96-hour signed cookie<br/>HttpOnly · Secure · SameSite=Strict"]
+        VOICE["gpt-realtime-2.1<br/>user-started ears / voice"]
+    end
 
-        UI <--> LOCAL
-        UI --> LIVE --- COOKIE
+    subgraph DEMO["Public Demo Lab · isolated"]
+        SCRIPT["Day 1 → 30 story<br/>recovery · memory · calibration"]
+        MOCK["browser-only mock traces<br/>same local schemas · zero API"]
+        SCRIPT --- MOCK
     end
 
     subgraph CLOUD["Google Cloud · asia-east1"]
         direction LR
-        RUN["Cloud Run<br/>PWA + protected endpoints<br/>runtime SA · min/max 1 · concurrency 1"]
+        RUN["Cloud Run<br/>runtime SA · min/max 1 · concurrency 1"]
         TASKS["Cloud Tasks<br/>caller SA + Google OIDC<br/>1/sec · 1 concurrent · 1 attempt"]
-        DB["Firestore<br/>session · pending check-in · lease<br/>decision · memory · safe traces"]
-        SECRETS["Secret Manager<br/>OpenAI key · pairing value<br/>session signing value"]
+        DB["Firestore<br/>session · check-in · lease<br/>Episode · layered memory · safe trace"]
+        SECRETS["Secret Manager<br/>OpenAI key · pairing<br/>session signing"]
 
-        RUN -->|"enqueue deterministic task"| TASKS
+        RUN -->|"deterministic task"| TASKS
         TASKS -->|"OIDC callback<br/>SCHEDULED → PENDING"| RUN
         RUN <--> DB
         RUN --> SECRETS
     end
 
-    subgraph AGENTS["Structured-output Agent system"]
+    subgraph AGENTS["Need-based structured Agent system"]
         direction LR
-        DISPATCH["Need-based dispatcher"]
         GOAL["Goal Architect"]
-        RECOVERY["Commitment Recovery"]
-        MEMORY["Memory Curator"]
-        CHIEF["Chief of Staff<br/>one final decision"]
+        CHIEF["Chief of Staff<br/>one visible decision"]
+        RECOVERY["Commitment Recovery<br/>only when needed"]
+        MEMORY["Memory Curator<br/>after visible response"]
 
-        DISPATCH --> GOAL --> CHIEF
-        DISPATCH --> RECOVERY --> CHIEF
-        DISPATCH --> MEMORY --> CHIEF
+        GOAL --> CHIEF
+        RECOVERY --> CHIEF
+        CHIEF --> MEMORY
     end
 
     OPENAI["OpenAI Responses API · GPT-5.6<br/>strict Zod · store false · SDK retries 0"]
 
     USER --> UI
-    LIVE -->|"pair once · poll · protected reply · confirm"| RUN
-    RUN -->|"general need signals"| DISPATCH
-    RUN -->|"live recovery path: exactly two Agents"| RECOVERY
-    LOCAL -. "same deterministic mock contracts" .-> DISPATCH
-    GOAL <--> OPENAI
-    RECOVERY <--> OPENAI
-    MEMORY <--> OPENAI
-    CHIEF <--> OPENAI
+    UI --> LIVE --- COOKIE
+    LIVE <--> RUN
+    LIVE <--> VOICE
+    RUN <--> AGENTS
+    AGENTS <--> OPENAI
+
+    JUDGE --> SCRIPT
+    MOCK -. "same schema shapes; never private state" .-> UI

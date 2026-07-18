@@ -628,3 +628,33 @@
   route.
 - Evidence: `docs/evidence/demo-lab-browser-acceptance-2026-07-19.md` and
   matching JSON.
+
+## 2026-07-19 — Final submission package aligned
+
+- Replaced the outdated phase-by-phase README with a judge-first product story:
+  the real cup-sketch outcome, current architecture, GPT-5.6 and Codex roles,
+  real/private versus scripted/public boundaries, safety controls, current
+  revisions, evidence entry points, and no-rebuild testing instructions.
+- Finalized a 391-word English narration and shot list designed for 2:50–2:55.
+  It leads with the physical Android outcome, proves the real memory loop,
+  shows the clearly labeled zero-API Demo Lab, then closes with Codex/GPT-5.6
+  engineering evidence and the larger consent-based vision.
+- Rewrote the Devpost draft and checklist around the current product rather
+  than the earlier evidence-only path. The only required submission asset not
+  yet present is the public under-three-minute YouTube video.
+- Updated the Mermaid architecture to include the isolated evaluator lane,
+  96-hour private session, Realtime voice layer, immutable Episodes, layered
+  memory, need-based Agents, and post-response Memory Curator. Regenerated and
+  visually inspected the tracked PNG so it no longer contradicts the source.
+- Rechecked the official rules on 2026-07-19: the video must be under three
+  minutes, public on YouTube, and include audio explaining the build, Codex,
+  and GPT-5.6; the repository and testing path must be available; submitted
+  materials require English or an English translation.
+- Submission-facing stale revision, URL, session-duration, and test-count
+  claims were removed. Tracked secret scan and `git diff --check` passed; the
+  public Demo Lab, stable app, and GitHub repository each returned HTTP 200. No
+  application code, Cloud Run traffic, private session, API key, or Firestore
+  data changed during this checkpoint.
+- The final documentation audit repaired one stale Realtime evidence filename;
+  all local Markdown targets now resolve. The unchanged application suite still
+  passes 125 tests with nine live-only skips.
