@@ -19,27 +19,28 @@
 - S25 已完成真實 PWA → native 配對；Firestore 安全遮罩確認 session、token fingerprint、通知／全螢幕同意、期限與未撤銷狀態均存在，秘密未進日誌或 Git。
 - 已實作 Cloud Tasks 驅動的 `1 → 2 → 4 → stop`：每級重新檢查回應 marker、安靜時段、同意、撤銷與狀態；FCM delivery receipt 可重試且 Android 依 idempotency key 去重。
 - native 四按鈕現在會先停止鈴聲、寫入 immutable response event，再走與 PWA 共用的真 GPT-5.6 Chief／Recovery 管線並在原生畫面顯示結構化決策。
-- 私人 revision `time-sovereignty-00046-woz` 已使用 15 秒驗收間隔上線於 `v2-private`／`live-mobile` tags；正式 V1 仍為 `00024-dih`、100% 流量。
+- 私人 revision `time-sovereignty-00048-yuz` 已使用 15 秒驗收間隔上線於 `v2-private`／`live-mobile` tags；正式 V1 仍為 `00024-dih`、100% 流量。
 - S25 已更新 APK 且原 pairing credential 保留；正確的 WebAPK `profile=play` 可開到「開始下一個真實行動時段」。
 - 修正第 1 級推播可能穿透安靜時段的安全洞；現在每一級送出前都走同一組安靜時段與同意圍欄。
 - S25 真實抓人閉環已通過：Cloud Tasks `1 → 2 → 4`、全螢幕原生回應、GPT-5.6 Recovery／Chief 決策、PWA review、Firestore Episode／記憶與下一次 follow-up 均已落盤。
 - 已確認「按鈕閃一下仍停舊頁」只是成功回傳中斷：雲端狀態為 `CONFIRMED` 且下一筆 Cloud Task 已存在，沒有資料遺失或重複呼叫。
 - 已加入只讀式確認回復：回傳中斷時向雲端核對 current／last-confirmed，不重送 POST、不重打 GPT-5.6、不重建 task。
 - S25 重整揭露第二個契約問題：確認後共有 Chief／Recovery／Chief／Memory Curator 四筆安全 trace，但 client schema 舊上限為三，導致 `/current` 讀回 400；已把 client 與 persisted schema 對齊為四並加回歸測試。
+- `00048` 上 S25 已驗證 `/current` 200：current follow-up 為 `SCHEDULED`、last-confirmed 為 `CONFIRMED` 且四筆安全 trace；錯誤確認按鈕與舊失敗提示均已消失。
 
 # 正在做
 
-- 將已通過完整本機驗證的四軌跡讀回修正部署到私人 V2 tags；公開 V1 不動。
+- 本輪 V2 真實抓人、GPT-5.6 調整、確認持久化與讀回修復已完成；等待 Chloe 決定下一個自然階段。
 
 # 下一步
 
-- 第一個動作：建立 tag-only 私人 revision，驗證 `/current` 由 400 恢復為 200；不得再次按確認或重跑 GPT-5.6。
-- 若顯示已確認／下一次報到已排程，記錄最終手機驗收並凍結本段；若仍顯示待確認，只檢查 service worker／快取，不重做後端閉環。
+- 第一個動作：凍結本輪已驗證的 `00048` 私人核心，不再重跑同一閉環或額外呼叫 GPT-5.6。
+- 下一個工作回合先由 Chloe 選擇：等待 21:14 的自然 follow-up，或回到提交／下一個 V2 slice；開始前重讀本檔與最近兩筆 checkpoint。
 
 # 已知問題
 
 - V2 尚未建立私有 Git remote；原生端確認後續承諾目前仍回到 PWA 完成。
-- `00046` 的 `/current` 因 client trace 上限落後 persisted schema 而回 400；本機已修正，尚待新私人 revision 與 S25 最後視覺確認。
+- 原生端確認後續承諾目前仍回到 PWA 完成；本輪 PWA confirmation path 已通過。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -62,8 +63,9 @@
 - 2026-07-20 00:52 +08:00 確認回復修正：focused 3/3、全套 170 tests 通過（另 9 skipped）；lint、typecheck、Next production build 均通過。
 - 2026-07-20 01:03 +08:00 private deploy：revision `00046-woz` Ready；兩個私人 tags 健康 200、native 無憑證 401、V1 `00024-dih` 仍 100%。
 - 2026-07-20 01:41 +08:00 四軌跡讀回修正：S25／Firestore 遮罩診斷確認 4-vs-3 schema 上限；targeted 9/9、全套 170 tests（另 9 skipped）、lint、typecheck、build 均通過。
+- 2026-07-20 01:48 +08:00 final private acceptance：`00048-yuz` Ready；兩個私人 health 200、native 無憑證 401、S25 `/current` 200，確認按鈕與舊錯誤提示消失，21:14 follow-up 卡片可見；V1 仍 `00024-dih`、100%。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-20 01:41（Asia/Shanghai）
+- 2026-07-20 01:48（Asia/Shanghai）

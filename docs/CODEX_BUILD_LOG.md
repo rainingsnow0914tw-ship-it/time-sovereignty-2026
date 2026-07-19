@@ -732,4 +732,11 @@
   contract and added an exact confirmed Chief → Recovery → Chief → Curator
   regression. Targeted 9/9, full 170 tests, ESLint, TypeScript, and production
   build passed.
+- Deployed checkpoint `348139a` as private tag-only revision `00048-yuz`.
+  Authenticated S25 `/current` returned 200 with a `SCHEDULED` current follow-up
+  and four-trace `CONFIRMED` prior check-in. Automatic polling removed the old
+  confirmation button; a clean reload removed the stale warning. Final visual
+  inspection showed only the real 2026-07-20 21:14 follow-up card.
+- Both private health routes returned 200, unauthorized native remained 401,
+  and public V1 `00024-dih` remained at 100% normal traffic.
 - Evidence: `docs/evidence/2026-07-20-v2-real-catch-confirmation-recovery.md`.

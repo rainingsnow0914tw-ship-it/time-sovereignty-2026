@@ -88,3 +88,20 @@ The client contract now allows four safe traces. Its regression test reproduces
 the confirmed four-Agent shape. Targeted tests passed 9/9; the full suite again
 passed 170 tests with 9 live-only skips, followed by ESLint, TypeScript, and the
 Next.js production build.
+
+## Final private deployment and S25 acceptance
+
+- Checkpoint `348139a` (`fix: return confirmed four-agent traces`) was deployed
+  as tag-only revision `time-sovereignty-00048-yuz`.
+- Both private tags point to `00048`; their health routes returned HTTP 200.
+- The native session route without a credential returned HTTP 401.
+- Public V1 remains `time-sovereignty-00024-dih` at 100% normal traffic.
+- A masked request made inside the authenticated S25 PWA returned HTTP 200:
+  current follow-up `SCHEDULED` with zero traces, prior check-in `CONFIRMED`
+  with four safe traces.
+- Automatic polling removed the obsolete confirmation button. An ignore-cache
+  reload removed the stale earlier refresh warning.
+- Final DOM and visual inspection showed the real follow-up card scheduled for
+  2026-07-20 21:14 local time, with no confirmation button and no error notice.
+- Screenshots remained in the local temporary directory and were not committed,
+  uploaded, or included in public evidence.
