@@ -60,7 +60,11 @@ branding, or unverified runtime assumptions.
 - Chloe may be away from the screen during long builds. Immediately before
   asking her to unlock, approve, tap, speak, or inspect the S25 Ultra, run
   `powershell -ExecutionPolicy Bypass -File scripts/call-chloe.ps1`; then state
-  the one exact action needed. Do not ring for ordinary progress updates.
+  the one exact action needed.
+- Immediately before announcing that a verifiable milestone or work segment is
+  complete, run the same sound hook so Chloe knows the unattended work has
+  stopped. Ring for user action and milestone completion, not for ordinary
+  progress updates.
 
 ## Security
 
