@@ -2,7 +2,7 @@
 
 - Time: 2026-07-20 00:03 +08:00
 - Scope: deterministic pre-delivery safety guard only
-- Cloud deployment: not part of this evidence checkpoint
+- Cloud deployment: private tag-only revision `time-sovereignty-00044-lel`
 - Stable V1 traffic: unchanged
 
 ## Finding
@@ -30,3 +30,13 @@ consent requirement.
 
 No live OpenAI call was needed because the changed boundary is deterministic
 scheduling safety, not an Agent contract.
+
+## Private deployment verification
+
+- Revision `time-sovereignty-00044-lel` reported Ready.
+- Runtime identity remained the dedicated V2 service account.
+- The explicit acceptance interval remained 15 seconds.
+- `v2-private` and `live-mobile` both point to `00044`.
+- Both private health checks returned HTTP 200.
+- Native session without a credential returned HTTP 401.
+- Stable public traffic remained 100% on `time-sovereignty-00024-dih`.

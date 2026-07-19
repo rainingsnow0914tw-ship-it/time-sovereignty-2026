@@ -694,3 +694,8 @@
   ESLint, TypeScript, and production build.
 - No cloud traffic, Firestore data, phone state, secret, or API call changed.
 - Evidence: `docs/evidence/2026-07-20-v2-level1-quiet-hours-regression.md`.
+- Deployed the verified correction as tag-only revision `00044-lel` using the
+  dedicated V2 runtime identity and the existing 15-second acceptance interval.
+- Both private tags now point to `00044`; health returned 200 and the native
+  session route without a credential returned 401. Public V1 `00024-dih`
+  remains at 100% normal traffic.
