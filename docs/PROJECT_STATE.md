@@ -13,21 +13,23 @@
 - PWA live session 撤銷會同步撤銷 native device；手機也可用 bearer credential 自我撤銷。
 - 已在 `time-sovereignty-2026` 啟用 Firebase Management、FCM 與 Installations，建立獨立 Android app `ai.timesovereignty.privateapp`；設定檔僅存在 Git ignored 本機路徑。
 - 真 FCM Level 4 鎖屏驗收通過：SM-S9380 從 `Dozing` 自行變 `Awake`，全螢幕 Incoming Check-in、鈴聲、震動與四按鈕均正常，選擇後立即停止。
+- 已建立 V2 專用 runtime 身分；只具 Firestore、Cloud Tasks、FCM 發送與三個既有 Secret 的必要存取，V1 runtime 未被加入 FCM 權限。
+- tag-only Cloud Run preview `time-sovereignty-00039-fev` 已上線；`v2-private` 健康檢查 200，未授權 native API 401，正式 V1 仍為 `00024`、100% 流量。
 
 # 正在做
 
-- 準備 Firebase／鎖屏實機 checkpoint；接著建立 tag-only Cloud Run preview 與真 response persistence。
+- 建立 PWA → Android 的正式配對，並把 native 按鈕回應寫入受保護後端。
 
 # 下一步
 
-- 第一個動作：建立 tag-only Cloud Run preview，加入 `CATCH_V2_*` 環境變數但不移動 V1 stable traffic。
-- 然後驗證 PWA pairing ticket → Android pair → Cloud Tasks／FCM delivery；讓 `downgrade`／`reschedule` 真正寫回 Firestore，並由 GPT-5.6 重新校準承諾。
+- 第一個動作：完成 Android pairing client，使用一次性 PWA ticket 換取並安全保存 native credential。
+- 然後驗證 Cloud Tasks → FCM delivery；讓 `downgrade`／`reschedule` 真正寫回 Firestore，並由 GPT-5.6 重新校準承諾。
 
 # 已知問題
 
 - Android App 已接 Firebase，但尚未交換正式 native pairing credential；debug token 只留 App 私有沙盒供本輪驗收。
 - 真 FCM 目前由本機 gcloud 單次送出，尚未由 Cloud Tasks callback 自動觸發；按鈕仍未回寫後端或真正排程。
-- V2 尚未建立 tag-only Cloud Run preview 或私有 Git remote。
+- V2 尚未建立私有 Git remote；tag-only preview 已建立但 Android 尚未正式配對。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -40,8 +42,9 @@
 - Android `:app:assembleDebug`：通過；APK 已安裝到 SM-S9380。
 - 2026-07-19 19:17 +08:00 實機：有聲響鈴＋震動、畫面完整、選擇後 `MainActivity` 恢復，vibrator `IDLE`、amplitude `0.0`、audio `In ring or call: false`。
 - 2026-07-19 19:45 +08:00 真 FCM 鎖屏實機：before `Dozing`、after `Awake`、top activity `IncomingCheckInActivity`；Chloe 確認全螢幕、鈴聲、震動與四按鈕，`downgrade` 後立即停止。
+- 2026-07-19 20:03 +08:00 Cloud Run：`00039-fev` 以 V2 專用身分、min/max 1、0% stable traffic 上線；health 200、native 未授權 401；V1 `00024` 仍 100%。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-19 19:45（Asia/Shanghai）
+- 2026-07-19 20:03（Asia/Shanghai）
