@@ -680,3 +680,19 @@
   identifies Codex and GPT-5.6, and truthfully discloses both the AI narration
   and the accelerated mock boundary.
 - Evidence: `docs/evidence/phase-8-youtube-publication-2026-07-19.md`.
+
+## 2026-07-20 — V1 submitted before longitudinal-loop development
+
+- The authenticated Devpost finalization page showed the project as Draft with
+  four of five steps complete and explicitly stated that edits remain possible
+  until the deadline.
+- Accepted the already-approved official rules and Devpost terms, then submitted
+  Time Sovereignty. Devpost returned the authoritative `Project submitted!`
+  confirmation and navigated to the public project page.
+- Verified the public page at https://devpost.com/software/chief-of-staff-sm5evr
+  shows `Submitted to OpenAI Build Week`, the approved YouTube video, Demo Lab,
+  public MIT repository, project story, and Chloe's contribution statement.
+- Tagged the exact submitted code baseline `20ca832` as `v1.0.0-submitted` and
+  opened `codex/longitudinal-goal-loop` for isolated post-submission work.
+- Saved a local screenshot and public-safe evidence note. No application code,
+  stable Cloud Run traffic, private session, Firestore data, or secret changed.
