@@ -740,3 +740,31 @@
 - Both private health routes returned 200, unauthorized native remained 401,
   and public V1 `00024-dih` remained at 100% normal traffic.
 - Evidence: `docs/evidence/2026-07-20-v2-real-catch-confirmation-recovery.md`.
+
+## 2026-07-20 — Later real follow-up retired the goal; Android gaps recorded
+
+- Advanced the single existing private follow-up under explicit user approval.
+  The event quiet start was temporarily moved to `03:00` for the overnight
+  acceptance, then restored to `22:30–08:00` immediately after Level 4 and
+  before the user reply.
+- Cloud Tasks and FCM recorded Levels 1, 2, and 4 as delivered at the 15-second
+  acceptance interval. The physical S25 did not automatically open full-screen
+  or ring/vibrate in this run, so provider delivery was not counted as device
+  acceptance.
+- Code inspection confirmed the native button labeled as returning to the PWA
+  only calls `finish()`. It returned to the native home and provided no live
+  reply field. Opening the private origin without `?profile=play` also entered
+  the intentionally separate default onboarding profile.
+- The exact `live-mobile/?profile=play` path restored the original journey.
+  Chloe completed the previously agreed minimal action through the current
+  PWA follow-up. GPT-5.6 retrieved four memory IDs and returned
+  `COMPLETED / RETIRE` without claiming new photo evidence or scheduling more
+  work.
+- After confirmation, Firestore showed `CONFIRMED`, one Episode, completed
+  memory curation, null next check-in/task, and restored quiet hours. The queue
+  was empty.
+- Safe Agent evidence contained Chief of Staff and Memory Curator runs using
+  `openai / gpt-5.6-sol`, both completed, with 3,336 total tokens.
+- No application code or deployment changed. Public V1 remained untouched.
+- Evidence:
+  `docs/evidence/2026-07-20-v2-real-follow-up-retire-and-android-gaps.md`.
