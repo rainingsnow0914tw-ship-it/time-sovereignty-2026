@@ -18,6 +18,41 @@ export class CatchDeliveryBusyError extends Error {
   }
 }
 
+export function evaluateCatchDeliveryGuard(options: {
+  eventId: string;
+  requestedLevel: CatchLevel;
+  status: LiveCheckInDocument["status"];
+  quietHours: LiveCheckInDocument["context"]["quietHours"];
+  fullScreenConsent: boolean;
+  now: Date;
+}) {
+  const previousLevel = options.requestedLevel === 4 ? 2 : 1;
+  const moved = options.quietHours
+    ? moveOutsideQuietHours(options.now, options.quietHours)
+    : options.now;
+  const decision = evaluateCatchEscalation({
+    eventId: options.eventId,
+    level: previousLevel,
+    priority: "HIGH",
+    responded: !["PENDING", "FAILED"].includes(options.status),
+    cancelled: false,
+    supportPaused: false,
+    categoryEnabled: true,
+    consentValid: true,
+    fullScreenConsent: options.fullScreenConsent,
+    withinQuietHours: moved.getTime() !== options.now.getTime(),
+    userCondition: "NORMAL",
+  });
+  if (
+    decision.kind === "ESCALATE" &&
+    options.requestedLevel > 1 &&
+    decision.to !== options.requestedLevel
+  ) {
+    throw new Error("Catch escalation level mismatch.");
+  }
+  return decision;
+}
+
 export async function deliverCatchLevel(options: {
   checkIn: LiveCheckInDocument;
   level: CatchLevel;
@@ -47,28 +82,16 @@ export async function deliverCatchLevel(options: {
     };
   }
 
-  if (level > 1) {
-    const previousLevel = level === 2 ? 1 : 2;
-    const moved = checkIn.context.quietHours
-      ? moveOutsideQuietHours(currentTime, checkIn.context.quietHours)
-      : currentTime;
-    const decision = evaluateCatchEscalation({
-      eventId: checkIn.id,
-      level: previousLevel,
-      priority: "HIGH",
-      responded: !["PENDING", "FAILED"].includes(checkIn.status),
-      cancelled: false,
-      supportPaused: false,
-      categoryEnabled: true,
-      consentValid: true,
-      fullScreenConsent: device.fullScreenConsentAt !== null,
-      withinQuietHours: moved.getTime() !== currentTime.getTime(),
-      userCondition: "NORMAL",
-    });
-    if (decision.kind === "STOP") {
-      return { result: "STOPPED", nextLevel: null, stopReason: decision.reason };
-    }
-    if (decision.to !== level) throw new Error("Catch escalation level mismatch.");
+  const decision = evaluateCatchDeliveryGuard({
+    eventId: checkIn.id,
+    requestedLevel: level,
+    status: checkIn.status,
+    quietHours: checkIn.context.quietHours,
+    fullScreenConsent: device.fullScreenConsentAt !== null,
+    now: currentTime,
+  });
+  if (decision.kind === "STOP") {
+    return { result: "STOPPED", nextLevel: null, stopReason: decision.reason };
   }
 
   const receipts = createCatchDeliveryRepository(cloud);

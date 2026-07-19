@@ -680,3 +680,17 @@
   identifies Codex and GPT-5.6, and truthfully discloses both the AI narration
   and the accelerated mock boundary.
 - Evidence: `docs/evidence/phase-8-youtube-publication-2026-07-19.md`.
+
+## 2026-07-20 — V2 first-delivery quiet-hours regression fixed
+
+- Resume verification found that Levels 2 and 4 re-evaluated quiet hours before
+  delivery, but Level 1 could be sent immediately without that guard.
+- Moved the deterministic delivery guard in front of every level while keeping
+  the `1 -> 2 -> 4 -> stop` transition and full-screen consent check unchanged.
+- Added direct regression coverage proving Level 1 stops inside `22:30–08:00`,
+  remains eligible outside that window, and Level 4 still requires separate
+  full-screen consent.
+- Verification passed: V2 targeted 40/40, full suite 167 tests with nine skips,
+  ESLint, TypeScript, and production build.
+- No cloud traffic, Firestore data, phone state, secret, or API call changed.
+- Evidence: `docs/evidence/2026-07-20-v2-level1-quiet-hours-regression.md`.

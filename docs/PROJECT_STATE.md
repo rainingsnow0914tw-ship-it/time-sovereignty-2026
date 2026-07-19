@@ -19,21 +19,22 @@
 - S25 已完成真實 PWA → native 配對；Firestore 安全遮罩確認 session、token fingerprint、通知／全螢幕同意、期限與未撤銷狀態均存在，秘密未進日誌或 Git。
 - 已實作 Cloud Tasks 驅動的 `1 → 2 → 4 → stop`：每級重新檢查回應 marker、安靜時段、同意、撤銷與狀態；FCM delivery receipt 可重試且 Android 依 idempotency key 去重。
 - native 四按鈕現在會先停止鈴聲、寫入 immutable response event，再走與 PWA 共用的真 GPT-5.6 Chief／Recovery 管線並在原生畫面顯示結構化決策。
+- 私人 revision `time-sovereignty-00042-cey` 已使用 15 秒驗收間隔上線於 `v2-private`／`live-mobile` tags；正式 V1 仍為 `00024-dih`、100% 流量。
+- S25 已更新 APK 且原 pairing credential 保留；正確的 WebAPK `profile=play` 可開到「開始下一個真實行動時段」。
+- 修正第 1 級推播可能穿透安靜時段的安全洞；現在每一級送出前都走同一組安靜時段與同意圍欄。
 
 # 正在做
 
-- 部署並實機驗證 Cloud Tasks → Level 1 → Level 2 → Level 4 → native response → GPT-5.6 決策。
+- 等待在非安靜時段執行 Cloud Tasks → Level 1 → Level 2 → Level 4 → native response → GPT-5.6 決策的最終實機驗收。
 
 # 下一步
 
-- 第一個動作：以 15 秒私人驗收間隔部署新 revision 並更新 S25 APK，保留既有 native credential。
-- 然後建立一筆新真實工作時段，觀察三段推播；Level 4 選 `downgrade`，確認 Firestore event、GPT-5.6 decision 與 PWA review 均出現。
+- 第一個動作：將安靜時段安全修補以 tag-only 新 revision 部署，不移動正式流量。
+- 然後由 Chloe 明確選擇：08:00 後驗收，或只為一次約三分鐘的受控測試臨時延後安靜時段；不得用隱藏開關繞過安全圍欄。
 
 # 已知問題
 
-- Android App 已接 Firebase，但尚未交換正式 native pairing credential；debug token 只留 App 私有沙盒供本輪驗收。
-- 真 FCM 目前由本機 gcloud 單次送出，尚未由 Cloud Tasks callback 自動觸發；按鈕仍未回寫後端或真正排程。
-- V2 尚未建立私有 Git remote；新抓人鏈路已建置但尚未部署／實機驗收，原生端確認後續承諾目前仍回到 PWA 完成。
+- V2 尚未建立私有 Git remote；Cloud Tasks 抓人鏈路已部署但尚未完成三段真實實機驗收，原生端確認後續承諾目前仍回到 PWA 完成。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -50,8 +51,9 @@
 - 2026-07-19 20:10 +08:00 pairing build：Vitest 37 files／153 tests 通過（另 5 files／9 tests skipped）；lint、typecheck、Next production build、Android Firebase debug APK 均通過。
 - 2026-07-19 20:30 +08:00 pairing physical：原 WebAPK `profile=play` → 一次性票 → native App → Firestore device document 全鏈通過；V1 仍 `00024`、100%。
 - 2026-07-19 23:51 +08:00 catch loop build：Vitest 41 files／164 tests 通過（另 5 files／9 tests skipped）；lint、typecheck、Next production build、Android Firebase APK 均通過。
+- 2026-07-20 00:03 +08:00 quiet-hours regression：V2 targeted 40/40、全套 167 tests 通過（另 9 skipped）；lint、typecheck、Next production build 均通過。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-19 23:51（Asia/Shanghai）
+- 2026-07-20 00:04（Asia/Shanghai）
