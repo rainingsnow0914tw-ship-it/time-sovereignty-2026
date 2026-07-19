@@ -249,9 +249,9 @@ export const ClientLiveCheckInSchema = LiveCheckInDocumentSchema.pick({
   createdAt: true,
   updatedAt: true,
 }).strip().extend({
-  // A blocked or changed goal has a three-step safe trace:
-  // Chief triage -> Commitment Recovery -> final Chief decision.
-  traces: z.array(AgentRunTraceSchema).max(3),
+  // A blocked or changed goal has three user-facing decision traces, followed
+  // by the post-response Memory Curator trace after confirmation.
+  traces: z.array(AgentRunTraceSchema).max(4),
 });
 
 export type LiveCheckInContext = z.infer<typeof LiveCheckInContextSchema>;

@@ -722,4 +722,14 @@
   `time-sovereignty-00046-woz`. Both private tags returned health 200, the
   native route without a credential returned 401, and stable public V1
   `00024-dih` remained at 100% normal traffic.
+- S25 refresh exposed a second read-after-write defect: the current route
+  returned 400 because the confirmed item had four safe traces after the
+  Memory Curator ran, while the client response contract still capped traces at
+  three. Masked Firestore inspection proved the active follow-up was
+  `SCHEDULED` and the prior item was `CONFIRMED`; no private content was read
+  into evidence.
+- Aligned the client contract with the already-existing four-trace persisted
+  contract and added an exact confirmed Chief → Recovery → Chief → Curator
+  regression. Targeted 9/9, full 170 tests, ESLint, TypeScript, and production
+  build passed.
 - Evidence: `docs/evidence/2026-07-20-v2-real-catch-confirmation-recovery.md`.

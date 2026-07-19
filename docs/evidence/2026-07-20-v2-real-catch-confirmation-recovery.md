@@ -63,3 +63,28 @@ response and had no read-after-write recovery path.
 - `live-mobile` health returned HTTP 200.
 - The native session route without a device credential returned HTTP 401.
 - Final S25 refreshed-screen confirmation remains the next physical check.
+
+## Read-after-write contract defect found on S25
+
+After refreshing revision `00046`, the visible PWA still showed the old
+confirmation button. A masked Chrome DevTools check proved that the phone was
+on the correct `live-mobile` URL and new revision, but
+`/api/live/check-ins/current` returned HTTP 400.
+
+A masked Firestore read then established:
+
+- the active follow-up exists with status `SCHEDULED`;
+- the prior check-in exists with status `CONFIRMED`;
+- the confirmed check-in contains four safe Agent trace IDs;
+- no private text, image, credential, or trace content was printed.
+
+The persisted check-in schema already allowed four trace IDs: Chief triage,
+Commitment Recovery, final Chief decision, and the post-response Memory
+Curator. The client response schema still allowed only three trace objects.
+Serializing `lastConfirmedCheckIn` therefore raised a Zod error and the current
+route returned 400 even though persistence was correct.
+
+The client contract now allows four safe traces. Its regression test reproduces
+the confirmed four-Agent shape. Targeted tests passed 9/9; the full suite again
+passed 170 tests with 9 live-only skips, followed by ESLint, TypeScript, and the
+Next.js production build.

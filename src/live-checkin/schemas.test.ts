@@ -69,8 +69,11 @@ describe("live decision compatibility", () => {
 });
 
 describe("client-safe recovery trace", () => {
-  it("accepts the full Chief, Recovery, Chief trace returned by a blocked check-in", () => {
-    const trace = (runId: string, agent: "CHIEF_OF_STAFF" | "COMMITMENT_RECOVERY") => ({
+  it("accepts the confirmed Chief, Recovery, Chief, Curator trace", () => {
+    const trace = (
+      runId: string,
+      agent: "CHIEF_OF_STAFF" | "COMMITMENT_RECOVERY" | "MEMORY_CURATOR",
+    ) => ({
       runId,
       agent,
       provider: "openai" as const,
@@ -86,11 +89,12 @@ describe("client-safe recovery trace", () => {
       trace("trace-chief-triage", "CHIEF_OF_STAFF"),
       trace("trace-recovery", "COMMITMENT_RECOVERY"),
       trace("trace-chief-final", "CHIEF_OF_STAFF"),
+      trace("trace-memory-curator", "MEMORY_CURATOR"),
     ];
 
     const result = ClientLiveCheckInSchema.safeParse({
-      id: "live-three-traces",
-      status: "DECISION_READY",
+      id: "live-four-traces",
+      status: "CONFIRMED",
       message: "What is true?",
       context: {
         goal: "Ship",
@@ -102,7 +106,7 @@ describe("client-safe recovery trace", () => {
       },
       scheduledFor: "2026-07-18T02:30:00.000Z",
       pendingAt: "2026-07-18T02:30:00.000Z",
-      replyId: "reply-three-traces",
+      replyId: "reply-four-traces",
       attemptCount: 1,
       decision: {
         assessment: "BLOCKED",
@@ -115,7 +119,7 @@ describe("client-safe recovery trace", () => {
       },
       traceRunIds: traces.map(({ runId }) => runId),
       traces,
-      confirmedAt: null,
+      confirmedAt: "2026-07-18T02:33:00.000Z",
       nextCheckInId: null,
       createdAt: "2026-07-18T02:29:00.000Z",
       updatedAt: "2026-07-18T02:32:55.000Z",
