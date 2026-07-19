@@ -1,10 +1,36 @@
 # Codex Repository Instructions
 
-This is the standalone OpenAI Build Week repository for **Time Sovereignty**.
+This is the isolated, local-only V2 repository for **Time Sovereignty**.
+
+It was branched from the accepted public V1 submission candidate at commit
+`20ca832`. V1 is frozen. V2 work must never modify, deploy over, or push into
+the public V1 repository.
 
 ## Product goal
 
-Build a production-shaped AI Chief of Staff that protects one meaningful long-term goal through planning, scheduled check-ins, recovery, progress evidence, memory, and continued follow-up without taking control away from the user. The public demo must include a real user-facing path, not just evidence-only model calls.
+Build a production-grade AI Chief of Staff that can find a consenting user in
+the real world when an important commitment is missed: escalate from a normal
+message to an interactive prompt and then to a full-screen Android call, hold a
+real voice conversation, persist the user's response as a domain event, create
+any promised follow-up for real, and adapt later interventions from limited
+evidence without shame or coercion.
+
+The valuable V2 loop is:
+
+`schedule -> message -> no response -> interactive prompt -> no response -> full-screen call -> voice/choice -> follow-up + memory -> later retrieval`.
+
+## Private-repository boundary
+
+- This repository must remain local-only until Chloe explicitly approves a
+  private remote destination and its access list.
+- Do not add a Git remote, publish a branch, or open a pull request by default.
+- Never copy `.env`, `google-services.json`, `local.properties`, API keys,
+  pairing values, session secrets, device tokens, Firestore user data, APKs,
+  archives, or raw media from either reference project.
+- The public V1 repository at
+  `C:\Users\soulf\Desktop\openAI build week202607130721` is read-only reference.
+- The Catch Loop repositories are read-only reference. They contain existing
+  user changes and must not be cleaned, reset, staged, or silently absorbed.
 
 ## Required reading order
 
@@ -15,6 +41,15 @@ Before broad implementation work, read:
 3. `docs/source/03_Codex_Kickoff_Prompt.md`
 
 Treat those files as the current product source of truth. Preserve them unchanged; record later decisions separately.
+
+For V2 Android escalation work, also read:
+
+1. `docs/decisions/0017-private-v2-native-catch-loop.md`
+2. The reference `docs/catch-contract.md` in Chloe Catch Loop
+3. Only the exact Catch Loop code anchors named by Decision 0017
+
+Copy the behavioral contracts, not the old data model, backend, credentials,
+branding, or unverified runtime assumptions.
 
 ## Collaboration
 
@@ -111,3 +146,20 @@ A phase is complete only when its intended user flow works, its contracts and de
 - Do not weaken mock/live schema parity, zero SDK retries, origin checks, one-device session expiry, revocation, or cleanup safeguards to make a demo pass.
 - Decision 0016 freezes the accepted private core at revision `time-sovereignty-00036-qov`. Before submission, do not broadly change onboarding, live check-in, Cloud Tasks, Firestore, Agent, Realtime, or memory contracts unless a verified safety, data-loss, build, or acceptance blocker requires it.
 - Keep Demo Lab, public guest access, video, README, and Devpost work isolated from Chloe's private session and memory data.
+- Preserve explicit opt-in, quiet hours, category disable controls, revocation,
+  and bounded ringing/vibration before escalating to a full-screen call.
+- V2 response types are domain events:
+  `complete`, `reschedule`, `downgrade`, `mercy`, and `timeout`.
+- Default high-priority escalation is `1 -> 2 -> 4 -> stop`; it is a pure,
+  deterministic, unit-tested transition.
+- A `reschedule` response is not successful until a new durable scheduled
+  event exists. AI language must never promise a follow-up that code did not
+  create.
+- Non-response is evidence, not permission to shame. Temporary illness,
+  emergencies, low energy, quiet hours, and explicit pause requests must stop
+  or downgrade escalation.
+- FCM payloads are data-only, flat string maps. Android full-screen calls use
+  `CATEGORY_CALL` plus `setFullScreenIntent` and must respect system silent and
+  vibrate modes.
+- GPT-5.6 remains the decision brain. Realtime is the user-started voice layer;
+  deterministic code owns scheduling, escalation, idempotency, and safety.
