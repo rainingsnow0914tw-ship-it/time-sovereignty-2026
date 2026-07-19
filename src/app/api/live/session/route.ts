@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 
+import { createCatchDeviceRepository } from "@/catch-v2/firestore-device-repository";
 import {
   authenticateLiveRequest,
   liveErrorResponse,
@@ -29,6 +30,7 @@ export async function DELETE(request: NextRequest) {
     const { config, repository, session } = await authenticateLiveRequest(request);
     assertAllowedOrigin(request, config);
     await repository.revoke(session.id);
+    await createCatchDeviceRepository(config.cloud).revokeBySession(session.id);
     const response = liveJson({ ok: true, revoked: true });
     response.cookies.set({
       name: LIVE_SESSION_COOKIE,
