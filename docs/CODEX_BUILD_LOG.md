@@ -791,3 +791,30 @@
   change, or secret exposure occurred. The unattended full-screen wake,
   ring, and vibration regression remains open and is the next exact task.
 - Evidence: `docs/evidence/2026-07-20-v2-native-return-to-pwa-repair.md`.
+
+## 2026-07-20 — Android full-screen access became observable and locally testable
+
+- Investigated the later repeat run in which Cloud Tasks and FCM provider
+  receipts existed but the S25 did not visibly wake, ring, or vibrate.
+- The app declared the required permissions, but Android 14+ full-screen special
+  access was not exposed in product UI. Added the platform
+  `canUseFullScreenIntent()` check, an exact user-initiated settings route, and a
+  clear explanation of the fallback behavior when access is unavailable.
+- Level 4 now attaches its full-screen intent only when the platform API reports
+  access ready; the persistent high-priority notification remains the safe
+  fallback.
+- Added a debug-build-only, shell-permission-protected fixed Level 4 receiver so
+  the Android lock-screen path can be reproduced without FCM, Cloud Tasks,
+  Firestore, or GPT-5.6. It is excluded from release builds and accepts no
+  private payload.
+- Eight Android unit tests passed and the debug APK built successfully. The APK
+  updated only the intended S25 while preserving pairing data.
+- Physical acceptance started with the S25 in `Dozing`, posted the local Level 4
+  notification, and observed `Awake` with `IncomingCheckInActivity` in front.
+  Chloe confirmed the audible ringtone, vibration, and complete green
+  full-screen UI.
+- A `default` AppOp with a reject timestamp is not claimed as the sole original
+  cause because the accepted local run still exposed the same surface value.
+  The next proof is one new controlled real FCM `1 → 2 → 4` run.
+- Evidence:
+  `docs/evidence/2026-07-20-v2-android-fullscreen-access-and-local-wake.md`.

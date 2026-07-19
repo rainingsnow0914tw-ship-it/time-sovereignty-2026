@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 
 object CatchNotifications {
     private const val LEVEL_ONE_CHANNEL = "time_sovereignty_message"
@@ -46,7 +47,15 @@ object CatchNotifications {
             .setCategory(if (payload.isFullScreen) Notification.CATEGORY_CALL else Notification.CATEGORY_REMINDER)
 
         if (payload.isFullScreen) {
-            builder.setOngoing(true).setFullScreenIntent(pendingIntent, true)
+            builder.setOngoing(true)
+            val systemAllows = Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+                manager.canUseFullScreenIntent()
+            if (
+                FullScreenIntentPolicy.evaluate(Build.VERSION.SDK_INT, systemAllows) ==
+                FullScreenIntentAccessState.READY
+            ) {
+                builder.setFullScreenIntent(pendingIntent, true)
+            }
         }
 
         manager.notify(payload.eventId.hashCode(), builder.build())

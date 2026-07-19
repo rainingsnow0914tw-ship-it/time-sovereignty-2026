@@ -2,11 +2,16 @@ package ai.timesovereignty.privateapp
 
 import android.Manifest
 import android.app.Activity
+import android.app.NotificationManager
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -16,6 +21,8 @@ class MainActivity : Activity() {
     private lateinit var pushStatus: TextView
     private var pendingPairingTicket: String? = null
     private var fcmToken: String? = null
+    private lateinit var fullScreenStatus: TextView
+    private lateinit var fullScreenAccessButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +34,11 @@ class MainActivity : Activity() {
         }
         preparePrivatePushChannel()
         acceptPairingIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::fullScreenStatus.isInitialized) refreshFullScreenIntentAccess()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -81,6 +93,39 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun refreshFullScreenIntentAccess() {
+        val manager = getSystemService(NotificationManager::class.java)
+        val systemAllows = Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+            manager.canUseFullScreenIntent()
+        when (FullScreenIntentPolicy.evaluate(Build.VERSION.SDK_INT, systemAllows)) {
+            FullScreenIntentAccessState.READY -> {
+                fullScreenStatus.text = "全螢幕來電已允許 · 高優先跟進可在鎖屏顯示"
+                fullScreenStatus.setTextColor(Color.rgb(35, 111, 78))
+                fullScreenAccessButton.visibility = View.GONE
+            }
+            FullScreenIntentAccessState.NEEDS_USER_APPROVAL -> {
+                fullScreenStatus.text =
+                    "還差一步：Android 尚未允許全螢幕來電。一般通知會到，但鎖屏不會自動打開。"
+                fullScreenStatus.setTextColor(Color.rgb(151, 72, 48))
+                fullScreenAccessButton.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun openFullScreenIntentSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        } catch (_: ActivityNotFoundException) {
+            fullScreenStatus.text = "找不到全螢幕來電設定；請從系統設定開啟 Time Sovereignty 的特殊存取權。"
+        }
+    }
+
     private fun buildContent(): LinearLayout {
         val density = resources.displayMetrics.density
         fun dp(value: Int) = (value * density).toInt()
@@ -105,6 +150,18 @@ class MainActivity : Activity() {
                 textSize = 17f
                 setTextColor(Color.rgb(36, 53, 46))
             })
+            fullScreenStatus = TextView(this@MainActivity).apply {
+                textSize = 14f
+                setPadding(0, dp(22), 0, dp(8))
+            }
+            addView(fullScreenStatus)
+            fullScreenAccessButton = Button(this@MainActivity).apply {
+                text = "允許全螢幕來電"
+                isAllCaps = false
+                setOnClickListener { openFullScreenIntentSettings() }
+                visibility = View.GONE
+            }
+            addView(fullScreenAccessButton)
             addView(Button(this@MainActivity).apply {
                 text = "本機預覽假電話（不連雲端）"
                 isAllCaps = false

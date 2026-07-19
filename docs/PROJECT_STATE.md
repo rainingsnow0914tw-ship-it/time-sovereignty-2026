@@ -30,20 +30,22 @@
 - 後續真實 follow-up 已完成記憶讀回與收尾：讀回 4 筆有限證據，Chief of Staff 判斷 `COMPLETED / RETIRE`，Chloe 確認後 Episode 與 Memory Curator 均落盤，且沒有建立下一筆 check-in 或 Cloud Task。
 - 本次 follow-up 使用 Chief of Staff 與 Memory Curator 兩筆真 `openai / gpt-5.6-sol` 安全軌跡，共 3,336 tokens；安靜時段已恢復為 `22:30–08:00`。
 - 原生「回到 PWA 確認」已從 finish-only 修為安全導向精確 `/?profile=play`；優先開啟 Chrome WebAPK、其次 Chrome，S25 實機已確認回到原杯子素描旅程且沒有掉進北極星 onboarding。
+- Android 14+ 已加入全螢幕特殊存取的真實狀態檢查與使用者授權入口；debug-only 本機 Level 4 驗收讓 S25 從 `Dozing` 變 `Awake`，Chloe 確認全螢幕、鈴聲與震動三項均通過，全程未連雲端或 GPT-5.6。
 
 # 正在做
 
-- 原生決策返回 PWA 的斷路已修復並完成 S25 實機驗收；目前只剩 2026-07-20 02:34 那輪未自動全螢幕、鈴聲與震動的 Android 背景喚醒回歸待診斷。
+- Android 本機通知到鎖屏的喚醒、全螢幕、鈴聲與震動已恢復並完成實機驗收；尚未用一筆新的真 FCM delivery 重驗先前 02:34 失敗的完整雲端到裝置路徑。
 
 # 下一步
 
-- 第一個動作：只連 S25（`R5CY12Y90ZF`／`SM-S9380`），先鎖屏並收集通知 channel、full-screen app-op、電池／背景限制與最小 logcat，再以不呼叫 GPT-5.6 的受控 FCM 重現定位。
-- 修好後重新驗收 Level 1／2／4 的實際裝置 UI；在通過前不宣稱背景抓人重複驗收成功，也不重跑已通過的記憶收尾。
+- 第一個動作：建立一個全新的短期橋式承諾，使用真 FCM／Cloud Tasks 跑一次 `1 → 2 → 4`，S25 鎖屏且前兩級故意不回應；不重用已 RETIRE 的杯子目標。
+- Level 4 實機通過後再讓 Chloe 選擇一個真實回應，驗證寫入與後續承諾；只在需要使用者判斷時呼叫 GPT-5.6，不重跑已通過的記憶收尾。
 
 # 已知問題
 
 - V2 尚未建立私有 Git remote；原生端確認後續承諾目前仍回到 PWA 完成。
 - 2026-07-20 02:34 的重複實機驗收中，FCM Level 1／2／4 provider receipts 均為 `DELIVERED`，但 S25 只顯示通知，沒有自動全螢幕、鈴聲或震動；需要 USB／ADB 定向診斷，不能把 provider receipt 當成裝置 UI 成功。
+- `USE_FULL_SCREEN_INTENT` AppOp 的 `default`／reject timestamp 不能單獨當作根因：本機實機通過後仍可看到相同 AppOp 表面狀態；新版改以官方 `canUseFullScreenIntent()` 作產品判斷。
 - 私人旅程存在 `play` storage profile；手動開缺少 `?profile=play` 的同源網址仍會正確進入空白 default onboarding，但原生返回路徑現在會強制使用正確 profile。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
@@ -71,8 +73,9 @@
 - 2026-07-20 02:34 +08:00 follow-up delivery：既有 task 提前執行，Level 1／2／4 provider receipts 均 `DELIVERED`，但 S25 未自動全螢幕、響鈴或震動；原生本輪回應未送出，判為 physical wake failure。
 - 2026-07-20 03:06 +08:00 memory retirement：正確 `?profile=play` PWA 讀回現行旅程與 4 筆記憶；`COMPLETED / RETIRE` 經 Chloe 確認後為 `CONFIRMED`，Episode 1、Memory Curator `COMPLETED`、兩筆 `gpt-5.6-sol` traces 共 3,336 tokens、queue 空、無 next check-in／task，安靜時段 `22:30–08:00`。
 - 2026-07-20 03:31 +08:00 Android return repair：`PrivatePwaReturnUrlTest` 5/5 通過，`:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL；APK 以保留資料方式安裝至指定 S25，實機由 Chrome WebAPK 開回原 `profile=play` 杯子旅程，Chloe 確認沒有出現北極星 onboarding。
+- 2026-07-20 04:04 +08:00 Android local wake：全螢幕 policy 3/3＋既有導航 5/5 通過，APK BUILD SUCCESSFUL；S25 從 `Dozing` 變 `Awake` 且前景為 IncomingCheckInActivity，Chloe 確認鈴聲、震動與完整綠色全螢幕三項皆通過；零雲端、零 GPT。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-20 03:34（Asia/Shanghai）
+- 2026-07-20 04:05（Asia/Shanghai）
