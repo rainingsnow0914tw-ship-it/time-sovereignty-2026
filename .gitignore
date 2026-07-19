@@ -30,6 +30,7 @@ Thumbs.db
 /android/app/google-services.json
 *.apk
 *.aab
+/firebase-debug.log
 
 # Raw intake artifacts retained locally outside version control
 /Time_Sovereignty_Codex_Package_v0.6.zip

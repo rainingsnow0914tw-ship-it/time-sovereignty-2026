@@ -11,20 +11,23 @@
 - 已建立 native pairing／auth 邊界：PWA 簽發 10 分鐘一次性票、Android 換取雜湊保存的可撤銷憑證，期限不超過原 live session。
 - 已建立 FCM HTTP v1 data-only adapter：flat string payload、高優先 Android delivery、零內部 retries、穩定 idempotency key，且錯誤不暴露 token。
 - PWA live session 撤銷會同步撤銷 native device；手機也可用 bearer credential 自我撤銷。
+- 已在 `time-sovereignty-2026` 啟用 Firebase Management、FCM 與 Installations，建立獨立 Android app `ai.timesovereignty.privateapp`；設定檔僅存在 Git ignored 本機路徑。
+- 真 FCM Level 4 鎖屏驗收通過：SM-S9380 從 `Dozing` 自行變 `Awake`，全螢幕 Incoming Check-in、鈴聲、震動與四按鈕均正常，選擇後立即停止。
 
 # 正在做
 
-- 準備 native pairing／FCM contract checkpoint；接著建立 Firebase Android app 與 tag-only Cloud Run preview。
+- 準備 Firebase／鎖屏實機 checkpoint；接著建立 tag-only Cloud Run preview 與真 response persistence。
 
 # 下一步
 
-- 第一個動作：在現有 GCP project 新增獨立 Firebase Android app，讓 `google-services.json` 只留本機且維持 Git ignored；取得 S25 的真 FCM token。
-- 然後以 tag-only Cloud Run preview 驗證 PWA pairing ticket → Android pair → 一次真 push；未回應升級與 response persistence 後接。
+- 第一個動作：建立 tag-only Cloud Run preview，加入 `CATCH_V2_*` 環境變數但不移動 V1 stable traffic。
+- 然後驗證 PWA pairing ticket → Android pair → Cloud Tasks／FCM delivery；讓 `downgrade`／`reschedule` 真正寫回 Firestore，並由 GPT-5.6 重新校準承諾。
 
 # 已知問題
 
-- Android App 尚未配對 Firebase，因此目前只通過本機假電話外殼；按鈕尚未回寫後端或真正排程。
-- V2 尚未建立 Firebase Android app、tag-only Cloud Run preview 或私有 Git remote。
+- Android App 已接 Firebase，但尚未交換正式 native pairing credential；debug token 只留 App 私有沙盒供本輪驗收。
+- 真 FCM 目前由本機 gcloud 單次送出，尚未由 Cloud Tasks callback 自動觸發；按鈕仍未回寫後端或真正排程。
+- V2 尚未建立 tag-only Cloud Run preview 或私有 Git remote。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -36,8 +39,9 @@
 - `npm test -- src/catch-v2`：4 test files、26/26 通過；native credential、一次性票、撤銷與 FCM 單次送出契約均已覆蓋。
 - Android `:app:assembleDebug`：通過；APK 已安裝到 SM-S9380。
 - 2026-07-19 19:17 +08:00 實機：有聲響鈴＋震動、畫面完整、選擇後 `MainActivity` 恢復，vibrator `IDLE`、amplitude `0.0`、audio `In ring or call: false`。
+- 2026-07-19 19:45 +08:00 真 FCM 鎖屏實機：before `Dozing`、after `Awake`、top activity `IncomingCheckInActivity`；Chloe 確認全螢幕、鈴聲、震動與四按鈕，`downgrade` 後立即停止。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-19 19:28（Asia/Shanghai）
+- 2026-07-19 19:45（Asia/Shanghai）

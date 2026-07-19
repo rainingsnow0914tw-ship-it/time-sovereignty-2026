@@ -9,8 +9,11 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : Activity() {
+    private lateinit var pushStatus: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(buildContent())
@@ -18,6 +21,19 @@ class MainActivity : Activity() {
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
+        }
+        preparePrivatePushChannel()
+    }
+
+    private fun preparePrivatePushChannel() {
+        pushStatus.text = "正在建立私人推播通道…"
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful || task.result.isNullOrBlank()) {
+                pushStatus.text = "私人推播通道尚未就緒；稍後會自動重試。"
+                return@addOnCompleteListener
+            }
+            DebugFcmTokenStore.save(this, task.result)
+            pushStatus.text = "私人推播通道已就緒 · 尚未配對後端"
         }
     }
 
@@ -65,12 +81,13 @@ class MainActivity : Activity() {
                 }
                 setPadding(dp(8), dp(14), dp(8), dp(14))
             })
-            addView(TextView(this@MainActivity).apply {
+            pushStatus = TextView(this@MainActivity).apply {
                 text = "目前階段：Android 外殼已就位；受保護的 FCM 配對與真實回寫正在施工。"
                 textSize = 14f
                 setTextColor(Color.rgb(95, 106, 100))
                 setPadding(0, dp(24), 0, 0)
-            })
+            }
+            addView(pushStatus)
         }
     }
 }

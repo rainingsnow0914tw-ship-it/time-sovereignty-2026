@@ -11,6 +11,10 @@ android {
     namespace = "ai.timesovereignty.privateapp"
     compileSdk = 35
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "ai.timesovereignty.privateapp"
         minSdk = 26

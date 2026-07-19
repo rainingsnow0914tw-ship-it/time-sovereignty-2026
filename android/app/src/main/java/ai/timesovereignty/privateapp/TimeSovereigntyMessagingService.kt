@@ -8,6 +8,7 @@ class TimeSovereigntyMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         // Registration is wired only after the protected device endpoint exists.
         // Never print or persist the raw FCM token in logs.
+        DebugFcmTokenStore.save(this, token)
         Log.i(TAG, "A new private device token is ready for protected registration.")
     }
 
