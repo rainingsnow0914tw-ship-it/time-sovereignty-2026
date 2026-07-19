@@ -5,8 +5,19 @@ import android.os.Handler
 import android.os.Looper
 import org.json.JSONObject
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
+import java.time.Instant
+import java.util.UUID
 import java.util.concurrent.Executors
+
+data class NativeDecision(
+    val assessment: String,
+    val userMessage: String,
+    val adaptedCommitment: String,
+    val nextFollowUpAt: String?,
+    val requiresConfirmation: Boolean
+)
 
 object NativeApiClient {
     private val executor = Executors.newSingleThreadExecutor()
@@ -26,7 +37,11 @@ object NativeApiClient {
                     .put("locale", "zh-TW")
                     .put("notificationConsent", true)
                     .put("fullScreenConsent", true)
-                val response = postJson("/api/live/native/pair", body, null)
+                val response = postJson(
+                    BuildConfig.PRIVATE_API_BASE_URL + "/api/live/native/pair",
+                    body,
+                    null
+                )
                 NativePairingSession(
                     deviceId = response.getString("deviceId"),
                     credential = response.getString("credential"),
@@ -37,12 +52,49 @@ object NativeApiClient {
         }
     }
 
+    fun respond(
+        responseUrl: String,
+        eventId: String,
+        responseType: String,
+        responseId: String = UUID.randomUUID().toString(),
+        session: NativePairingSession,
+        callback: (Result<NativeDecision>) -> Unit
+    ) {
+        executor.execute {
+            val result = runCatching {
+                val safeUrl = validateResponseUrl(responseUrl, eventId)
+                val body = JSONObject()
+                    .put("eventId", eventId)
+                    .put("responseId", responseId)
+                    .put("type", responseType)
+                    .put("responseText", JSONObject.NULL)
+                    .put("energy", JSONObject.NULL)
+                    .put(
+                        "delayMinutes",
+                        if (responseType == "reschedule") 10 else JSONObject.NULL
+                    )
+                    .put("respondedAt", Instant.now().toString())
+                val response = postJson(safeUrl, body, session)
+                val decision = response.getJSONObject("decision")
+                NativeDecision(
+                    assessment = decision.getString("assessment"),
+                    userMessage = decision.getString("userMessage"),
+                    adaptedCommitment = decision.getString("adaptedCommitment"),
+                    nextFollowUpAt = decision.optString("nextFollowUpAt")
+                        .takeIf { it.isNotBlank() && it != "null" },
+                    requiresConfirmation = response.optBoolean("requiresConfirmation", true)
+                )
+            }
+            main.post { callback(result) }
+        }
+    }
+
     private fun postJson(
-        path: String,
+        url: String,
         body: JSONObject,
         session: NativePairingSession?
     ): JSONObject {
-        val connection = (URL(BuildConfig.PRIVATE_API_BASE_URL + path)
+        val connection = (URL(url)
             .openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 15_000
@@ -67,6 +119,19 @@ object NativeApiClient {
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun validateResponseUrl(responseUrl: String, eventId: String): String {
+        val base = URI(BuildConfig.PRIVATE_API_BASE_URL)
+        val candidate = URI(responseUrl)
+        require(candidate.scheme == "https" && candidate.host == base.host) {
+            "Native response host is not trusted."
+        }
+        require(
+            candidate.path == "/api/live/native/events/$eventId/responses" &&
+                candidate.query == null
+        ) { "Native response path is not trusted." }
+        return candidate.toString()
     }
 }
 

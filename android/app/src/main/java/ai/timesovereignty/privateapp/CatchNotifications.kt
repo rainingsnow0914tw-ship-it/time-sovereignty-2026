@@ -17,7 +17,7 @@ object CatchNotifications {
         val manager = context.getSystemService(NotificationManager::class.java)
         ensureChannels(manager)
 
-        val target = if (payload.isFullScreen) {
+        val target = if (payload.isInteractive) {
             IncomingCheckInActivity.intent(context, payload)
         } else {
             Intent(context, MainActivity::class.java).apply {

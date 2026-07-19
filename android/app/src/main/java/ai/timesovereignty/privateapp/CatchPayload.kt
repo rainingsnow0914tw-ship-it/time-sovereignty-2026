@@ -6,9 +6,11 @@ data class CatchPayload(
     val title: String,
     val message: String,
     val responseUrl: String?,
-    val expiresAt: String?
+    val expiresAt: String?,
+    val idempotencyKey: String = "$eventId:level:$level"
 ) {
     val isFullScreen: Boolean get() = level == 4
+    val isInteractive: Boolean get() = level >= 2
 
     companion object {
         fun from(data: Map<String, String>): CatchPayload? {
@@ -22,7 +24,9 @@ data class CatchPayload(
                 title = data["title"]?.take(120) ?: "澄來找妳了",
                 message = data["message"]?.take(1_000) ?: "我們原本約好的時間到了。現在真實情況是什麼？",
                 responseUrl = data["response_url"],
-                expiresAt = data["expires_at"]
+                expiresAt = data["expires_at"],
+                idempotencyKey = data["idempotency_key"]?.take(256)
+                    ?: "$eventId:level:$level"
             )
         }
     }

@@ -8,10 +8,15 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import java.util.UUID
 
 class IncomingCheckInActivity : Activity() {
     private lateinit var eventId: String
     private lateinit var ringer: BoundedRinger
+    private lateinit var statusText: TextView
+    private val responseButtons = mutableListOf<Button>()
+    private var pendingResponseId: String? = null
+    private var pendingResponseType: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +58,13 @@ class IncomingCheckInActivity : Activity() {
                 setPadding(0, 0, 0, dp(30))
             })
 
+            statusText = TextView(this@IncomingCheckInActivity).apply {
+                text = "請選擇最符合現在真實情況的一項。"
+                textSize = 14f
+                setTextColor(Color.rgb(192, 232, 216))
+                setPadding(0, 0, 0, dp(14))
+            }
+            addView(statusText)
             addResponseButton("我完成了", "complete")
             addResponseButton("延後 10 分鐘", "reschedule")
             addResponseButton("把行動縮小", "downgrade")
@@ -61,20 +73,79 @@ class IncomingCheckInActivity : Activity() {
     }
 
     private fun LinearLayout.addResponseButton(label: String, responseType: String) {
-        addView(Button(this@IncomingCheckInActivity).apply {
+        val button = Button(this@IncomingCheckInActivity).apply {
             text = label
             isAllCaps = false
-            setOnClickListener { finishWith(responseType) }
-        })
+            setOnClickListener { submitResponse(responseType) }
+        }
+        responseButtons += button
+        addView(button)
     }
 
-    private fun finishWith(responseType: String) {
+    private fun submitResponse(responseType: String) {
         ringer.stop()
         CatchNotifications.cancel(this, eventId)
-        // The protected response endpoint is the next adapter. Until then the
-        // local preview exits without pretending that anything was persisted.
-        setResult(RESULT_OK, Intent().putExtra("response_type", responseType))
-        finish()
+        val responseUrl = intent.getStringExtra(EXTRA_RESPONSE_URL)
+        val session = NativeCredentialStore.load(this)
+        if (responseUrl.isNullOrBlank() || session == null || eventId == "local-preview") {
+            setResult(RESULT_OK, Intent().putExtra("response_type", responseType))
+            finish()
+            return
+        }
+        pendingResponseType = responseType
+        pendingResponseId = pendingResponseId ?: UUID.randomUUID().toString()
+        responseButtons.forEach { it.isEnabled = false }
+        statusText.text = "已停止鈴聲。澄正在用 GPT-5.6 理解現在的真實情況…"
+        NativeApiClient.respond(
+            responseUrl = responseUrl,
+            eventId = eventId,
+            responseType = responseType,
+            responseId = pendingResponseId!!,
+            session = session
+        ) { result ->
+            result.onSuccess { decision -> showDecision(decision) }
+                .onFailure {
+                    statusText.text = "這次回應尚未安全保存。請重試同一筆回應；系統不會重複處理。"
+                    responseButtons.forEach { it.isEnabled = false }
+                    responseButtons.firstOrNull()?.apply {
+                        text = "重試安全送出"
+                        isEnabled = true
+                        setOnClickListener { submitResponse(pendingResponseType!!) }
+                    }
+                }
+        }
+    }
+
+    private fun showDecision(decision: NativeDecision) {
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
+        setContentView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(28), dp(72), dp(28), dp(36))
+            setBackgroundColor(Color.rgb(245, 241, 232))
+            addView(TextView(this@IncomingCheckInActivity).apply {
+                text = "GPT-5.6 已理解"
+                textSize = 14f
+                setTextColor(Color.rgb(75, 111, 95))
+            })
+            addView(TextView(this@IncomingCheckInActivity).apply {
+                text = decision.userMessage
+                textSize = 21f
+                setTextColor(Color.rgb(23, 63, 53))
+                setPadding(0, dp(16), 0, dp(20))
+            })
+            addView(TextView(this@IncomingCheckInActivity).apply {
+                text = "調整後的承諾\n${decision.adaptedCommitment}"
+                textSize = 17f
+                setTextColor(Color.rgb(36, 53, 46))
+                setPadding(0, 0, 0, dp(20))
+            })
+            addView(Button(this@IncomingCheckInActivity).apply {
+                text = if (decision.requiresConfirmation) "稍後回到 PWA 確認" else "完成"
+                isAllCaps = false
+                setOnClickListener { finish() }
+            })
+        })
     }
 
     override fun onStop() {

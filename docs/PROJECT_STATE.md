@@ -17,21 +17,23 @@
 - tag-only Cloud Run preview `time-sovereignty-00039-fev` 已上線；`v2-private` 健康檢查 200，未授權 native API 401，正式 V1 仍為 `00024`、100% 流量。
 - PWA 已加入 10 分鐘一次性 Android handoff；原生 App 可接 deep link、取得 FCM token、向受保護端點配對，並以 Android Keystore 加密保存 credential。
 - S25 已完成真實 PWA → native 配對；Firestore 安全遮罩確認 session、token fingerprint、通知／全螢幕同意、期限與未撤銷狀態均存在，秘密未進日誌或 Git。
+- 已實作 Cloud Tasks 驅動的 `1 → 2 → 4 → stop`：每級重新檢查回應 marker、安靜時段、同意、撤銷與狀態；FCM delivery receipt 可重試且 Android 依 idempotency key 去重。
+- native 四按鈕現在會先停止鈴聲、寫入 immutable response event，再走與 PWA 共用的真 GPT-5.6 Chief／Recovery 管線並在原生畫面顯示結構化決策。
 
 # 正在做
 
-- 建立可重試的 native delivery receipt 與受保護 response endpoint，讓按鈕不再只停止本機鈴聲。
+- 部署並實機驗證 Cloud Tasks → Level 1 → Level 2 → Level 4 → native response → GPT-5.6 決策。
 
 # 下一步
 
-- 第一個動作：加入 FCM delivery receipt，讓同一 Cloud Task retry 不會重複送達但發送失敗仍可安全重試。
-- 然後加入 native response endpoint，驗證 Cloud Tasks → FCM；讓 `downgrade`／`reschedule` 真正寫回 Firestore並由 GPT-5.6 重新校準承諾。
+- 第一個動作：以 15 秒私人驗收間隔部署新 revision 並更新 S25 APK，保留既有 native credential。
+- 然後建立一筆新真實工作時段，觀察三段推播；Level 4 選 `downgrade`，確認 Firestore event、GPT-5.6 decision 與 PWA review 均出現。
 
 # 已知問題
 
 - Android App 已接 Firebase，但尚未交換正式 native pairing credential；debug token 只留 App 私有沙盒供本輪驗收。
 - 真 FCM 目前由本機 gcloud 單次送出，尚未由 Cloud Tasks callback 自動觸發；按鈕仍未回寫後端或真正排程。
-- V2 尚未建立私有 Git remote；Cloud Tasks 尚未自動送 FCM，四個 native 按鈕仍只停止本機鈴聲、尚未回寫後端。
+- V2 尚未建立私有 Git remote；新抓人鏈路已建置但尚未部署／實機驗收，原生端確認後續承諾目前仍回到 PWA 完成。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -47,8 +49,9 @@
 - 2026-07-19 20:03 +08:00 Cloud Run：`00039-fev` 以 V2 專用身分、min/max 1、0% stable traffic 上線；health 200、native 未授權 401；V1 `00024` 仍 100%。
 - 2026-07-19 20:10 +08:00 pairing build：Vitest 37 files／153 tests 通過（另 5 files／9 tests skipped）；lint、typecheck、Next production build、Android Firebase debug APK 均通過。
 - 2026-07-19 20:30 +08:00 pairing physical：原 WebAPK `profile=play` → 一次性票 → native App → Firestore device document 全鏈通過；V1 仍 `00024`、100%。
+- 2026-07-19 23:51 +08:00 catch loop build：Vitest 41 files／164 tests 通過（另 5 files／9 tests skipped）；lint、typecheck、Next production build、Android Firebase APK 均通過。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-19 20:30（Asia/Shanghai）
+- 2026-07-19 23:51（Asia/Shanghai）

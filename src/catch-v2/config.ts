@@ -7,6 +7,7 @@ const CatchV2ConfigSchema = z
     pairingTicketMinutes: z.number().int().min(2).max(30),
     deviceHours: z.number().int().min(1).max(168),
     responseBaseUrl: z.string().url(),
+    testEscalationSeconds: z.number().int().min(10).max(300).nullable(),
   })
   .strict();
 
@@ -28,6 +29,9 @@ export function readCatchV2Config(
     pairingTicketMinutes: Number(env.CATCH_V2_PAIRING_TICKET_MINUTES ?? "10"),
     deviceHours: Number(env.CATCH_V2_DEVICE_HOURS ?? "72"),
     responseBaseUrl: env.CATCH_V2_RESPONSE_BASE_URL,
+    testEscalationSeconds: env.CATCH_V2_TEST_ESCALATION_SECONDS
+      ? Number(env.CATCH_V2_TEST_ESCALATION_SECONDS)
+      : null,
   });
 }
 

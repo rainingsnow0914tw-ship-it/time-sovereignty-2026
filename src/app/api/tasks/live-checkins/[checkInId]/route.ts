@@ -2,6 +2,8 @@ import { OAuth2Client } from "google-auth-library";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
+import { isCatchV2Enabled, readCatchV2Config } from "@/catch-v2/config";
+import { deliverCatchLevel } from "@/catch-v2/delivery";
 import {
   CloudTaskAuthenticationError,
   verifyCloudTaskOidc,
@@ -36,6 +38,14 @@ export async function POST(
       checkInId,
       taskName: request.headers.get("x-cloudtasks-taskname")?.trim() || null,
     });
+    const nativeDelivery = isCatchV2Enabled()
+      ? await deliverCatchLevel({
+          checkIn: result.checkIn,
+          level: 1,
+          cloud: config.cloud,
+          v2: readCatchV2Config(),
+        })
+      : null;
     console.info("[live-check-in] task delivered", {
       checkInId,
       duplicate: result.duplicate,
@@ -45,6 +55,7 @@ export async function POST(
       ok: true,
       result: result.duplicate ? "duplicate" : "pending",
       checkInId,
+      nativeDelivery,
     });
   } catch (error) {
     if (error instanceof CloudTaskAuthenticationError) {

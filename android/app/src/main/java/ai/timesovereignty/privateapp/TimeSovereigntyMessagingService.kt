@@ -18,6 +18,10 @@ class TimeSovereigntyMessagingService : FirebaseMessagingService() {
             Log.w(TAG, "Rejected an invalid Time Sovereignty push payload.")
             return
         }
+        if (!PushDedupeStore.claim(this, payload.idempotencyKey)) {
+            Log.i(TAG, "Ignored a duplicate private delivery receipt.")
+            return
+        }
         CatchNotifications.show(this, payload)
     }
 
