@@ -29,23 +29,22 @@
 - `00048` 上 S25 已驗證 `/current` 200：current follow-up 為 `SCHEDULED`、last-confirmed 為 `CONFIRMED` 且四筆安全 trace；錯誤確認按鈕與舊失敗提示均已消失。
 - 後續真實 follow-up 已完成記憶讀回與收尾：讀回 4 筆有限證據，Chief of Staff 判斷 `COMPLETED / RETIRE`，Chloe 確認後 Episode 與 Memory Curator 均落盤，且沒有建立下一筆 check-in 或 Cloud Task。
 - 本次 follow-up 使用 Chief of Staff 與 Memory Curator 兩筆真 `openai / gpt-5.6-sol` 安全軌跡，共 3,336 tokens；安靜時段已恢復為 `22:30–08:00`。
+- 原生「回到 PWA 確認」已從 finish-only 修為安全導向精確 `/?profile=play`；優先開啟 Chrome WebAPK、其次 Chrome，S25 實機已確認回到原杯子素描旅程且沒有掉進北極星 onboarding。
 
 # 正在做
 
-- 本輪後續記憶／RETIRE 閉環已驗收並完成證據落盤；Android 本輪沒有自動全螢幕、鈴聲或震動，且原生「回到 PWA」按鈕實際只關閉頁面，等待 Chloe 核准下一輪修復。
+- 原生決策返回 PWA 的斷路已修復並完成 S25 實機驗收；目前只剩 2026-07-20 02:34 那輪未自動全螢幕、鈴聲與震動的 Android 背景喚醒回歸待診斷。
 
 # 下一步
 
-- 第一個動作：把 `IncomingCheckInActivity` 的 finish-only「回到 PWA」改成安全開啟 `live-mobile/?profile=play`，加導航測試後重建私人 APK。
-- 接著只連 S25（`SM-S9380`）做鎖屏／背景重現，收集最小 Android 日誌與通知 channel／full-screen app-op 狀態，再修本輪未自動喚醒、響鈴與震動的原因。
-- 在上述兩點修好前，不再宣稱 V2 的背景抓人重複驗收通過；不需要重跑已通過的記憶收尾或額外呼叫 GPT-5.6。
+- 第一個動作：只連 S25（`R5CY12Y90ZF`／`SM-S9380`），先鎖屏並收集通知 channel、full-screen app-op、電池／背景限制與最小 logcat，再以不呼叫 GPT-5.6 的受控 FCM 重現定位。
+- 修好後重新驗收 Level 1／2／4 的實際裝置 UI；在通過前不宣稱背景抓人重複驗收成功，也不重跑已通過的記憶收尾。
 
 # 已知問題
 
 - V2 尚未建立私有 Git remote；原生端確認後續承諾目前仍回到 PWA 完成。
-- 原生「稍後回到 PWA 確認」按鈕目前只呼叫 `finish()`，會回到原生主畫面，沒有開啟 PWA。
 - 2026-07-20 02:34 的重複實機驗收中，FCM Level 1／2／4 provider receipts 均為 `DELIVERED`，但 S25 只顯示通知，沒有自動全螢幕、鈴聲或震動；需要 USB／ADB 定向診斷，不能把 provider receipt 當成裝置 UI 成功。
-- 私人旅程存在 `play` storage profile；缺少 `?profile=play` 的同源網址會正確進入空白 default onboarding，不能拿來恢復真實旅程。
+- 私人旅程存在 `play` storage profile；手動開缺少 `?profile=play` 的同源網址仍會正確進入空白 default onboarding，但原生返回路徑現在會強制使用正確 profile。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -71,8 +70,9 @@
 - 2026-07-20 01:48 +08:00 final private acceptance：`00048-yuz` Ready；兩個私人 health 200、native 無憑證 401、S25 `/current` 200，確認按鈕與舊錯誤提示消失，21:14 follow-up 卡片可見；V1 仍 `00024-dih`、100%。
 - 2026-07-20 02:34 +08:00 follow-up delivery：既有 task 提前執行，Level 1／2／4 provider receipts 均 `DELIVERED`，但 S25 未自動全螢幕、響鈴或震動；原生本輪回應未送出，判為 physical wake failure。
 - 2026-07-20 03:06 +08:00 memory retirement：正確 `?profile=play` PWA 讀回現行旅程與 4 筆記憶；`COMPLETED / RETIRE` 經 Chloe 確認後為 `CONFIRMED`，Episode 1、Memory Curator `COMPLETED`、兩筆 `gpt-5.6-sol` traces 共 3,336 tokens、queue 空、無 next check-in／task，安靜時段 `22:30–08:00`。
+- 2026-07-20 03:31 +08:00 Android return repair：`PrivatePwaReturnUrlTest` 5/5 通過，`:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL；APK 以保留資料方式安裝至指定 S25，實機由 Chrome WebAPK 開回原 `profile=play` 杯子旅程，Chloe 確認沒有出現北極星 onboarding。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-20 03:10（Asia/Shanghai）
+- 2026-07-20 03:34（Asia/Shanghai）

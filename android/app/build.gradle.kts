@@ -26,6 +26,11 @@ android {
             "PRIVATE_API_BASE_URL",
             "\"https://v2-private---time-sovereignty-defqnamrrq-de.a.run.app\""
         )
+        buildConfigField(
+            "String",
+            "PRIVATE_PWA_BASE_URL",
+            "\"https://live-mobile---time-sovereignty-defqnamrrq-de.a.run.app\""
+        )
     }
 
     compileOptions {
@@ -42,4 +47,5 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
     implementation("com.google.firebase:firebase-messaging")
     implementation("androidx.activity:activity-ktx:1.9.2")
+    testImplementation("junit:junit:4.13.2")
 }

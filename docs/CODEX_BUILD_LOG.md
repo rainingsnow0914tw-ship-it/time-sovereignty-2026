@@ -768,3 +768,26 @@
 - No application code or deployment changed. Public V1 remained untouched.
 - Evidence:
   `docs/evidence/2026-07-20-v2-real-follow-up-retire-and-android-gaps.md`.
+
+## 2026-07-20 — Native decision now returns to the correct private PWA journey
+
+- Replaced the misleading finish-only native action with a real return to the
+  exact private `/?profile=play` route.
+- Added a strict origin-to-route builder: only credential-free HTTPS origins on
+  the default HTTPS port are accepted; old paths, queries, and fragments cannot
+  redirect the confirmation flow to another storage profile.
+- Physical inspection exposed that a generic Android HTTPS intent selected
+  Samsung Internet, which did not share the installed Chrome PWA's private
+  journey state. The handler policy now prefers the installed Chrome WebAPK,
+  then Chrome, while retaining a visible fallback if no handler is available.
+- Five Android unit tests cover the exact route, stale-route normalization,
+  unsafe-origin rejection, WebAPK preference, and Chrome fallback. Unit tests
+  and the debug APK build passed.
+- The rebuilt APK was installed with data preservation on S25
+  `R5CY12Y90ZF` / `SM-S9380`. Android resolved the link to the installed Chrome
+  WebAPK, and Chloe confirmed it opened the original cup-sketch journey without
+  showing the blank North Star onboarding.
+- No GPT-5.6 call, cloud deployment, Firestore write, Cloud Task, public V1
+  change, or secret exposure occurred. The unattended full-screen wake,
+  ring, and vibration regression remains open and is the next exact task.
+- Evidence: `docs/evidence/2026-07-20-v2-native-return-to-pwa-repair.md`.

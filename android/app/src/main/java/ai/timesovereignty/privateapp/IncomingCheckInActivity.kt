@@ -1,9 +1,11 @@
 package ai.timesovereignty.privateapp
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
@@ -141,11 +143,42 @@ class IncomingCheckInActivity : Activity() {
                 setPadding(0, 0, 0, dp(20))
             })
             addView(Button(this@IncomingCheckInActivity).apply {
-                text = if (decision.requiresConfirmation) "稍後回到 PWA 確認" else "完成"
+                text = if (decision.requiresConfirmation) "回到 PWA 確認" else "完成"
                 isAllCaps = false
-                setOnClickListener { finish() }
+                setOnClickListener {
+                    if (decision.requiresConfirmation) {
+                        openPwaForConfirmation(this)
+                    } else {
+                        finish()
+                    }
+                }
             })
         })
+    }
+
+    private fun openPwaForConfirmation(button: Button) {
+        val returnUrl = PrivatePwaReturnUrl.build(BuildConfig.PRIVATE_PWA_BASE_URL)
+        if (returnUrl == null) {
+            button.text = "無法開啟 PWA；請從桌面開啟 Time Sovereignty"
+            button.isEnabled = false
+            return
+        }
+
+        try {
+            val returnIntent = Intent(Intent.ACTION_VIEW, Uri.parse(returnUrl)).apply {
+                addCategory(Intent.CATEGORY_BROWSABLE)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            val handlerPackages = packageManager
+                .queryIntentActivities(returnIntent, 0)
+                .map { it.activityInfo.packageName }
+            PrivatePwaHandlerSelector.choose(handlerPackages)?.let(returnIntent::setPackage)
+            startActivity(returnIntent)
+            finish()
+        } catch (_: ActivityNotFoundException) {
+            button.text = "找不到瀏覽器；請從桌面開啟 Time Sovereignty"
+            button.isEnabled = false
+        }
     }
 
     override fun onStop() {
