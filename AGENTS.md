@@ -62,9 +62,10 @@ branding, or unverified runtime assumptions.
   `powershell -ExecutionPolicy Bypass -File scripts/call-chloe.ps1`; then state
   the one exact action needed.
 - Immediately before announcing that a verifiable milestone or work segment is
-  complete, run the same sound hook so Chloe knows the unattended work has
-  stopped. Ring for user action and milestone completion, not for ordinary
-  progress updates.
+  complete, run
+  `powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\soulf\.codex\chloe-notification-hook.ps1" -Event complete`.
+- The global `Stop` hook owns ordinary stage-stop sound. Do not manually replay
+  it or ring for ordinary progress updates.
 
 ## Security
 

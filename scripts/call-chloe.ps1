@@ -1,15 +1,9 @@
 $ErrorActionPreference = "Stop"
-$tone = "C:\Users\soulf\Desktop\阿寶遊樂園\cheng-notification-tones\03-cheng-mischief-pop.wav"
+$globalHook = "C:\Users\soulf\.codex\chloe-notification-hook.ps1"
 
-if (-not (Test-Path -LiteralPath $tone)) {
-    [System.Media.SystemSounds]::Exclamation.Play()
-    Start-Sleep -Milliseconds 450
+if (-not (Test-Path -LiteralPath $globalHook)) {
     [System.Media.SystemSounds]::Exclamation.Play()
     exit 0
 }
 
-$player = [System.Media.SoundPlayer]::new($tone)
-$player.Load()
-$player.PlaySync()
-Start-Sleep -Milliseconds 300
-$player.PlaySync()
+& powershell -NoProfile -ExecutionPolicy Bypass -File $globalHook -Event action
