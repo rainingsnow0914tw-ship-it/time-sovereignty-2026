@@ -696,3 +696,24 @@
   opened `codex/longitudinal-goal-loop` for isolated post-submission work.
 - Saved a local screenshot and public-safe evidence note. No application code,
   stable Cloud Run traffic, private session, Firestore data, or secret changed.
+
+## 2026-07-20 — Longitudinal goal workspace contracts
+
+- Added versioned schemas for a session-owned goal workspace, one-to-many daily
+  schedule slots, immutable plan revisions, structured attendance, and a
+  content-free deletion tombstone.
+- The contract keeps every plan, attendance row, task pointer, and memory path
+  scoped by stable `goalId`. A paused or terminal workspace cannot retain an
+  active check-in or task pointer.
+- Multi-slot support represents goals such as three bridge sessions per day as
+  one goal with three local-time slots. Duplicate local times are rejected.
+- Attendance can record completed, partial, blocked, rescheduled, rest, missed,
+  or cancelled outcomes while storing only evidence kinds and safe summaries,
+  never raw replies, voice, or images.
+- Decision 0017 fixes the product boundary: Firestore owns durable state, Cloud
+  Tasks owns wake-up, GPT-5.6 owns interpretation and replanning, and the PWA
+  owns visible consent and goal management. Only the next occurrence is
+  materialized.
+- Verification passed: 33 test files passed with five skipped; 131 tests passed
+  with nine skipped; ESLint, TypeScript, production build, and diff check all
+  passed.
