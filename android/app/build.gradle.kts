@@ -21,6 +21,11 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "2.0.0-private-alpha"
+        buildConfigField(
+            "String",
+            "PRIVATE_API_BASE_URL",
+            "\"https://v2-private---time-sovereignty-defqnamrrq-de.a.run.app\""
+        )
     }
 
     compileOptions {

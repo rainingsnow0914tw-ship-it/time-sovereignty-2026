@@ -41,6 +41,7 @@ import {
   summarizeLiveCheckIn,
   type LiveCheckInSummary,
 } from "./live-check-in-summary";
+import { buildNativePairingUri } from "./native-pairing";
 
 const card =
   "rounded-[1.6rem] border border-[#9eb9aa] bg-[#f7fbf7] p-5 shadow-[0_14px_45px_rgba(23,63,53,0.06)] sm:p-6";
@@ -79,6 +80,7 @@ export function LiveCheckInPanel({
   const [lastConfirmed, setLastConfirmed] =
     useState<ClientLiveCheckIn | null>(null);
   const [pairingCode, setPairingCode] = useState("");
+  const [nativePairing, setNativePairing] = useState(false);
   const [deviceLabel, setDeviceLabel] = useState("Chloe Android demo");
   const [reply, setReply] = useState("");
   const [photo, setPhoto] = useState<PreparedPhotoEvidence | null>(null);
@@ -271,6 +273,31 @@ export function LiveCheckInPanel({
       setNotice("The cloud schedule did not complete. The same request can be retried safely.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const connectNativeApp = async () => {
+    setNativePairing(true);
+    setNotice("Creating a one-time private Android handoff…");
+    try {
+      const response = await fetch("/api/live/native/pairing-ticket", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+      });
+      const payload = (await response.json()) as {
+        pairingTicket?: unknown;
+        expiresAt?: unknown;
+      };
+      if (!response.ok || typeof payload.pairingTicket !== "string") {
+        throw new Error("native_pairing_ticket_failed");
+      }
+      setNotice("Opening the private Android app. This ticket works once only.");
+      window.location.assign(buildNativePairingUri(payload.pairingTicket));
+    } catch {
+      setNotice("The private Android handoff could not start. No credential was exposed.");
+    } finally {
+      setNativePairing(false);
     }
   };
 
@@ -626,6 +653,21 @@ export function LiveCheckInPanel({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><LiveBadge>Real Cloud Tasks + GPT-5.6</LiveBadge><h2 className="mt-2 text-2xl font-semibold text-[#173f35]">Private incoming check-in</h2></div>
         <button type="button" className={secondary} disabled={busy} onClick={revoke}>Revoke device</button>
+      </div>
+      <div className="mt-4 rounded-2xl border border-[#c9d9cd] bg-white p-4">
+        <p className="text-sm font-semibold text-[#284b3d]">Private Android real-world channel</p>
+        <p className="mt-1 text-xs leading-5 text-[#66736c]">
+          Pair the installed private app with a ten-minute, one-use ticket. The
+          OpenAI key never enters the phone.
+        </p>
+        <button
+          type="button"
+          className={`${secondary} mt-3`}
+          disabled={busy || nativePairing}
+          onClick={() => void connectNativeApp()}
+        >
+          {nativePairing ? "Opening private app…" : "Connect private Android app"}
+        </button>
       </div>
       {canStartLiveFocusBlock(current) ? (
         <div className="mt-5 rounded-2xl border border-[#c9d9cd] bg-white p-5">

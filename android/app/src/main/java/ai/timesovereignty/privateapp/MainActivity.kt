@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Button
@@ -13,6 +14,8 @@ import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : Activity() {
     private lateinit var pushStatus: TextView
+    private var pendingPairingTicket: String? = null
+    private var fcmToken: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +26,13 @@ class MainActivity : Activity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
         }
         preparePrivatePushChannel()
+        acceptPairingIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        acceptPairingIntent(intent)
     }
 
     private fun preparePrivatePushChannel() {
@@ -33,7 +43,41 @@ class MainActivity : Activity() {
                 return@addOnCompleteListener
             }
             DebugFcmTokenStore.save(this, task.result)
-            pushStatus.text = "私人推播通道已就緒 · 尚未配對後端"
+            fcmToken = task.result
+            pushStatus.text = if (NativeCredentialStore.load(this) != null) {
+                "私人推播通道已配對 · 憑證只保存在這支手機"
+            } else {
+                "私人推播通道已就緒 · 從 PWA 開始一次性配對"
+            }
+            tryPairing()
+        }
+    }
+
+    private fun acceptPairingIntent(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme != "timesovereignty-private" || data.host != "pair") return
+        val ticket = data.getQueryParameter("ticket")?.trim().orEmpty()
+        if (ticket.length !in 32..500) {
+            pushStatus.text = "配對票無效，請回到 PWA 重新開始。"
+            return
+        }
+        pendingPairingTicket = ticket
+        pushStatus.text = "收到一次性配對票，正在建立受保護連線…"
+        intent.data = null
+        tryPairing()
+    }
+
+    private fun tryPairing() {
+        val ticket = pendingPairingTicket ?: return
+        val token = fcmToken ?: return
+        pendingPairingTicket = null
+        NativeApiClient.pair(ticket, token) { result ->
+            result.onSuccess { session ->
+                NativeCredentialStore.save(this, session)
+                pushStatus.text = "配對完成 · 真實世界跟進通道已受保護地連線"
+            }.onFailure {
+                pushStatus.text = "配對未完成；票可能已使用或過期，請從 PWA 重試。"
+            }
         }
     }
 
