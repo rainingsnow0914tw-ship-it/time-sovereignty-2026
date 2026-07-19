@@ -658,3 +658,25 @@
 - The final documentation audit repaired one stale Realtime evidence filename;
   all local Markdown targets now resolve. The unchanged application suite still
   passes 125 tests with nine live-only skips.
+
+## 2026-07-19 — Public submission video published
+
+- Codex assembled the approved 2:56 submission cut from the real cup-sketch
+  outcome, physical-phone acceptance, isolated Demo Lab, architecture, Git
+  history, tests, dated decisions, and safe evidence views.
+- English narration was generated as 25 timed segments with OpenAI `tts-1-hd`
+  using the `nova` voice. Segment durations were measured, long lines were
+  speed-adjusted, short lines were silence-padded, and corrected English
+  captions were burned into the 1080p final video.
+- Chloe and the driver watched the final cut twice and approved it. The local
+  file is exactly 176 seconds; the YouTube player rounds the displayed duration
+  to 2:57, still below the official three-minute limit.
+- The final video was published to the verified `Chloe Kao` hackathon channel
+  (`UCr9cVav4Jas5dKCkxs526hQ`) at https://youtu.be/d0cX1V4R7h4.
+- YouTube reported no copyright or Community Guidelines issues. A separate
+  unauthenticated oEmbed request returned the correct title, author `Chloe Kao`,
+  channel URL, and public thumbnail, confirming judge-visible access.
+- The video description links the no-login Demo Lab and public MIT repository,
+  identifies Codex and GPT-5.6, and truthfully discloses both the AI narration
+  and the accelerated mock boundary.
+- Evidence: `docs/evidence/phase-8-youtube-publication-2026-07-19.md`.

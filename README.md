@@ -7,6 +7,8 @@ structured decision brain—not a decorative chat box.
 
 - **Public 30-day Demo Lab:**
   https://live-mobile---time-sovereignty-defqnamrrq-de.a.run.app/demo
+- **Under-three-minute submission video:**
+  https://youtu.be/d0cX1V4R7h4
 - **Stable app:** https://time-sovereignty-defqnamrrq-de.a.run.app
 - **Source:** https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
 - **License:** [MIT](LICENSE)

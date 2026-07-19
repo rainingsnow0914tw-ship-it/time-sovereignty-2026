@@ -19,7 +19,7 @@ Apps for Your Life
 - Stable app: https://time-sovereignty-defqnamrrq-de.a.run.app
 - Public MIT repository:
   https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
-- Public YouTube demo: `[add final video URL]`
+- Public YouTube demo: https://youtu.be/d0cX1V4R7h4
 - Codex `/feedback` Session ID:
   `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`
 

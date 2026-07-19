@@ -8,10 +8,10 @@
 - [x] README explains setup, Codex collaboration, key decisions, and GPT-5.6.
 - [x] Working no-login evaluator path available without rebuilding.
 - [x] Primary Codex `/feedback` Session ID recorded.
-- [ ] Public YouTube demo is **under 3:00**.
-- [ ] Demo has audible English narration covering the product, Codex, and
+- [x] Public YouTube demo is **under 3:00**.
+- [x] Demo has audible English narration covering the product, Codex, and
       GPT-5.6.
-- [ ] English captions are corrected.
+- [x] English captions are corrected.
 - [ ] Final Devpost submission is completed before July 21, 2026, 5:00 PM PDT
       (July 22, 2026, 8:00 AM Taiwan time).
 
@@ -44,14 +44,15 @@
 ## Video assets
 
 - [x] Final 2:50–2:55 English script and shot list.
-- [ ] Record real cup / phone completion hook.
-- [ ] Record real plan, support agreement, decision, and Developer clips.
-- [ ] Record cloud Demo Lab one-click Day 30, Journey, and Developer.
-- [ ] Record architecture, Codex evidence chain, tests, and Git history.
-- [ ] Edit to 2:58 or less.
-- [ ] Remove API key, pairing code, cookie, access token, raw reply/photo, email,
+- [x] Record real cup / phone completion hook.
+- [x] Record real plan, support agreement, decision, and Developer clips.
+- [x] Record cloud Demo Lab one-click Day 30, Journey, and Developer.
+- [x] Record architecture, Codex evidence chain, tests, and Git history.
+- [x] Edit to 2:58 or less.
+- [x] Remove API key, pairing code, cookie, access token, raw reply/photo, email,
       and unrelated tabs from every frame.
-- [ ] Upload public YouTube, test in incognito, paste URL into Devpost.
+- [x] Upload public YouTube and verify it through the unauthenticated YouTube
+      oEmbed endpoint: https://youtu.be/d0cX1V4R7h4
 
 ## Final Devpost pass
 
@@ -59,7 +60,8 @@
 - [x] Public Demo Lab URL.
 - [x] Public GitHub + MIT.
 - [x] `/feedback` Session ID.
-- [ ] Public YouTube URL.
+- [x] Public YouTube URL.
 - [ ] English language check for all submitted materials.
-- [ ] Final link check: Demo Lab, stable app, GitHub, YouTube.
+- [x] Final link check: Demo Lab, stable app, GitHub, YouTube returned HTTP 200
+      from an unauthenticated request on 2026-07-19.
 - [ ] Submit and save confirmation screenshot.
