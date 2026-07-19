@@ -41,6 +41,7 @@ import {
   summarizeLiveCheckIn,
   type LiveCheckInSummary,
 } from "./live-check-in-summary";
+import { findRecoveredConfirmation } from "./live-confirmation-recovery";
 import { buildNativePairingUri } from "./native-pairing";
 
 const card =
@@ -105,7 +106,7 @@ export function LiveCheckInPanel({
   const confirmationIdRef = useRef<string | null>(null);
   const memoryDecisionIdRef = useRef<string | null>(null);
 
-  const refreshCurrent = useCallback(async () => {
+  const refreshCurrent = useCallback(async (): Promise<CurrentPayload | null> => {
     const response = await fetch("/api/live/check-ins/current", {
       cache: "no-store",
       credentials: "same-origin",
@@ -113,7 +114,8 @@ export function LiveCheckInPanel({
     if (response.status === 401) {
       setConnection("UNPAIRED");
       setCurrent(null);
-      return;
+      setLastConfirmed(null);
+      return null;
     }
     if (!response.ok) throw new Error("current_unavailable");
     const payload = (await response.json()) as CurrentPayload;
@@ -127,6 +129,7 @@ export function LiveCheckInPanel({
       memoryDecisionIdRef.current = payload.checkIn.id;
       setMemoryDisposition("DEFER");
     }
+    return payload;
   }, []);
 
   useEffect(() => {
@@ -487,8 +490,11 @@ export function LiveCheckInPanel({
 
   const confirm = async () => {
     if (!current?.decision) return;
+    const expectedCheckIn = current;
     setBusy(true);
     setNotice("Persisting confirmation, memory, and next follow-up…");
+    let confirmedCheckIn: ClientLiveCheckIn | null = null;
+    let recoveredAfterInterruptedResponse = false;
     try {
       confirmationIdRef.current ??= crypto.randomUUID();
       const response = await fetch(
@@ -505,22 +511,44 @@ export function LiveCheckInPanel({
       );
       const payload = (await response.json()) as { checkIn?: ClientLiveCheckIn };
       if (!response.ok || !payload.checkIn) throw new Error("confirm_failed");
-      realtimeVoiceRef.current?.disconnect();
-      realtimeVoiceRef.current = null;
-      setCurrent(payload.checkIn);
-      setLastConfirmed(payload.checkIn);
-      setPausePolling(true);
-      setNotice(
-        payload.checkIn.decision?.assessment === "COMPLETED"
-          ? "Completion confirmed. No artificial thirty-day journey was created."
-          : "Confirmed. The next real follow-up is scheduled.",
-      );
-      onCommitmentConfirmed?.(payload.checkIn.decision!);
+      confirmedCheckIn = payload.checkIn;
     } catch {
-      setNotice("Confirmation did not finish. Repeating it is safe and idempotent.");
+      try {
+        const refreshed = await refreshCurrent();
+        if (refreshed) {
+          confirmedCheckIn = findRecoveredConfirmation(
+            refreshed,
+            expectedCheckIn.id,
+          );
+          recoveredAfterInterruptedResponse = confirmedCheckIn !== null;
+        }
+      } catch {
+        // The read-only recovery check is best effort; polling can retry it later.
+      }
     } finally {
       setBusy(false);
     }
+
+    if (!confirmedCheckIn) {
+      setNotice(
+        "Confirmation could not be verified yet. Do not press again; the phone will safely check the cloud state.",
+      );
+      return;
+    }
+
+    realtimeVoiceRef.current?.disconnect();
+    realtimeVoiceRef.current = null;
+    setCurrent(confirmedCheckIn);
+    setLastConfirmed(confirmedCheckIn);
+    setPausePolling(true);
+    setNotice(
+      recoveredAfterInterruptedResponse
+        ? "The response was interrupted, but the cloud confirmation was recovered safely. The next real follow-up is scheduled."
+        : confirmedCheckIn.decision?.assessment === "COMPLETED"
+          ? "Completion confirmed. No artificial thirty-day journey was created."
+          : "Confirmed. The next real follow-up is scheduled.",
+    );
+    onCommitmentConfirmed?.(confirmedCheckIn.decision!);
   };
 
   const revoke = async () => {

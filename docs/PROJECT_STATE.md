@@ -22,19 +22,23 @@
 - 私人 revision `time-sovereignty-00044-lel` 已使用 15 秒驗收間隔上線於 `v2-private`／`live-mobile` tags；正式 V1 仍為 `00024-dih`、100% 流量。
 - S25 已更新 APK 且原 pairing credential 保留；正確的 WebAPK `profile=play` 可開到「開始下一個真實行動時段」。
 - 修正第 1 級推播可能穿透安靜時段的安全洞；現在每一級送出前都走同一組安靜時段與同意圍欄。
+- S25 真實抓人閉環已通過：Cloud Tasks `1 → 2 → 4`、全螢幕原生回應、GPT-5.6 Recovery／Chief 決策、PWA review、Firestore Episode／記憶與下一次 follow-up 均已落盤。
+- 已確認「按鈕閃一下仍停舊頁」只是成功回傳中斷：雲端狀態為 `CONFIRMED` 且下一筆 Cloud Task 已存在，沒有資料遺失或重複呼叫。
+- 已加入只讀式確認回復：回傳中斷時向雲端核對 current／last-confirmed，不重送 POST、不重打 GPT-5.6、不重建 task。
 
 # 正在做
 
-- 等待在非安靜時段執行 Cloud Tasks → Level 1 → Level 2 → Level 4 → native response → GPT-5.6 決策的最終實機驗收。
+- 將已通過本機完整驗證的確認畫面回復修正部署到私人 V2 tags；公開 V1 不動。
 
 # 下一步
 
-- 第一個動作：由 Chloe 明確選擇 08:00 後驗收，或只為一次約三分鐘的受控測試臨時延後安靜時段；不得用隱藏開關繞過安全圍欄。
-- 核准後建立兩分鐘真實工作時段，忽略 Level 1／2，在 Level 4 選 `downgrade`，確認 Firestore event、GPT-5.6 decision 與 PWA review。
+- 第一個動作：以既有 V2 專用 runtime 身分建立 tag-only revision，將 `v2-private`／`live-mobile` 指向新 revision。
+- 驗證私人 health 200、native 無憑證 401、V1 `00024-dih` 仍為 100%；手機重新整理後應顯示雲端真實後續狀態，不再保留假的待確認按鈕。
 
 # 已知問題
 
-- V2 尚未建立私有 Git remote；Cloud Tasks 抓人鏈路已部署但尚未完成三段真實實機驗收，原生端確認後續承諾目前仍回到 PWA 完成。
+- V2 尚未建立私有 Git remote；原生端確認後續承諾目前仍回到 PWA 完成。
+- 已修正成功確認回傳中斷時的舊畫面問題，但新 bundle 尚待部署到私人 tags 並在手機重新整理確認。
 - Catch Loop 本機 backend 可能落後 Cloud Shell；第一階段不依賴它的 runtime 狀態。
 - V1 Devpost submission 仍為 Draft，預計臺灣時間 2026-07-20 20:00 起進行正式提交。
 
@@ -53,8 +57,10 @@
 - 2026-07-19 23:51 +08:00 catch loop build：Vitest 41 files／164 tests 通過（另 5 files／9 tests skipped）；lint、typecheck、Next production build、Android Firebase APK 均通過。
 - 2026-07-20 00:03 +08:00 quiet-hours regression：V2 targeted 40/40、全套 167 tests 通過（另 9 skipped）；lint、typecheck、Next production build 均通過。
 - 2026-07-20 00:11 +08:00 private deploy：revision `00044-lel` Ready；兩個私人 tags 健康 200、native 無憑證 401、V1 `00024-dih` 仍 100%。
+- 2026-07-20 00:28 +08:00 真實實機：Cloud Tasks Level 1／2／4 均單次送達；S25 全螢幕 `downgrade` → 三筆 GPT-5.6 trace（4,985 tokens）→ PWA review → Firestore `CONFIRMED`、Episode、memory、next task 均存在。
+- 2026-07-20 00:52 +08:00 確認回復修正：focused 3/3、全套 170 tests 通過（另 9 skipped）；lint、typecheck、Next production build 均通過。
 - V1 與兩份 Catch Loop 參考 repo 均未被修改；V2 仍無 remote。
 
 # 最後更新時間
 
-- 2026-07-20 00:11（Asia/Shanghai）
+- 2026-07-20 00:52（Asia/Shanghai）

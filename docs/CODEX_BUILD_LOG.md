@@ -699,3 +699,23 @@
 - Both private tags now point to `00044`; health returned 200 and the native
   session route without a credential returned 401. Public V1 `00024-dih`
   remains at 100% normal traffic.
+
+## 2026-07-20 — Real Catch Loop passed; confirmation UI recovery added
+
+- The controlled physical S25 acceptance traversed real Cloud Tasks Levels 1,
+  2, and 4, woke the native full-screen check-in, accepted a `downgrade`
+  response, and returned a structured GPT-5.6 `REDUCE` decision to the PWA.
+- Safe evidence recorded three completed GPT-5.6 traces, 4,985 total tokens,
+  and three retrieved memory items without preserving raw private content.
+- Chloe confirmed the adapted commitment. Firestore authoritatively showed
+  `CONFIRMED`, an immutable Episode, durable resume/goal/operational memory, and
+  an attached next Cloud Tasks follow-up. Cloud Run showed no confirmation
+  error.
+- The phone nevertheless stayed on the old review card because the frontend
+  did not recover when the successful HTTP response was interrupted. Added a
+  read-only cloud-state recovery that recognizes the confirmed item either as
+  current or as the previous item after its next follow-up becomes current.
+- The recovery never repeats the confirmation POST, GPT-5.6 call, or task
+  creation. Three focused regression cases, the 170-test suite, ESLint,
+  TypeScript, and the production build all passed.
+- Evidence: `docs/evidence/2026-07-20-v2-real-catch-confirmation-recovery.md`.
