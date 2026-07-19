@@ -718,4 +718,8 @@
 - The recovery never repeats the confirmation POST, GPT-5.6 call, or task
   creation. Three focused regression cases, the 170-test suite, ESLint,
   TypeScript, and the production build all passed.
+- Checkpoint `02c9707` was deployed as private tag-only revision
+  `time-sovereignty-00046-woz`. Both private tags returned health 200, the
+  native route without a credential returned 401, and stable public V1
+  `00024-dih` remained at 100% normal traffic.
 - Evidence: `docs/evidence/2026-07-20-v2-real-catch-confirmation-recovery.md`.

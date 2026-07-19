@@ -50,3 +50,16 @@ response and had no read-after-write recovery path.
 - TypeScript: passed.
 - Next.js production build: passed.
 - `git diff --check`: passed before checkpoint.
+
+## Private deployment verification
+
+- Checkpoint: `02c9707` (`fix: recover confirmed mobile check-ins`).
+- Revision `time-sovereignty-00046-woz` reported Ready and serves 0% normal
+  traffic.
+- Both `v2-private` and `live-mobile` tags point to revision `00046`.
+- The stable public revision remains `time-sovereignty-00024-dih` at 100%.
+- Dedicated runtime identity and container concurrency 1 were preserved.
+- `v2-private` health returned HTTP 200.
+- `live-mobile` health returned HTTP 200.
+- The native session route without a device credential returned HTTP 401.
+- Final S25 refreshed-screen confirmation remains the next physical check.
