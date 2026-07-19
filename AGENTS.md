@@ -57,6 +57,10 @@ branding, or unverified runtime assumptions.
 - Explain the product-facing result before internal schemas or code.
 - Do not reduce the product to a generic reminder or task app.
 - Do not begin a broad implementation change until the kickoff review is presented and Chloe approves it.
+- Chloe may be away from the screen during long builds. Immediately before
+  asking her to unlock, approve, tap, speak, or inspect the S25 Ultra, run
+  `powershell -ExecutionPolicy Bypass -File scripts/call-chloe.ps1`; then state
+  the one exact action needed. Do not ring for ordinary progress updates.
 
 ## Security
 

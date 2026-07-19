@@ -23,6 +23,14 @@ Thumbs.db
 .turbo/
 .cache/
 
+# Private Android build and Firebase pairing
+/android/.gradle/
+/android/local.properties
+/android/**/build/
+/android/app/google-services.json
+*.apk
+*.aab
+
 # Raw intake artifacts retained locally outside version control
 /Time_Sovereignty_Codex_Package_v0.6.zip
 /ChatGPT Image 2026年7月15日 上午08_22_59.png
