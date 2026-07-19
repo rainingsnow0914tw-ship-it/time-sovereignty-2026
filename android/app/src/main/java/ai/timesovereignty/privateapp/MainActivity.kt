@@ -26,6 +26,9 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Returning to the app is itself an unconditional escape hatch.
+        // Never leave a missed catch alert ringing behind the main screen.
+        CatchNotifications.cancelAll(this)
         setContentView(buildContent())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -162,6 +165,21 @@ class MainActivity : Activity() {
                 visibility = View.GONE
             }
             addView(fullScreenAccessButton)
+            addView(Button(this@MainActivity).apply {
+                text = "立即停止所有提醒"
+                isAllCaps = false
+                setOnClickListener {
+                    CatchNotifications.cancelAll(this@MainActivity)
+                    pushStatus.text = "目前鈴聲、震動與通知已全部停止。之後的跟進仍受 PWA 裡的暫停與撤銷設定控制。"
+                }
+                setPadding(dp(8), dp(14), dp(8), dp(14))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = "安全保護：即使沒有接起來，鈴聲最長 30 秒；回到這個 App 或按上方按鈕都會立即停止。"
+                textSize = 14f
+                setTextColor(Color.rgb(95, 68, 55))
+                setPadding(0, dp(8), 0, dp(18))
+            })
             addView(Button(this@MainActivity).apply {
                 text = "本機預覽假電話（不連雲端）"
                 isAllCaps = false

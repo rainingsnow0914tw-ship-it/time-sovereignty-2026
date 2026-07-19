@@ -818,3 +818,14 @@
   The next proof is one new controlled real FCM `1 → 2 → 4` run.
 - Evidence:
   `docs/evidence/2026-07-20-v2-android-fullscreen-access-and-local-wake.md`.
+
+## 2026-07-20 — Goal isolation and Android stop safety accepted
+
+- Added stable goal identity to every new live schedule and per-goal active / last-confirmed pointers to the device session. Goal-aware reads, confirmation, memory retrieval, and effectiveness updates now reject cross-goal state.
+- Focused isolation tests passed 11/11; the full web suite passed 173 tests with 9 skipped, followed by lint, typecheck, and the production build.
+- Deployed only to private revision `time-sovereignty-00050-pid`; private health checks remained 200, unauthorized native access remained 401, and public V1 stayed on `00024-dih` at 100%.
+- S25 rendered the bridge goal without the retired cup result. A stale installed client was caught issuing old `/current` requests without `goalId`; versioned in-place navigation restored goal-scoped polling with repeated 200 responses without deleting local data.
+- Real Cloud Tasks / FCM delivered a passive Level 1 and a bounded audible Level 2. A real GPT-5.6 response classified the temporary technical block and produced `RESCHEDULE`; this also exposed the human-visible timezone label and intent-button UX defects now tracked in PROJECT_STATE.
+- Android escalation tiers now have independent notification identities. More importantly, the call signal has a hard 30-second cap, every activity exit stops app-owned sound and vibration, opening the native main screen is an unconditional stop, and the main screen permanently exposes `立即停止所有提醒`.
+- Android unit tests and APK build passed. Chloe completed six S25 safety checks: audible, vibration, no response required to escape, app exit, app reopen, and explicit stop control all passed.
+- Evidence: `docs/evidence/2026-07-20-goal-isolation-and-android-stop-safety.md`.

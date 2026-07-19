@@ -22,6 +22,9 @@ export const LiveCheckInStatusSchema = z.enum([
 
 export const LiveCheckInContextSchema = z
   .object({
+    // Legacy check-ins may not have this field. Every new schedule must use
+    // LiveScheduleContextSchema, where goalId is required.
+    goalId: EntityIdSchema.optional(),
     goal: z.string().trim().min(1).max(240),
     motivation: z.string().trim().min(1).max(2_000),
     targetWindow: z.string().trim().min(1).max(240),
@@ -35,6 +38,7 @@ export const LiveCheckInContextSchema = z
   .strict();
 
 export const LiveScheduleContextSchema = LiveCheckInContextSchema.extend({
+  goalId: EntityIdSchema,
   locale: z.enum(["zh-TW", "en"]),
   quietHours: QuietHoursSchema,
 });
@@ -168,6 +172,18 @@ export const LiveDeviceSessionSchema = z
     expiresAt: IsoDateTimeSchema,
     activeCheckInId: EntityIdSchema.nullable(),
     lastConfirmedCheckInId: EntityIdSchema.nullable(),
+    goalStates: z
+      .record(
+        EntityIdSchema,
+        z
+          .object({
+            activeCheckInId: EntityIdSchema.nullable(),
+            lastConfirmedCheckInId: EntityIdSchema.nullable(),
+            updatedAt: IsoDateTimeSchema,
+          })
+          .strict(),
+      )
+      .default({}),
     createdAt: IsoDateTimeSchema,
     revokedAt: IsoDateTimeSchema.nullable(),
     updatedAt: IsoDateTimeSchema,
@@ -255,6 +271,7 @@ export const ClientLiveCheckInSchema = LiveCheckInDocumentSchema.pick({
 });
 
 export type LiveCheckInContext = z.infer<typeof LiveCheckInContextSchema>;
+export type LiveScheduleContext = z.infer<typeof LiveScheduleContextSchema>;
 export type LiveCheckInDocument = z.infer<typeof LiveCheckInDocumentSchema>;
 export type LiveChiefOfStaffDecision = z.infer<
   typeof LiveChiefOfStaffDecisionSchema

@@ -14,11 +14,18 @@ import {
   buildLiveEpisode,
   buildResumeMemory,
   buildStrategyMemory,
+  deriveLiveGoalKey,
   LiveMemoryRecordSchema,
   memoryDocumentId,
   selectRelevantLiveMemories,
   type LiveMemoryRecord,
 } from "./live-memory";
+import {
+  checkInBelongsToGoal,
+  goalCheckInPointers,
+  withActiveGoalCheckIn,
+  withLastConfirmedGoalCheckIn,
+} from "./goal-scope";
 import {
   LiveCheckInDocumentSchema,
   LiveDeviceSessionSchema,
@@ -27,6 +34,7 @@ import {
   type LiveChiefOfStaffDecision,
   type LiveDeviceSession,
   type LiveMemoryDisposition,
+  type LiveScheduleContext,
 } from "./schemas";
 
 const SESSION_DOCUMENT_ID = "single-device";
@@ -83,11 +91,15 @@ export interface LiveCheckInRepository {
     id: string;
     sessionId: string;
     message: string;
-    context: LiveCheckInContext;
+    context: LiveScheduleContext;
     scheduledFor: string;
   }): Promise<{ checkIn: LiveCheckInDocument; duplicate: boolean }>;
   attachTask(checkInId: string, taskName: string): Promise<LiveCheckInDocument>;
-  findCurrent(sessionId: string): Promise<LiveCheckInDocument | null>;
+  findCurrent(sessionId: string, goalId: string): Promise<LiveCheckInDocument | null>;
+  findLastConfirmed(
+    sessionId: string,
+    goalId: string,
+  ): Promise<LiveCheckInDocument | null>;
   findById(checkInId: string): Promise<LiveCheckInDocument | null>;
   findRelevantMemories(options: {
     sessionId: string;
@@ -211,6 +223,7 @@ export function createLiveCheckInRepository(
           expiresAt,
           activeCheckInId: null,
           lastConfirmedCheckInId: null,
+          goalStates: {},
           createdAt: timestamp,
           revokedAt: null,
           updatedAt: timestamp,
@@ -263,7 +276,10 @@ export function createLiveCheckInRepository(
         ]);
         if (existingSnapshot.exists) {
           const existing = LiveCheckInDocumentSchema.parse(existingSnapshot.data());
-          if (existing.sessionId !== sessionId) {
+          if (
+            existing.sessionId !== sessionId ||
+            existing.context.goalId !== context.goalId
+          ) {
             throw new LiveCheckInStateError("Check-in identity is already in use.");
           }
           return { checkIn: existing, duplicate: true };
@@ -304,11 +320,10 @@ export function createLiveCheckInRepository(
           updatedAt: timestamp,
         });
         transaction.set(checkInRef, checkIn);
-        transaction.set(sessionRef, {
-          ...session,
-          activeCheckInId: id,
-          updatedAt: timestamp,
-        });
+        transaction.set(
+          sessionRef,
+          withActiveGoalCheckIn(session, context.goalId, id, timestamp),
+        );
         return { checkIn, duplicate: false };
       });
     },
@@ -334,18 +349,48 @@ export function createLiveCheckInRepository(
       });
     },
 
-    async findCurrent(sessionId) {
+    async findCurrent(sessionId, goalId) {
       const sessionSnapshot = await sessionRef.get();
       if (!sessionSnapshot.exists) return null;
       const session = LiveDeviceSessionSchema.parse(sessionSnapshot.data());
-      if (session.id !== sessionId || !session.activeCheckInId) return null;
+      const pointer = goalCheckInPointers(session, goalId)?.activeCheckInId;
+      if (session.id !== sessionId || !pointer) return null;
       const snapshot = await firestore
         .collection("live_checkins")
-        .doc(session.activeCheckInId)
+        .doc(pointer)
         .get();
-      return snapshot.exists
-        ? LiveCheckInDocumentSchema.parse(snapshot.data())
-        : null;
+      if (!snapshot.exists) return null;
+      const checkIn = LiveCheckInDocumentSchema.parse(snapshot.data());
+      if (
+        checkIn.sessionId !== sessionId ||
+        !checkInBelongsToGoal(checkIn, goalId)
+      ) {
+        throw new LiveCheckInStateError("Goal-scoped current pointer is invalid.");
+      }
+      return checkIn;
+    },
+
+    async findLastConfirmed(sessionId, goalId) {
+      const sessionSnapshot = await sessionRef.get();
+      if (!sessionSnapshot.exists) return null;
+      const session = LiveDeviceSessionSchema.parse(sessionSnapshot.data());
+      const pointer = goalCheckInPointers(session, goalId)?.lastConfirmedCheckInId;
+      if (session.id !== sessionId || !pointer) return null;
+      const snapshot = await firestore
+        .collection("live_checkins")
+        .doc(pointer)
+        .get();
+      if (!snapshot.exists) return null;
+      const checkIn = LiveCheckInDocumentSchema.parse(snapshot.data());
+      if (
+        checkIn.sessionId !== sessionId ||
+        !checkInBelongsToGoal(checkIn, goalId)
+      ) {
+        throw new LiveCheckInStateError(
+          "Goal-scoped last-confirmed pointer is invalid.",
+        );
+      }
+      return checkIn;
     },
 
     async findById(checkInId) {
@@ -556,6 +601,12 @@ export function createLiveCheckInRepository(
         if (current.sessionId !== sessionId || session.id !== sessionId) {
           throw new LiveCheckInStateError("Check-in does not belong to this session.");
         }
+        const goalId = current.context.goalId;
+        if (!goalId) {
+          throw new LiveCheckInStateError(
+            "Legacy check-in has no stable goal identity and cannot be confirmed.",
+          );
+        }
         if (current.status === "CONFIRMED") {
           if (current.confirmationId !== confirmationId) {
             throw new LiveCheckInStateError(
@@ -596,11 +647,15 @@ export function createLiveCheckInRepository(
           updatedAt: timestamp,
         });
         transaction.set(ref, updated);
-        transaction.set(sessionRef, {
-          ...session,
-          lastConfirmedCheckInId: current.id,
-          updatedAt: timestamp,
-        });
+        transaction.set(
+          sessionRef,
+          withLastConfirmedGoalCheckIn(
+            session,
+            goalId,
+            current.id,
+            timestamp,
+          ),
+        );
         if (!episodeSnapshot.exists) {
           transaction.set(
             episodeRef,
@@ -631,6 +686,12 @@ export function createLiveCheckInRepository(
           if (!memorySnapshot.exists) continue;
           const parsed = LiveMemoryRecordSchema.safeParse(memorySnapshot.data());
           if (!parsed.success || parsed.data.sessionId !== sessionId) continue;
+          if (
+            parsed.data.scope === "GOAL" &&
+            parsed.data.goalKey !== deriveLiveGoalKey(current.context)
+          ) {
+            continue;
+          }
           const effective = applyMemoryOutcome({
             memory: parsed.data,
             assessment: current.decision.assessment,

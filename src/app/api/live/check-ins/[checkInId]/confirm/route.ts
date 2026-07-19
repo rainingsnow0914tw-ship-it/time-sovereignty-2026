@@ -6,7 +6,10 @@ import {
   liveErrorResponse,
   liveJson,
 } from "@/live-checkin/route-helpers";
-import { LiveConfirmRequestSchema } from "@/live-checkin/schemas";
+import {
+  LiveConfirmRequestSchema,
+  LiveScheduleContextSchema,
+} from "@/live-checkin/schemas";
 import { runLiveMemoryCurator } from "@/live-checkin/memory-curator";
 import { createLiveCheckInScheduler } from "@/live-checkin/scheduler";
 import { assertAllowedOrigin } from "@/live-checkin/session-auth";
@@ -79,21 +82,33 @@ export async function POST(
       });
     }
 
+    if (
+      !confirmedCheckIn.context.goalId ||
+      !confirmedCheckIn.context.locale ||
+      !confirmedCheckIn.context.quietHours
+    ) {
+      throw new Error("Confirmed live check-in has no stable goal identity.");
+    }
+
     const nextCheckInId = `follow-${checkInId}`.slice(0, 128);
     const scheduledFor = selectLiveFollowUpTime({
       proposedAt: decision.nextFollowUpAt,
       now: new Date(),
       quietHours: confirmedCheckIn.context.quietHours,
     });
+    const nextContext = LiveScheduleContextSchema.parse({
+      ...confirmedCheckIn.context,
+      goalId: confirmedCheckIn.context.goalId,
+      locale: confirmedCheckIn.context.locale,
+      quietHours: confirmedCheckIn.context.quietHours,
+      currentAction: decision.adaptedCommitment,
+      minimumAction: decision.adaptedCommitment,
+    });
     const next = await auth.repository.createScheduled({
       id: nextCheckInId,
       sessionId: auth.session.id,
       message: `How did “${decision.adaptedCommitment}” go?`,
-      context: {
-        ...confirmedCheckIn.context,
-        currentAction: decision.adaptedCommitment,
-        minimumAction: decision.adaptedCommitment,
-      },
+      context: nextContext,
       scheduledFor,
     });
     let nextCheckIn = next.checkIn;

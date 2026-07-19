@@ -6,16 +6,18 @@ import {
   liveErrorResponse,
   liveJson,
 } from "@/live-checkin/route-helpers";
+import { EntityIdSchema } from "@/domain/shared";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
     const { config, repository, session } = await authenticateLiveRequest(request);
-    const checkIn = await repository.findCurrent(session.id);
-    const lastConfirmed = session.lastConfirmedCheckInId
-      ? await repository.findById(session.lastConfirmedCheckInId)
-      : null;
+    const goalId = EntityIdSchema.parse(request.nextUrl.searchParams.get("goalId"));
+    const [checkIn, lastConfirmed] = await Promise.all([
+      repository.findCurrent(session.id, goalId),
+      repository.findLastConfirmed(session.id, goalId),
+    ]);
     return liveJson({
       ok: true,
       paired: true,

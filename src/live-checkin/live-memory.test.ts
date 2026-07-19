@@ -8,7 +8,10 @@ import {
 } from "./live-memory";
 import { LiveCheckInDocumentSchema } from "./schemas";
 
-function confirmedCandidate() {
+function confirmedCandidate(
+  goalId = "goal-drawing",
+  goal = "Build a sustainable sketch practice",
+) {
   return LiveCheckInDocumentSchema.parse({
     version: 1,
     id: "first-phone-task",
@@ -16,7 +19,8 @@ function confirmedCandidate() {
     status: "DECISION_READY",
     message: "What is true now?",
     context: {
-      goal: "Build a sustainable sketch practice",
+      goalId,
+      goal,
       motivation: "Draw small illustrations",
       targetWindow: "One month",
       currentAction: "Draw one cup for 20 minutes",
@@ -101,5 +105,32 @@ describe("live layered memory", () => {
     expect(updated.effectiveness).toMatchObject({ attempts: 1, successes: 1 });
     expect(updated.confidence).toBeCloseTo(0.57);
     expect(updated.confirmationState).toBe("TENTATIVE");
+  });
+
+  it("uses stable goal identity rather than mutable or coincidentally equal titles", () => {
+    const drawingMemory = buildStrategyMemory({
+      checkIn: confirmedCandidate("goal-drawing", "Practice every day"),
+      disposition: "DEFER",
+      timestamp: "2026-07-19T01:02:00.000Z",
+    })!;
+
+    const renamedDrawing = selectRelevantLiveMemories({
+      memories: [drawingMemory],
+      context: confirmedCandidate(
+        "goal-drawing",
+        "Draw one small illustration every day",
+      ).context,
+      now: new Date("2026-07-20T01:00:00.000Z"),
+    });
+    const unrelatedBridgeGoalWithSameTitle = selectRelevantLiveMemories({
+      memories: [drawingMemory],
+      context: confirmedCandidate("goal-bridge", "Practice every day").context,
+      now: new Date("2026-07-20T01:00:00.000Z"),
+    });
+
+    expect(renamedDrawing.map((memory) => memory.id)).toEqual([
+      drawingMemory.id,
+    ]);
+    expect(unrelatedBridgeGoalWithSameTitle).toEqual([]);
   });
 });

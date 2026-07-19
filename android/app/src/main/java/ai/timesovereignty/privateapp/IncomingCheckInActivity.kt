@@ -14,7 +14,6 @@ import java.util.UUID
 
 class IncomingCheckInActivity : Activity() {
     private lateinit var eventId: String
-    private lateinit var ringer: BoundedRinger
     private lateinit var statusText: TextView
     private val responseButtons = mutableListOf<Button>()
     private var pendingResponseId: String? = null
@@ -26,9 +25,11 @@ class IncomingCheckInActivity : Activity() {
         setTurnScreenOn(true)
 
         eventId = intent.getStringExtra(EXTRA_EVENT_ID) ?: return finish()
-        ringer = BoundedRinger(this)
+        CatchAttentionSignal.stopPrompt()
         setContentView(buildContent())
-        ringer.start()
+        if (intent.getIntExtra(EXTRA_LEVEL, 4) == 4) {
+            CatchAttentionSignal.playCall(this)
+        }
     }
 
     private fun buildContent(): LinearLayout {
@@ -85,7 +86,7 @@ class IncomingCheckInActivity : Activity() {
     }
 
     private fun submitResponse(responseType: String) {
-        ringer.stop()
+        CatchAttentionSignal.stopAll()
         CatchNotifications.cancel(this, eventId)
         val responseUrl = intent.getStringExtra(EXTRA_RESPONSE_URL)
         val session = NativeCredentialStore.load(this)
@@ -182,12 +183,12 @@ class IncomingCheckInActivity : Activity() {
     }
 
     override fun onStop() {
-        ringer.stop()
+        CatchAttentionSignal.stopAll()
         super.onStop()
     }
 
     override fun onDestroy() {
-        ringer.stop()
+        CatchAttentionSignal.stopAll()
         super.onDestroy()
     }
 

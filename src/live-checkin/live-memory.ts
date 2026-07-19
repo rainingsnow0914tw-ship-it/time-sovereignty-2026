@@ -41,6 +41,7 @@ export const LiveMemoryRecordSchema = z
     id: EntityIdSchema,
     sessionId: EntityIdSchema,
     sourceCheckInId: EntityIdSchema,
+    goalId: EntityIdSchema.nullable().default(null),
     scope: LiveMemoryScopeSchema,
     goalKey: z.string().regex(/^[a-f0-9]{32}$/u).nullable(),
     kind: LiveMemoryKindSchema,
@@ -85,6 +86,7 @@ export const LiveEpisodeSchema = z
     id: EntityIdSchema,
     sessionId: EntityIdSchema,
     checkInId: EntityIdSchema,
+    goalId: EntityIdSchema.nullable().default(null),
     goalKey: z.string().regex(/^[a-f0-9]{32}$/u),
     goalSnapshot: z.string().trim().min(1).max(240),
     actionBefore: z.string().trim().min(1).max(500),
@@ -103,8 +105,10 @@ export type LiveMemoryRecord = z.infer<typeof LiveMemoryRecordSchema>;
 export type LiveEpisode = z.infer<typeof LiveEpisodeSchema>;
 
 export function deriveLiveGoalKey(context: LiveCheckInContext): string {
-  const normalized = context.goal.trim().toLocaleLowerCase("en-US");
-  return createHash("sha256").update(normalized).digest("hex").slice(0, 32);
+  const stableIdentity = context.goalId
+    ? `goal-id:${context.goalId}`
+    : `legacy-title:${context.goal.trim().toLocaleLowerCase("en-US")}`;
+  return createHash("sha256").update(stableIdentity).digest("hex").slice(0, 32);
 }
 
 export function memoryDocumentId(prefix: string, checkInId: string): string {
@@ -124,6 +128,7 @@ export function buildLiveEpisode(options: {
     id: memoryDocumentId("episode", checkIn.id),
     sessionId: checkIn.sessionId,
     checkInId: checkIn.id,
+    goalId: checkIn.context.goalId ?? null,
     goalKey: deriveLiveGoalKey(checkIn.context),
     goalSnapshot: checkIn.context.goal,
     actionBefore: checkIn.context.currentAction,
@@ -162,6 +167,7 @@ export function buildStrategyMemory(options: {
     id: memoryDocumentId("strategy", checkIn.id),
     sessionId: checkIn.sessionId,
     sourceCheckInId: checkIn.id,
+    goalId: checkIn.context.goalId ?? null,
     scope: "GOAL",
     goalKey: deriveLiveGoalKey(checkIn.context),
     kind: "STRATEGY",
@@ -194,6 +200,7 @@ export function buildResumeMemory(options: {
     id: memoryDocumentId("resume", checkIn.id),
     sessionId: checkIn.sessionId,
     sourceCheckInId: checkIn.id,
+    goalId: checkIn.context.goalId ?? null,
     scope: "GOAL",
     goalKey: deriveLiveGoalKey(checkIn.context),
     kind: "RESUME",

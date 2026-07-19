@@ -46,11 +46,12 @@ describe("live follow-up quiet-hours fence", () => {
     ).toBe("2026-07-18T00:00:00.000Z");
   });
 
-  it("requires locale and quiet hours on every new live schedule", () => {
+  it("requires goal identity, locale, and quiet hours on every new live schedule", () => {
     const request = {
       scheduleId: "live-language-proof",
       message: "現在真實的情況是什麼？",
       context: {
+        goalId: "goal-live-proof",
         goal: "完成驗收",
         motivation: "保護時間",
         targetWindow: "今晚",

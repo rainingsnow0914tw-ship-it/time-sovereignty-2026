@@ -107,10 +107,13 @@ export function LiveCheckInPanel({
   const memoryDecisionIdRef = useRef<string | null>(null);
 
   const refreshCurrent = useCallback(async (): Promise<CurrentPayload | null> => {
-    const response = await fetch("/api/live/check-ins/current", {
+    const response = await fetch(
+      `/api/live/check-ins/current?goalId=${encodeURIComponent(record.goal.id)}`,
+      {
       cache: "no-store",
       credentials: "same-origin",
-    });
+      },
+    );
     if (response.status === 401) {
       setConnection("UNPAIRED");
       setCurrent(null);
@@ -119,6 +122,13 @@ export function LiveCheckInPanel({
     }
     if (!response.ok) throw new Error("current_unavailable");
     const payload = (await response.json()) as CurrentPayload;
+    if (
+      (payload.checkIn && payload.checkIn.context.goalId !== record.goal.id) ||
+      (payload.lastConfirmedCheckIn &&
+        payload.lastConfirmedCheckIn.context.goalId !== record.goal.id)
+    ) {
+      throw new Error("goal_scope_mismatch");
+    }
     setConnection("PAIRED");
     setCurrent(payload.checkIn);
     setLastConfirmed(payload.lastConfirmedCheckIn);
@@ -130,7 +140,7 @@ export function LiveCheckInPanel({
       setMemoryDisposition("DEFER");
     }
     return payload;
-  }, []);
+  }, [record.goal.id]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -248,6 +258,7 @@ export function LiveCheckInPanel({
           scheduleId: scheduleIdRef.current,
           message: options.message,
           context: {
+            goalId: record.goal.id,
             goal: record.goal.title,
             motivation: record.goal.motivation,
             targetWindow: record.goal.targetWindow,
