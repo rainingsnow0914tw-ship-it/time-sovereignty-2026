@@ -88,4 +88,17 @@ describe("live check-in scheduler", () => {
     expect(result.alreadyExisted).toBe(true);
     expect(result.taskName).toContain("/tasks/live-live-proof");
   });
+
+  it("treats an already-gone task as a successful cancellation", async () => {
+    const client: LiveCloudTasksClientLike = {
+      queuePath: () => "projects/p/locations/asia-east1/queues/q",
+      createTask: async () => [{}, {}, {}],
+      deleteTask: async () => {
+        throw Object.assign(new Error("not found"), { code: 5 });
+      },
+    };
+    await expect(
+      createLiveCheckInScheduler(config, client).cancel("task-one"),
+    ).resolves.toEqual({ alreadyGone: true });
+  });
 });

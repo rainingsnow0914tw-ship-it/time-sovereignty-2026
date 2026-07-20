@@ -9,6 +9,7 @@ type Task = protos.google.cloud.tasks.v2.ITask;
 export interface LiveCloudTasksClientLike {
   queuePath(projectId: string, location: string, queue: string): string;
   createTask(request: CreateTaskRequest): Promise<[Task, unknown, unknown]>;
+  deleteTask?(request: { name: string }): Promise<unknown>;
 }
 
 export interface ScheduledLiveCheckInTask {
@@ -64,6 +65,7 @@ export function createLiveCheckInScheduler(
   client: LiveCloudTasksClientLike = new CloudTasksClient(),
 ): {
   schedule(checkIn: LiveCheckInDocument): Promise<ScheduledLiveCheckInTask>;
+  cancel(taskName: string): Promise<{ alreadyGone: boolean }>;
 } {
   return {
     async schedule(checkIn) {
@@ -94,6 +96,25 @@ export function createLiveCheckInScheduler(
           scheduledFor: checkIn.scheduledFor,
           alreadyExisted: true,
         };
+      }
+    },
+    async cancel(taskName) {
+      if (!client.deleteTask) {
+        throw new Error("Cloud Tasks client does not support task cancellation.");
+      }
+      try {
+        await client.deleteTask({ name: taskName });
+        return { alreadyGone: false };
+      } catch (error) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          (error as { code?: unknown }).code === 5
+        ) {
+          return { alreadyGone: true };
+        }
+        throw error;
       }
     },
   };

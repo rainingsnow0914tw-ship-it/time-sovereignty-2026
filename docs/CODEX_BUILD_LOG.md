@@ -717,3 +717,24 @@
 - Verification passed: 33 test files passed with five skipped; 131 tests passed
   with nine skipped; ESLint, TypeScript, production build, and diff check all
   passed.
+
+## 2026-07-20 — Protected cloud goal lifecycle
+
+- Added a Firestore goal workspace repository and authenticated private routes
+  for Save, List, Open, Pause, Resume, Complete, Archive, and Delete.
+- Separated durable ownership from the expiring phone session. Existing session
+  documents upgrade to stable owner `private-single-device`, so a 96-hour
+  re-pair does not orphan a thirty-day goal.
+- Confirmed browser records are converted server-side into a workspace and
+  first immutable plan revision. The client cannot choose another owner.
+- Added optimistic workspace revisions, ownership checks, idempotent creation,
+  and content-free deletion tombstones. Browser GET routes rely on the signed
+  same-site cookie; every mutation retains the strict Origin check.
+- Pause, Complete, Archive, and Delete clear active wake-up pointers and cancel
+  the named Cloud Task. Cancellation treats an already-gone task as success.
+- Added `goalId` to new check-in contexts. A late authenticated Cloud Task now
+  checks the goal workspace before delivery; paused, archived, or deleted goals
+  return an idempotent `inactive_goal` no-op and cannot produce a ghost alert.
+- Verification passed: 38 test files passed with five skipped; 144 tests passed
+  with nine skipped; ESLint, TypeScript, production build, and diff check all
+  passed.

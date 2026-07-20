@@ -8,6 +8,7 @@ import {
 } from "@/infrastructure/auth/cloud-task-oidc";
 import { readLiveCheckInConfig } from "@/live-checkin/config";
 import { createLiveCheckInRepository } from "@/live-checkin/firestore-repository";
+import { createLiveGoalWorkspaceRepository } from "@/live-checkin/goal-workspace-repository";
 import { liveErrorResponse, liveJson } from "@/live-checkin/route-helpers";
 
 export const runtime = "nodejs";
@@ -32,7 +33,28 @@ export async function POST(
     if (body.checkInId !== checkInId) {
       return liveJson({ ok: false, error: "check_in_id_mismatch" }, { status: 400 });
     }
-    const result = await createLiveCheckInRepository(config.cloud).markPending({
+    const repository = createLiveCheckInRepository(config.cloud);
+    const scheduledCheckIn = await repository.findById(checkInId);
+    if (!scheduledCheckIn) {
+      return liveJson({ ok: false, error: "check_in_not_found" }, { status: 404 });
+    }
+    if (
+      scheduledCheckIn.context.goalId &&
+      !(await createLiveGoalWorkspaceRepository(config.cloud).isDeliverable(
+        scheduledCheckIn.context.goalId,
+      ))
+    ) {
+      console.info("[live-check-in] task ignored for inactive goal", {
+        checkInId,
+        goalId: scheduledCheckIn.context.goalId,
+      });
+      return liveJson({
+        ok: true,
+        result: "inactive_goal",
+        checkInId,
+      });
+    }
+    const result = await repository.markPending({
       checkInId,
       taskName: request.headers.get("x-cloudtasks-taskname")?.trim() || null,
     });

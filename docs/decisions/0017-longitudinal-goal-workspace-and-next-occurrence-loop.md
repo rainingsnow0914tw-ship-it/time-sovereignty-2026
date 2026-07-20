@@ -13,8 +13,10 @@ thirty-day Demo Lab cannot substitute for this product responsibility.
 
 ## Decision
 
-1. A confirmed goal becomes a session-owned Firestore workspace. Browser
-   storage is a recoverable draft and cache, not the authoritative record.
+1. A confirmed goal becomes a stable-owner Firestore workspace. The expiring
+   phone session authorizes access but does not own the data, so re-pairing does
+   not orphan a thirty-day goal. Browser storage is a recoverable draft and
+   cache, not the authoritative record.
 2. Every workspace has a stable `goalId`. Plan revisions, attendance,
    check-ins, Episodes, strategies, and tasks remain goal-scoped.
 3. A schedule policy can contain one or more local-time slots. This supports

@@ -21,6 +21,7 @@ import {
 } from "./live-memory";
 import {
   LiveCheckInDocumentSchema,
+  LIVE_PRIVATE_OWNER_ID,
   LiveDeviceSessionSchema,
   type LiveCheckInContext,
   type LiveCheckInDocument,
@@ -207,6 +208,7 @@ export function createLiveCheckInRepository(
         const session = LiveDeviceSessionSchema.parse({
           version: 1,
           id: idFactory(),
+          ownerId: LIVE_PRIVATE_OWNER_ID,
           deviceLabel,
           expiresAt,
           activeCheckInId: null,

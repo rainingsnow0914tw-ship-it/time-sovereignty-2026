@@ -83,7 +83,7 @@ describe("longitudinal goal workspace contracts", () => {
     const workspace = GoalWorkspaceSchema.parse({
       version: 1,
       id: goalId,
-      sessionId: "session-one",
+      ownerId: "private-single-device",
       status: "ACTIVE",
       goal: {
         id: goalId,
@@ -143,7 +143,7 @@ describe("longitudinal goal workspace contracts", () => {
     const base = {
       version: 1,
       id: "goal-english",
-      sessionId: "session-one",
+      ownerId: "private-single-device",
       status: "PAUSED",
       goal: {
         id: "goal-english",
@@ -204,7 +204,7 @@ describe("longitudinal goal workspace contracts", () => {
     const attendance = GoalAttendanceEntrySchema.parse({
       version: 1,
       id: "attendance-one",
-      sessionId: "session-one",
+      ownerId: "private-single-device",
       goalId: "goal-english",
       checkInId: "check-in-one",
       scheduledFor: "2026-07-20T13:00:00.000Z",
@@ -224,7 +224,7 @@ describe("longitudinal goal workspace contracts", () => {
     const tombstone = GoalDeletionTombstoneSchema.parse({
       version: 1,
       goalId: "goal-english",
-      sessionId: "session-one",
+      ownerId: "private-single-device",
       invalidatedCheckInId: "check-in-one",
       invalidatedTaskName: "task-one",
       deletedAt: "2026-07-20T02:00:00.000Z",

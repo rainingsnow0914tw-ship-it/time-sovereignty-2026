@@ -15,6 +15,7 @@ import {
   LiveSessionStateError,
   type LiveCheckInRepository,
 } from "./firestore-repository";
+import { LiveGoalWorkspaceStateError } from "./goal-workspace-repository";
 import {
   ClientLiveCheckInSchema,
   type ClientLiveCheckIn,
@@ -92,6 +93,9 @@ export function liveErrorResponse(
   }
   if (error instanceof LiveCheckInStateError) {
     return liveJson({ ok: false, error: "live_check_in_conflict" }, { status: 409 });
+  }
+  if (error instanceof LiveGoalWorkspaceStateError) {
+    return liveJson({ ok: false, error: "goal_workspace_conflict" }, { status: 409 });
   }
   if (error instanceof z.ZodError || error instanceof SyntaxError) {
     return liveJson({ ok: false, error: "invalid_live_request" }, { status: 400 });

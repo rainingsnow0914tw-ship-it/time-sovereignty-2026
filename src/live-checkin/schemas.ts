@@ -22,6 +22,7 @@ export const LiveCheckInStatusSchema = z.enum([
 
 export const LiveCheckInContextSchema = z
   .object({
+    goalId: EntityIdSchema.optional(),
     goal: z.string().trim().min(1).max(240),
     motivation: z.string().trim().min(1).max(2_000),
     targetWindow: z.string().trim().min(1).max(240),
@@ -160,10 +161,13 @@ export const LiveCheckInDocumentSchema = z
   })
   .strict();
 
-export const LiveDeviceSessionSchema = z
+export const LIVE_PRIVATE_OWNER_ID = "private-single-device";
+
+const LiveDeviceSessionOutputSchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
+    ownerId: EntityIdSchema,
     deviceLabel: z.string().trim().min(1).max(120),
     expiresAt: IsoDateTimeSchema,
     activeCheckInId: EntityIdSchema.nullable(),
@@ -173,6 +177,11 @@ export const LiveDeviceSessionSchema = z
     updatedAt: IsoDateTimeSchema,
   })
   .strict();
+
+export const LiveDeviceSessionSchema = z.preprocess((value) => {
+  if (!value || typeof value !== "object" || "ownerId" in value) return value;
+  return { ...value, ownerId: LIVE_PRIVATE_OWNER_ID };
+}, LiveDeviceSessionOutputSchema);
 
 export const LivePairRequestSchema = z
   .object({

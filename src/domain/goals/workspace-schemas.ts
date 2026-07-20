@@ -109,7 +109,7 @@ export const GoalPlanRevisionSchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
-    sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     goalId: EntityIdSchema,
     ordinal: z.number().int().positive(),
     source: GoalPlanRevisionSourceSchema,
@@ -125,7 +125,7 @@ export const GoalWorkspaceSchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
-    sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     status: GoalWorkspaceStatusSchema,
     goal: GoalSchema,
     action: ActionSchema,
@@ -178,7 +178,7 @@ export const GoalAttendanceEntrySchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
-    sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     goalId: EntityIdSchema,
     checkInId: EntityIdSchema.nullable(),
     scheduledFor: IsoDateTimeSchema,
@@ -195,7 +195,7 @@ export const GoalDeletionTombstoneSchema = z
   .object({
     version: z.literal(1),
     goalId: EntityIdSchema,
-    sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     invalidatedCheckInId: EntityIdSchema.nullable(),
     invalidatedTaskName: z.string().trim().min(1).max(1_000).nullable(),
     deletedAt: IsoDateTimeSchema,
