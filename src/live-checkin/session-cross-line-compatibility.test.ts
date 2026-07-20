@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { LiveDeviceSessionSchema } from "./schemas";
+import {
+  LiveCheckInDocumentSchema,
+  LiveDeviceSessionSchema,
+} from "./schemas";
 
 // The parallel `codex/longitudinal-goal-loop` line deploys to the same Cloud
 // Run service and the same Firestore database. A session it created carries
@@ -66,5 +69,57 @@ describe("device session written by the parallel development line", () => {
         somethingNobodyWrites: true,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("check-in written by the parallel development line", () => {
+  // Check-ins created by codex/longitudinal-goal-loop carry ownerId. Reading
+  // one through session.activeCheckInId or lastConfirmedCheckInId would fail
+  // the entire current-check-in request if the strict schema rejected it.
+  const checkInFromOtherLine = {
+    version: 1,
+    id: "live-1784499276418-0d6572b0",
+    sessionId: "f7322b54-6338-4565-8f93-cb3271996c72",
+    ownerId: "private-single-device",
+    status: "CONFIRMED",
+    message: "How did the session go?",
+    context: {
+      goal: "Drink one glass of water",
+      motivation: "Support physical health",
+      targetWindow: "Today",
+      currentAction: "Pick up a glass of water now",
+      minimumAction: "Take a single sip",
+      preferredTone: "Warm",
+    },
+    scheduledFor: "2026-07-19T22:16:36.416Z",
+    taskName: null,
+    pendingAt: "2026-07-19T22:16:36.416Z",
+    replyId: null,
+    replyFingerprint: null,
+    attemptCount: 1,
+    leaseToken: null,
+    leaseExpiresAt: null,
+    recovery: null,
+    decision: null,
+    traceRunIds: [],
+    confirmedAt: null,
+    confirmationId: null,
+    nextCheckInId: null,
+    nextTaskName: null,
+    errorName: null,
+    createdAt: "2026-07-19T22:14:36.626Z",
+    updatedAt: "2026-07-19T22:34:08.099Z",
+  };
+
+  it("stays readable so one legacy record cannot fail the whole request", () => {
+    const parsed = LiveCheckInDocumentSchema.safeParse(checkInFromOtherLine);
+
+    expect(parsed.success ? [] : parsed.error.issues).toEqual([]);
+  });
+
+  it("preserves ownerId rather than stripping it on write", () => {
+    const parsed = LiveCheckInDocumentSchema.parse(checkInFromOtherLine);
+
+    expect(parsed.ownerId).toBe("private-single-device");
   });
 });

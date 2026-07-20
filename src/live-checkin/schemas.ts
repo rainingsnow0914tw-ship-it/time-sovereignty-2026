@@ -129,6 +129,11 @@ export const LiveCheckInDocumentSchema = z
     version: z.literal(1),
     id: EntityIdSchema,
     sessionId: EntityIdSchema,
+    // Same cross-line concern as LiveDeviceSessionSchema: check-ins written by
+    // `codex/longitudinal-goal-loop` carry ownerId. Reading one of those would
+    // otherwise fail the whole current-check-in request. Accepted and
+    // preserved, never stripped.
+    ownerId: EntityIdSchema.optional(),
     status: LiveCheckInStatusSchema,
     message: z.string().trim().min(1).max(1_000),
     context: LiveCheckInContextSchema,
