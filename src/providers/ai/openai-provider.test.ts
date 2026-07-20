@@ -180,3 +180,106 @@ describe("OpenAiResponsesProvider", () => {
     );
   });
 });
+
+// A private check-in must not quietly reach the public web, so search is
+// opt-in per request. These assertions exist to make an accidental
+// always-on search visible: without webSearch the call must stay exactly as
+// it has always been - no tools, no reasoning.
+describe("OpenAiResponsesProvider web search", () => {
+  const baseRequest = {
+    runId: "run-search",
+    agent: "GOAL_ARCHITECT" as const,
+    outputSchemaName: "GoalArchitectOutput",
+    inputSummary: "Safe summary",
+    input: { question: "低強度的替代運動有哪些" },
+  };
+
+  it("sends no tools and no reasoning when search was not requested", async () => {
+    let captured: Record<string, unknown> | null = null;
+    const provider = new OpenAiResponsesProvider({
+      parseResponse: async (body) => {
+        captured = body as unknown as Record<string, unknown>;
+        return {
+          outputParsed: goalPlan,
+          model: "gpt-5.6-sol",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    await provider.generateStructured(baseRequest, GoalArchitectOutputSchema);
+
+    expect(captured).not.toBeNull();
+    expect(captured!.tools).toBeUndefined();
+    expect(captured!.reasoning).toEqual({ effort: "none" });
+  });
+
+  it("enables the web_search tool only when the request asks for it", async () => {
+    let captured: Record<string, unknown> | null = null;
+    const provider = new OpenAiResponsesProvider({
+      parseResponse: async (body) => {
+        captured = body as unknown as Record<string, unknown>;
+        return {
+          outputParsed: goalPlan,
+          model: "gpt-5.6-sol",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    await provider.generateStructured(
+      { ...baseRequest, webSearch: {} },
+      GoalArchitectOutputSchema,
+    );
+
+    expect(captured!.tools).toEqual([{ type: "web_search" }]);
+    expect(captured!.reasoning).toEqual({ effort: "low" });
+  });
+
+  // The API rejects an integer here with 400 invalid_type; it accepts only
+  // "default" or "unlimited". Verified against the live API on 2026-07-21.
+  it("passes the return token budget using the words the API accepts", async () => {
+    let captured: Record<string, unknown> | null = null;
+    const provider = new OpenAiResponsesProvider({
+      parseResponse: async (body) => {
+        captured = body as unknown as Record<string, unknown>;
+        return {
+          outputParsed: goalPlan,
+          model: "gpt-5.6-sol",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    await provider.generateStructured(
+      { ...baseRequest, webSearch: { returnTokenBudget: "unlimited" } },
+      GoalArchitectOutputSchema,
+    );
+
+    expect(captured!.tools).toEqual([
+      { type: "web_search", return_token_budget: "unlimited" },
+    ]);
+  });
+
+  it("keeps store false and the safety identifier while searching", async () => {
+    let captured: Record<string, unknown> | null = null;
+    const provider = new OpenAiResponsesProvider({
+      parseResponse: async (body) => {
+        captured = body as unknown as Record<string, unknown>;
+        return {
+          outputParsed: goalPlan,
+          model: "gpt-5.6-sol",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    await provider.generateStructured(
+      { ...baseRequest, webSearch: {}, safetyIdentifier: "ts_abc" },
+      GoalArchitectOutputSchema,
+    );
+
+    expect(captured!.store).toBe(false);
+    expect(captured!.safety_identifier).toBe("ts_abc");
+  });
+});

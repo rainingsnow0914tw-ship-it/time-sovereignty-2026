@@ -14,6 +14,7 @@
     "test:live:phase4-contracts": "node scripts/run-phase4-contract-live.mjs",
     "test:live:goal-architect": "node scripts/run-live-goal-architect.mjs",
     "test:live:check-in": "node scripts/run-live-check-in.mjs",
+    "test:live:web-search": "node scripts/run-live-web-search.mjs",
     "test:live:memory-curator": "node scripts/run-live-memory-curator.mjs",
     "test:watch": "vitest",
     "smoke:openai": "node scripts/smoke-openai.mjs"

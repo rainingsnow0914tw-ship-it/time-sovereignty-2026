@@ -103,6 +103,10 @@ export class OpenAiResponsesProvider implements AiProvider {
           },
         ]
       : serializedInput;
+    // Searching needs the model to actually think about what it found, so a
+    // search request lifts reasoning off "none". Without a search the call is
+    // byte-for-byte what it has always been: no tools, no reasoning.
+    const webSearch = request.webSearch;
     const response = await this.parseResponse({
       model: this.model,
       instructions: request.additionalInstructions
@@ -115,7 +119,19 @@ export class OpenAiResponsesProvider implements AiProvider {
           normalizeFormatName(request.outputSchemaName),
         ),
       },
-      reasoning: { effort: "none" },
+      ...(webSearch
+        ? {
+            tools: [
+              {
+                type: "web_search" as const,
+                ...(webSearch.returnTokenBudget === undefined
+                  ? {}
+                  : { return_token_budget: webSearch.returnTokenBudget }),
+              },
+            ],
+            reasoning: { effort: "low" as const },
+          }
+        : { reasoning: { effort: "none" as const } }),
       max_output_tokens: this.maxOutputTokens,
       store: false,
       safety_identifier: request.safetyIdentifier,
