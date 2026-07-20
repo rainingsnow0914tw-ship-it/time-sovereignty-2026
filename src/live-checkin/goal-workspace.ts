@@ -7,6 +7,7 @@ import {
   type GoalWorkspace,
 } from "../domain/goals/workspace-schemas";
 import type { LocalOnboardingRecord } from "../repositories/local-onboarding-repository";
+import { nextGoalOccurrence } from "./goal-schedule";
 
 function scheduleMode(
   frequency: LocalOnboardingRecord["supportAgreement"]["checkInFrequency"],
@@ -38,7 +39,7 @@ export function createInitialGoalWorkspace(options: {
   const scheduleTimes = options.scheduleTimes?.length
     ? options.scheduleTimes
     : [record.supportAgreement.preferredCheckInTime];
-  const schedule = {
+  const scheduleWithoutNext = {
     version: 1 as const,
     mode,
     timezone,
@@ -53,7 +54,19 @@ export function createInitialGoalWorkspace(options: {
         : [],
     quietHours: record.supportAgreement.quietHours,
     targetEndAt: record.plan.cadence.targetEndAt,
-    nextOccurrenceAt: record.plan.initialCheckInProposal.scheduledFor,
+    nextOccurrenceAt: null,
+  };
+  // The user's confirmed slots own the first occurrence too. Using the plan's
+  // proposed instant here would silently ignore a time the user just edited,
+  // and only the second occurrence onwards would respect their choice.
+  const firstOccurrenceAt =
+    nextGoalOccurrence({
+      schedule: scheduleWithoutNext,
+      after: new Date(record.savedAt),
+    }) ?? record.plan.initialCheckInProposal.scheduledFor;
+  const schedule = {
+    ...scheduleWithoutNext,
+    nextOccurrenceAt: firstOccurrenceAt,
   };
   const workspace = GoalWorkspaceSchema.parse({
     version: 1,
@@ -64,7 +77,7 @@ export function createInitialGoalWorkspace(options: {
     action: {
       ...record.action,
       status: "READY",
-      nextCheckAt: record.plan.initialCheckInProposal.scheduledFor,
+      nextCheckAt: firstOccurrenceAt,
     },
     supportAgreement: record.supportAgreement,
     currentPlanRevisionId: revisionId,

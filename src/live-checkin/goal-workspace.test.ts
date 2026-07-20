@@ -48,6 +48,53 @@ describe("initial cloud goal workspace", () => {
     )).toBe(true);
   });
 
+  it("schedules the first occurrence from the user's confirmed slot, not the plan's proposal", async () => {
+    // 11:00 in Asia/Macau. The mock architect proposes either one hour later or
+    // the next evening, so neither can coincide with the user's edited slot.
+    const now = () => new Date("2026-07-20T03:00:00.000Z");
+    const answers = {
+      goal: "今天完成 5 次肩頸伸展",
+      targetWindow: "今天",
+      motivation: "因久坐導致肩膀緊繃",
+    };
+    const generated = await createMockGoalArchitectResult(answers, now);
+    const record = createConfirmedOnboardingRecord({
+      answers,
+      plan: generated.output,
+      agentTrace: generated.trace,
+      support: {
+        ...defaultSupportAgreementDraft,
+        checkInFrequency: "DAILY",
+        preferredCheckInTime: "11:30",
+        timezone: "Asia/Macau",
+      },
+      now,
+      idFactory: (prefix) => `${prefix}-stretch`,
+    });
+
+    const result = createInitialGoalWorkspace({
+      ownerId: "private-single-device",
+      requestId: "save-stretch",
+      record,
+      scheduleTimes: ["11:30"],
+    });
+
+    const localTime = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Macau",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(result.workspace.action.nextCheckAt as string));
+
+    expect(localTime).toBe("11:30");
+    expect(result.workspace.schedule.nextOccurrenceAt).toBe(
+      result.workspace.action.nextCheckAt,
+    );
+    expect(result.workspace.action.nextCheckAt).not.toBe(
+      record.plan.initialCheckInProposal.scheduledFor,
+    );
+  });
+
   it("maps a custom cadence to a meaningful AI-led schedule mode", async () => {
     const now = () => new Date("2026-07-20T00:00:00.000Z");
     const answers = {

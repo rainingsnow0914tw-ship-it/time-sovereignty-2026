@@ -6,9 +6,9 @@ import type { LiveCheckInDocument } from "./schemas";
 import {
   advanceGoalAfterConfirmation,
   attendanceFromConfirmedCheckIn,
-  nextGoalOccurrence,
   scheduleNextGoalOccurrence,
 } from "./goal-loop";
+import { nextGoalOccurrence } from "./goal-schedule";
 import type { LiveCheckInConfig } from "./config";
 
 const timestamp = "2026-07-20T00:00:00.000Z";
