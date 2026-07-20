@@ -15,14 +15,14 @@
 
 # 正在做
 
-- Phase 6 真手機驗收進行中。A 組（保存）與 B 組（真實循環）已在雲端 `00056` 實測到「Cloud Task 送達、狀態 `PENDING`」；尚缺使用者回報、GPT-5.6 判斷、確認與出勤寫入這後半段。
-- 剛修掉阻擋 Phase 6 的第三個真手機 bug（客戶端 trace 投影上限，見下方），checkpoint `4522757`，正在部署 tag-only 預覽等待驗收。
+- Phase 6 真手機驗收：B 組（真實循環）已於 2026-07-20 在 `00058-mem` 完整通過，證據見 `docs/evidence/phase-6-real-phone-goal-loop-2026-07-20.md`。
+- 下一段是 C 組多目標隔離驗收；正式 V1 流量仍未動。
 
 # 下一步
 
-- 第一個動作：等 `4522757` 的 tag-only revision Ready，確認 22 個 env、3 個 Secret Manager 引用、`time-sovereignty-v2-runtime` SA、`minScale=1` 與 `00024` 100% 流量都未變動，再確認 `GET /api/live/check-ins/current` 不再回 400。
-- 接著請 Chloe 在 S25 的 PWA 上，對既有喝水目標（`goal-e8e7f665…`，狀態 `PENDING`）回報一次，驗證 GPT-5.6 真判斷 → 確認 → 出勤寫入；該目標為一次性短衝刺，正確行為是**不**再排下一筆。
-- 之後補 Phase 6 C 組多目標隔離驗收，再依 Phase 7 收尾（evidence、decision、README／Devpost 文案）。
+- 第一個動作：Phase 6 C 組多目標隔離驗收。在 `00058-mem` 上同時保留兩個目標（例如既有喝水目標與一個新的每日多時段目標），驗證：一個目標的回報不得引用另一個目標的進度、暫停其一另一仍續排、刪除後不再收到通知。
+- 接著決定「一次性目標完成後 workspace 仍為 `ACTIVE`、`nextCheckInId` 仍指向已完成 check-in」是規格還是缺口；目前完成需使用者手動按 `Complete`。
+- 之後才是 Phase 7 收尾（decision log、README／Devpost story 更新、最終 checkpoint）。不重剪已批准影片。
 - 驗收通過後才決定是否提升流量；正式 V1 在 Chloe 明確批准前保持不動。
 
 # 已知問題
@@ -51,7 +51,9 @@
 - 2026-07-20 09:34–09:39 +08:00（雲端 `00056` 實測，Codex 額度中斷後由 Chloe 於手機操作、事後從 Cloud Run log 還原）：`POST /api/live/goals/plan` 回 200（先前為 400，`5bfd599` 修正生效）；`/api/live/goals` 多次 200；09:39:45 `[live-check-in] task delivered { checkInId: 'goal-e8e7f665…', duplicate: false, status: 'PENDING' }`，證明目標型 Cloud Task 真實排程並送達。
 - 2026-07-20 10:06 +08:00：`GET /api/live/check-ins/current` 回 400，手機顯示「受保護的連線暫時無法使用」。以 Firestore REST 唯讀取樣 1 筆 session 與 20 筆 check-in 全數通過現行 schema，排除資料損毀；根因為 `ClientLiveCheckInSchema.traces` 上限 `max(3)` 與文件層 `traceRunIds` 上限 `max(4)` 不一致，`live-1784499276418-0d6572b0` 與 `live-1784477994742-2dd18d80` 各帶 4 段 trace 因而落在客戶端投影被拒。
 - 2026-07-20 10:16 +08:00：`traces` 上限對齊為 `max(4)` 並新增四段 goal-led trace 投影測試；全套 46 files passed／6 skipped、163 tests passed／10 skipped；lint、typecheck、production build 全通過。
+- 2026-07-20 10:22 +08:00：`00058-mem` 部署完成，`live-mobile` 與 `v2-private` 兩個 tag 同指該版，`00024` 仍 100%。設定與部署前基準完全一致（22 env、3 Secret Manager 引用、`time-sovereignty-v2-runtime` SA、512Mi、`minScale=1`）。同一支手機同一組 cookie 上，`GET /api/live/check-ins/current` 由 10:06 的 400 變為 10:22 的 200。
+- 2026-07-20 10:25–10:32 +08:00：Phase 6 B 組真手機閉環通過。`[live-check-in] agents completed` 顯示 `gpt-5.6-sol`、1,224 tokens、`assessment: COMPLETED`、`dispatchedAgents: []`；使用者於 10:29 確認後寫入 1 筆 `attendance`（`status: COMPLETED`），手機 Open-goal 面板顯示「已完成 · 7月20日 10:29」；`gcloud tasks list` 回 `Listed 0 items.`，一次性短衝刺未排下一筆。詳見 `docs/evidence/phase-6-real-phone-goal-loop-2026-07-20.md`。
 
 # 最後更新時間
 
-- 2026-07-20 10:18 +08:00
+- 2026-07-20 10:34 +08:00
