@@ -975,7 +975,10 @@ function SupportAgreementForm({
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {scheduleTimes.map((time, index) => (
-                <div key={`${index}-${time}`} className="flex items-end gap-2">
+                // The key must not contain the value. Keying on the time
+                // remounts the input on every keystroke, which drops focus and
+                // forces one tap per digit.
+                <div key={index} className="flex items-end gap-2">
                   <TimeField
                     label={`Session ${index + 1}`}
                     value={time}
