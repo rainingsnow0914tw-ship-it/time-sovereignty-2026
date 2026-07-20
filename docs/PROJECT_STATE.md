@@ -37,8 +37,10 @@
 - 手機已有目標管理、草稿復原、多時段編輯與最近五筆出勤視覺化；長期排程循環尚未在真實雲端／手機驗收。
 - 真手機驗收已連續抓到三個「舊資料／舊上限撞新契約」的 bug：①回訪首頁誤判為模擬入口（`b850407`）②舊 session 的 `goalStates` 淘汰欄位讓 `/api/live/goals` 回 400（`5bfd599`）③客戶端 trace 投影上限 `max(3)` 擋掉四段 goal-led trace，使 `/api/live/check-ins/current` 回 400、整個「今天／報到／出勤」區塊顯示「受保護的連線暫時無法使用」（`4522757`）。同型風險尚未全面盤點，後續改契約時應優先檢查客戶端投影是否與文件層上限同步。
 - `firestore-repository.ts` 的 `findCurrent`（activeCheckInId 分支）與 `findById` 使用 `.parse()`，單筆壞文件會讓整條讀取 API 失敗；同檔案的 fallback 掃描已用 `.safeParse()`。韌性落差已知，未修，因 Decision 0016 凍結期間僅處理實際阻斷驗收的問題。
-- Goal Architect 契約只有單一 `preferredCheckInTime`，無法結構化表達多時段。UI 以 `suggestedScheduleTimes` 掃描計畫自由文字補足，實測 7 份計畫中僅 `assumptionsNeedingConfirmation` 命中（4/7），`cadence.rationale`／`completionSignal`／`proposal.rationale` 皆為 0，因此假設句中順口提到的時間會被當成真實報到時段（Chloe 2026-07-20 遇到未設定過的 `Session 2 · 09:00`）。Chloe 已裁示先不動、優先完成驗收；修法選項見 Decision 0018「Not decided here」。
+- Goal Architect 契約只有單一 `preferredCheckInTime`，無法結構化表達多時段。`e13e52f` 已把 `suggestedScheduleTimes` 的掃描範圍收窄到描述節奏的欄位，止住了「假設句裡的時間變成真實時段」，但契約層的缺口仍在；真正的解法是讓模型輸出時段陣列，會動到凍結中的契約。見 Decision 0018「Not decided here」。
 - `+ New goal` 按鈕位於畫面上方，重置後的新問卷長在下方且不自動捲動，使用者感受為「按了沒反應」（Chloe 2026-07-20 實遇）。未修；評審第一印象風險。
+- 使用者可設定一個超出目標窗口的時段，系統靜默改用計畫提議的 fallback，畫面顯示與實際排程不一致且無提示（Chloe 2026-07-20 實遇：顯示 `12:10`、實排 `11:49:30`，該目標 `targetEndAt` 僅五分鐘）。fallback 本身是 Decision 0018 規格，缺的是當場告知。未修。
+- 真機驗證的方法論限制：以 `adb shell input text` 模擬輸入可驗證程式邏輯，但會繞過真實鍵盤，無法暴露「格式打不出來」這類可用性缺陷（2026-07-20 實證，見 `docs/AGENT_RELAY_LOG.md`）。使用者需親手操作的功能，最終證據只能來自人。
 - `docs/EMERGENCY_HANDOFF_ANDROID_FINAL_2026-07-17.md` 與九張 `docs/LOCAL_CHEATSHEET_*.md` 為 local-only，不得進公開 commit。
 
 # 最近測試結果
@@ -63,6 +65,8 @@
 - 2026-07-20 11:01 +08:00：時間輸入失焦修正（`f862c55`）已部署至 `00060-vem` 並在 S25 實測：一次連續輸入 `11:30` 五個字元，焦點保留在欄位內。修正前每次按鍵都會重掛輸入元件。
 - 2026-07-20 11:26 +08:00：首次排程改由使用者確認的時段推導（`e14b273`，Decision 0018），排程算術抽出為純函式模組 `goal-schedule.ts`；新增回歸測試「slot 為 11:30 時首次報到必須是當地 11:30 且不等於計畫提議」。全套 46 files passed／6 skipped、164 tests passed／10 skipped；lint、typecheck、production build 全通過。
 
+- 2026-07-20 12:29 +08:00：修掉三個只有真人會撞到的缺陷（`e13e52f`）：時間欄位在數字鍵盤上打不出冒號、時段建議把假設句裡的時間變成真實時段、`GoalCadenceTimingError` 讓使用者盲按且每次付費。新增 6 項測試（輸入正規化 4、重試行為 2）；全套 46 files passed／6 skipped、170 tests passed／10 skipped；lint、typecheck、production build 全通過。附帶發現：`GoalArchitectOutputSchema` 本身已擋下「報到晚於目標截止」，能走到時間圍欄的只有非未來時間或超出 cadence 最大延遲。
+
 # 最後更新時間
 
-- 2026-07-20 11:28 +08:00
+- 2026-07-20 12:31 +08:00
