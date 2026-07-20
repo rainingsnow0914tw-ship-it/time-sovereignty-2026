@@ -8,6 +8,7 @@ import {
   speechLanguageForLocale,
   useLocale,
 } from "../../i18n/locale";
+import { appendVoiceTurn } from "../onboarding/model";
 import type { LocalOnboardingRecord } from "../../repositories/local-onboarding-repository";
 import type {
   ClientLiveCheckIn,
@@ -387,8 +388,13 @@ export function LiveCheckInPanel({
     if (!current) return;
     realtimeVoiceRef.current?.disconnect(false);
     const session = new RealtimeVoiceSession({
+      // A conversation is more than its last sentence. Replacing the field on
+      // every transcript silently destroyed what came before it: saying "make
+      // it once instead of five" and then "in ten minutes" left only the second
+      // half, so the report lost the very change being agreed. Each turn is
+      // appended, and anything already typed by hand is kept.
       onTranscript: (transcript) => {
-        setReply(transcript);
+        setReply((current) => appendVoiceTurn(current, transcript));
         setNotice("Natural voice reply transcribed. Review it before sending.");
       },
       onStatus: (status) => {

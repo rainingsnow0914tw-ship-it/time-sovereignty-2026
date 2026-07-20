@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  appendVoiceTurn,
   applyGoalCadenceRecommendation,
   applyPlanFeedback,
   createMockGoalArchitectResult,
@@ -120,5 +121,40 @@ describe("Phase 2 onboarding model", () => {
 
     expect(support.checkInFrequency).toBe("CUSTOM");
     expect(support.reviewFrequencyDays).toBe(1);
+  });
+});
+
+describe("voice turns accumulate into the report field", () => {
+  // Observed on a real phone 2026-07-21: Chloe said "make it once instead of
+  // five", saw the field change to that, then said "in ten minutes" and the
+  // first half vanished. The report lost the very change being agreed.
+  it("keeps every turn instead of replacing the previous one", () => {
+    let field = "";
+    field = appendVoiceTurn(field, "我覺得五次太多了，我想改成一次");
+    field = appendVoiceTurn(field, "十分鐘後做");
+
+    expect(field).toBe("我覺得五次太多了，我想改成一次\n十分鐘後做");
+  });
+
+  it("keeps text the user typed by hand before speaking", () => {
+    const field = appendVoiceTurn("腰有點痛", "所以今天只做一次");
+
+    expect(field).toBe("腰有點痛\n所以今天只做一次");
+  });
+
+  it("ignores an empty or whitespace-only transcript", () => {
+    expect(appendVoiceTurn("已經做完了", "   ")).toBe("已經做完了");
+    expect(appendVoiceTurn("已經做完了", "")).toBe("已經做完了");
+  });
+
+  it("does not duplicate a repeated final transcript", () => {
+    let field = appendVoiceTurn("", "十分鐘後做");
+    field = appendVoiceTurn(field, "十分鐘後做");
+
+    expect(field).toBe("十分鐘後做");
+  });
+
+  it("starts cleanly when nothing has been said yet", () => {
+    expect(appendVoiceTurn("", "我今天腰很痛")).toBe("我今天腰很痛");
   });
 });

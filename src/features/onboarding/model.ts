@@ -269,3 +269,18 @@ export function applyPlanFeedback(
     ],
   });
 }
+
+// Voice turns accumulate rather than replace. A single check-in can involve
+// several exchanges — shrinking the action, then agreeing when to do it — and
+// only keeping the newest sentence loses the part that actually changed.
+// Repeated identical transcripts are ignored so a re-sent final chunk does not
+// duplicate the line.
+export function appendVoiceTurn(existing: string, transcript: string): string {
+  const addition = transcript.trim();
+  if (!addition) return existing;
+  const current = existing.trimEnd();
+  if (!current) return addition;
+  const lines = current.split("\n");
+  if (lines[lines.length - 1]?.trim() === addition) return current;
+  return `${current}\n${addition}`;
+}
