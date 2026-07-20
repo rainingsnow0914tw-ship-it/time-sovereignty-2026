@@ -269,3 +269,12 @@ export function applyPlanFeedback(
     ],
   });
 }
+
+// A numeric phone keypad has no colon key, so typing the required HH:MM by hand
+// is impossible on a real device: the field demanded a character the keyboard
+// could not produce. Accept the digits and insert the separator.
+export function normalizeTimeInput(raw: string): string {
+  const digits = raw.replace(/\D/gu, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}

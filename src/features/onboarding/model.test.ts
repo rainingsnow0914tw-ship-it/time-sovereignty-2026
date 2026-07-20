@@ -5,6 +5,7 @@ import {
   applyPlanFeedback,
   createMockGoalArchitectResult,
   defaultSupportAgreementDraft,
+  normalizeTimeInput,
   OnboardingAnswersSchema,
 } from "./model";
 
@@ -120,5 +121,28 @@ describe("Phase 2 onboarding model", () => {
 
     expect(support.checkInFrequency).toBe("CUSTOM");
     expect(support.reviewFrequencyDays).toBe(1);
+  });
+});
+
+describe("check-in time input on a numeric keypad", () => {
+  it("inserts the separator the phone keyboard cannot type", () => {
+    expect(normalizeTimeInput("1225")).toBe("12:25");
+    expect(normalizeTimeInput("0930")).toBe("09:30");
+  });
+
+  it("keeps a partially typed value usable while typing and deleting", () => {
+    expect(normalizeTimeInput("")).toBe("");
+    expect(normalizeTimeInput("1")).toBe("1");
+    expect(normalizeTimeInput("12")).toBe("12");
+    expect(normalizeTimeInput("122")).toBe("12:2");
+  });
+
+  it("accepts a value that already contains a colon", () => {
+    expect(normalizeTimeInput("12:25")).toBe("12:25");
+  });
+
+  it("ignores stray characters and extra digits", () => {
+    expect(normalizeTimeInput("12a25")).toBe("12:25");
+    expect(normalizeTimeInput("122599")).toBe("12:25");
   });
 });

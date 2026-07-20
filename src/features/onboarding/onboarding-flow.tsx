@@ -43,6 +43,7 @@ import {
   applyPlanFeedback,
   createMockGoalArchitectResult,
   defaultSupportAgreementDraft,
+  normalizeTimeInput,
   SupportAgreementDraftSchema,
   type OnboardingAnswers,
   type ProgressFormat,
@@ -69,17 +70,14 @@ function pendingAssumptions(plan: GoalPlan): AssumptionDraft[] {
 }
 
 function suggestedScheduleTimes(plan: GoalPlan): string[] {
+  // Only scan fields that describe the check-in rhythm itself. Narrative fields
+  // — especially `assumptionsNeedingConfirmation` — routinely mention a clock
+  // time in passing ("assuming your day starts at 09:00"), and scanning them
+  // turned those asides into real scheduled sessions the user never chose.
   const humanText = [
-    plan.goalSummary,
-    plan.targetWindow,
     plan.cadence.rationale,
     plan.cadence.completionSignal,
-    ...plan.feasibilityNotes,
-    plan.firstMilestone,
-    plan.bestNextAction,
-    plan.minimumViableAction,
     plan.initialCheckInProposal.rationale,
-    ...plan.assumptionsNeedingConfirmation,
   ].join(" ");
   const mentioned = humanText.match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/gu) ?? [];
   return [...new Set([plan.cadence.preferredCheckInTime, ...mentioned])].slice(
@@ -1273,7 +1271,7 @@ function TimeField({
         required
         className={inputClass}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(normalizeTimeInput(event.target.value))}
       />
     </label>
   );
