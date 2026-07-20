@@ -2,6 +2,8 @@ import type { AppLocale } from "../../i18n/locale";
 import { z } from "zod";
 import {
   LiveGoalArchitectResponseSchema,
+  LiveGoalArchitectRevisionResponseSchema,
+  type LiveGoalPlanAssumptionResponse,
 } from "../../live-checkin/goal-architect-schemas";
 import type { AgentRunResult } from "../../providers/ai/types";
 import type { GoalPlan } from "../../domain/goals/schemas";
@@ -89,5 +91,36 @@ export async function createLiveGoalArchitectResult(options: {
   }
   const payload: unknown = await response.json();
   const parsed = LiveGoalArchitectResponseSchema.parse(payload);
+  return { output: parsed.plan, trace: parsed.trace };
+}
+
+export async function reviseLiveGoalArchitectResult(
+  options: {
+    answers: OnboardingAnswers;
+    currentPlan: GoalPlan;
+    locale: AppLocale;
+    timezone: string;
+    requestId: string;
+    reason: "FEEDBACK" | "ASSUMPTIONS" | "MANUAL_EDIT";
+    userFeedback: string | null;
+    assumptionResponses: LiveGoalPlanAssumptionResponse[];
+  },
+  fetcher: Fetcher = fetch,
+): Promise<AgentRunResult<GoalPlan>> {
+  const response = await fetcher("/api/live/goals/plan/revise", {
+    method: "POST",
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options),
+  });
+  if (!response.ok) {
+    throw new LiveGoalArchitectClientError(
+      response.status,
+      await readFailureCode(response),
+    );
+  }
+  const payload: unknown = await response.json();
+  const parsed = LiveGoalArchitectRevisionResponseSchema.parse(payload);
   return { output: parsed.plan, trace: parsed.trace };
 }

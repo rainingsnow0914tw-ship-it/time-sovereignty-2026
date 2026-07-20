@@ -738,3 +738,23 @@
 - Verification passed: 38 test files passed with five skipped; 144 tests passed
   with nine skipped; ESLint, TypeScript, production build, and diff check all
   passed.
+
+## 2026-07-20 — Real GPT-5.6 plan revision loop
+
+- Replaced the plan-review dead ends with one protected structured revision
+  path. Free-form corrections, assumption answers, and direct plan edits now
+  invoke the real Goal Architect instead of appending an inert local note.
+- Assumptions can be marked `This fits`, `Not true`, or `Change it`; edited
+  assumptions require the user's replacement text. A revision clears answered
+  assumptions and returns only genuinely unresolved ones.
+- The revision call re-evaluates cadence, timing, milestone, next action,
+  hard-day version, completion signal, and remaining assumptions together.
+  It is idempotent, uses the existing paired-device boundary, has a five-minute
+  lease, preserves zero SDK retries, and never silently falls back to mock.
+- A deliberate live contract call rejected the false one-evening-reminder
+  assumption for a three-times-per-day bridge goal. `gpt-5.6-sol` returned a
+  schema-valid plan reflecting 09:00, 14:00, and 19:00 and consumed 1,409
+  tokens. Evidence: `docs/evidence/live-goal-plan-revision-2026-07-20.md`.
+- Verification passed: 40 test files passed with six skipped; 148 tests passed
+  with ten skipped; ESLint, TypeScript, production build, and diff check all
+  passed.

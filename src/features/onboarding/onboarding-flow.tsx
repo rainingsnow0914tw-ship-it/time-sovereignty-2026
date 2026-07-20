@@ -30,6 +30,7 @@ import {
   LiveGoalArchitectClientError,
   LivePairingClientError,
   pairLiveGoalArchitectDevice,
+  reviseLiveGoalArchitectResult,
 } from "./live-goal-architect-client";
 import {
   applyGoalCadenceRecommendation,
@@ -44,6 +45,22 @@ import {
 } from "./model";
 
 type Stage = "goal" | "window" | "why" | "plan" | "support" | "complete";
+
+type AssumptionDraft = {
+  statement: string;
+  disposition: "PENDING" | "CONFIRMED" | "REJECTED" | "EDITED";
+  userNote: string;
+};
+
+type PlanRevisionReason = "FEEDBACK" | "ASSUMPTIONS" | "MANUAL_EDIT";
+
+function pendingAssumptions(plan: GoalPlan): AssumptionDraft[] {
+  return plan.assumptionsNeedingConfirmation.map((statement) => ({
+    statement,
+    disposition: "PENDING",
+    userNote: "",
+  }));
+}
 
 const stageOrder: Stage[] = [
   "goal",
@@ -469,11 +486,15 @@ function PlanReview({
   trace,
   editing,
   concern,
+  assumptionDrafts,
+  busy,
   error,
   onPlanChange,
   onEditingChange,
   onConcernChange,
   onApplyConcern,
+  onAssumptionChange,
+  onRevise,
   onBack,
   onConfirm,
 }: {
@@ -481,11 +502,15 @@ function PlanReview({
   trace: AgentRunTrace;
   editing: boolean;
   concern: string;
+  assumptionDrafts: AssumptionDraft[];
+  busy: boolean;
   error: string | null;
   onPlanChange: (plan: GoalPlan) => void;
   onEditingChange: (editing: boolean) => void;
   onConcernChange: (concern: string) => void;
   onApplyConcern: () => void;
+  onAssumptionChange: (index: number, draft: AssumptionDraft) => void;
+  onRevise: (reason: PlanRevisionReason) => void;
   onBack: () => void;
   onConfirm: () => void;
 }) {
@@ -551,10 +576,11 @@ function PlanReview({
           />
           <button
             type="button"
-            onClick={() => onEditingChange(false)}
+            disabled={busy}
+            onClick={() => onRevise("MANUAL_EDIT")}
             className={`${secondaryButtonClass} justify-self-start`}
           >
-            Done adjusting
+            {busy ? "GPT-5.6 is reviewing…" : "Ask GPT-5.6 to review my edits"}
           </button>
         </div>
       ) : (
@@ -613,13 +639,73 @@ function PlanReview({
         <summary className="cursor-pointer font-semibold text-[#43554d]">
           Assumptions to confirm ({plan.assumptionsNeedingConfirmation.length})
         </summary>
-        <ul className="mt-3 space-y-2 pl-5 text-[#6a746f]">
-          {plan.assumptionsNeedingConfirmation.map((assumption) => (
-            <li key={assumption} className="list-disc leading-6">
-              {assumption}
-            </li>
+        <div className="mt-4 space-y-3">
+          {assumptionDrafts.map((draft, index) => (
+            <div
+              key={`${index}-${draft.statement}`}
+              className="rounded-xl border border-[#dde4df] bg-white p-3"
+            >
+              <p className="leading-6 text-[#56655e]">{draft.statement}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {([
+                  ["CONFIRMED", "This fits"],
+                  ["REJECTED", "Not true"],
+                  ["EDITED", "Change it"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      onAssumptionChange(index, {
+                        ...draft,
+                        disposition: value,
+                        userNote: value === "EDITED" ? draft.userNote : "",
+                      })
+                    }
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                      draft.disposition === value
+                        ? "border-[#70927f] bg-[#e7f1e9] text-[#2f5c48]"
+                        : "border-[#d7ded9] bg-white text-[#5f6e66]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {draft.disposition === "EDITED" && (
+                <input
+                  className={`${inputClass} mt-3`}
+                  placeholder="Write what is true instead…"
+                  value={draft.userNote}
+                  onChange={(event) =>
+                    onAssumptionChange(index, {
+                      ...draft,
+                      userNote: event.target.value,
+                    })
+                  }
+                />
+              )}
+            </div>
           ))}
-        </ul>
+          {assumptionDrafts.length > 0 && (
+            <button
+              type="button"
+              disabled={
+                busy ||
+                !assumptionDrafts.some(
+                  (draft) =>
+                    draft.disposition !== "PENDING" &&
+                    (draft.disposition !== "EDITED" ||
+                      draft.userNote.trim().length > 0),
+                )
+              }
+              onClick={() => onRevise("ASSUMPTIONS")}
+              className={`${secondaryButtonClass} disabled:cursor-not-allowed disabled:opacity-45`}
+            >
+              {busy ? "GPT-5.6 is revising…" : "Revise the plan from my answers"}
+            </button>
+          )}
+        </div>
       </details>
 
       <details className="mt-3 rounded-2xl border border-[#e1e5e1] bg-white p-4 text-sm">
@@ -635,11 +721,11 @@ function PlanReview({
         />
         <button
           type="button"
-          disabled={concern.trim().length < 2}
+          disabled={busy || concern.trim().length < 2}
           onClick={onApplyConcern}
           className={`${secondaryButtonClass} mt-3 disabled:cursor-not-allowed disabled:opacity-45`}
         >
-          Add this to the plan
+          {busy ? "GPT-5.6 is revising…" : "Ask GPT-5.6 to revise the plan"}
         </button>
       </details>
 
@@ -1284,12 +1370,19 @@ export function OnboardingFlow({
     useState<LocalOnboardingRecord | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
   const [concern, setConcern] = useState("");
+  const [assumptionDrafts, setAssumptionDrafts] = useState<AssumptionDraft[]>(
+    [],
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pairingRequired, setPairingRequired] = useState(false);
   const [pairingCode, setPairingCode] = useState("");
   const [deviceLabel, setDeviceLabel] = useState("Android PWA");
   const liveRequestRef = useRef<{
+    fingerprint: string;
+    requestId: string;
+  } | null>(null);
+  const revisionRequestRef = useRef<{
     fingerprint: string;
     requestId: string;
   } | null>(null);
@@ -1335,6 +1428,7 @@ export function OnboardingFlow({
         : await createMockGoalArchitectResult(completedAnswers);
       setPlan(result.output);
       setTrace(result.trace);
+      setAssumptionDrafts(pendingAssumptions(result.output));
       setPairingRequired(false);
       setSupport((current) =>
         applyGoalCadenceRecommendation(current, result.output),
@@ -1395,16 +1489,104 @@ export function OnboardingFlow({
     }
   };
 
-  const applyConcern = () => {
+  const revisePlan = async (reason: PlanRevisionReason) => {
     if (!plan) return;
-    try {
-      setPlan(applyPlanFeedback(plan, concern));
-      setConcern("");
-      setEditingPlan(true);
-      setError(null);
-    } catch {
+    const userFeedback = reason === "FEEDBACK" ? concern.trim() : null;
+    const assumptionResponses = assumptionDrafts
+      .filter((draft) => draft.disposition !== "PENDING")
+      .map((draft) => ({
+        statement: draft.statement,
+        disposition: draft.disposition as "CONFIRMED" | "REJECTED" | "EDITED",
+        userNote:
+          draft.disposition === "EDITED" ? draft.userNote.trim() || null : null,
+      }));
+
+    if (reason === "FEEDBACK" && (!userFeedback || userFeedback.length < 2)) {
       setError("Please describe what feels wrong in at least two characters.");
+      return;
     }
+    if (
+      reason === "ASSUMPTIONS" &&
+      (assumptionResponses.length === 0 ||
+        assumptionResponses.some(
+          (response) =>
+            response.disposition === "EDITED" && !response.userNote,
+        ))
+    ) {
+      setError("Please answer or correct at least one assumption first.");
+      return;
+    }
+
+    if (!liveGoalArchitect) {
+      const mockFeedback =
+        userFeedback ??
+        assumptionResponses
+          .map((response) =>
+            `${response.statement}: ${response.userNote ?? response.disposition}`,
+          )
+          .join("; ") ??
+        "Manual plan revision requested.";
+      setPlan(applyPlanFeedback(plan, mockFeedback));
+      setConcern("");
+      setEditingPlan(false);
+      setError(null);
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const payload = {
+        answers,
+        currentPlan: plan,
+        locale,
+        timezone:
+          Intl.DateTimeFormat().resolvedOptions().timeZone ||
+          defaultSupportAgreementDraft.timezone,
+        reason,
+        userFeedback,
+        assumptionResponses,
+      };
+      const fingerprint = JSON.stringify(payload);
+      if (revisionRequestRef.current?.fingerprint !== fingerprint) {
+        revisionRequestRef.current = {
+          fingerprint,
+          requestId: crypto.randomUUID(),
+        };
+      }
+      const result = await reviseLiveGoalArchitectResult({
+        ...payload,
+        requestId: revisionRequestRef.current.requestId,
+      });
+      setPlan(result.output);
+      setTrace(result.trace);
+      setAssumptionDrafts(pendingAssumptions(result.output));
+      setSupport((current) =>
+        applyGoalCadenceRecommendation(current, result.output),
+      );
+      setConcern("");
+      setEditingPlan(false);
+      setPairingRequired(false);
+      revisionRequestRef.current = null;
+    } catch (caught) {
+      if (
+        caught instanceof LiveGoalArchitectClientError &&
+        caught.status === 401
+      ) {
+        setPairingRequired(true);
+        setError("This private device needs to be paired again before GPT-5.6 can revise the plan.");
+      } else {
+        setError(
+          "GPT-5.6 stopped safely before changing the plan. Retry keeps the same request identity.",
+        );
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const applyConcern = () => {
+    void revisePlan("FEEDBACK");
   };
 
   const confirmSupport = (event: FormEvent<HTMLFormElement>) => {
@@ -1534,11 +1716,23 @@ export function OnboardingFlow({
         trace={trace!}
         editing={editingPlan}
         concern={concern}
+        assumptionDrafts={assumptionDrafts}
+        busy={busy}
         error={error}
         onPlanChange={setPlan}
         onEditingChange={setEditingPlan}
         onConcernChange={setConcern}
         onApplyConcern={applyConcern}
+        onAssumptionChange={(index, draft) =>
+          setAssumptionDrafts((current) =>
+            current.map((item, itemIndex) =>
+              itemIndex === index ? draft : item,
+            ),
+          )
+        }
+        onRevise={(reason) => {
+          void revisePlan(reason);
+        }}
         onBack={() => setStage("why")}
         onConfirm={() => {
           setError(null);

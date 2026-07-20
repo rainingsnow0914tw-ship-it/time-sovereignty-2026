@@ -9,15 +9,16 @@
 - Devpost 已於 2026-07-20 07:51 +08:00 正式提交，作品頁為 https://devpost.com/software/chief-of-staff-sm5evr；提交基線為 `20ca832`，標記 `v1.0.0-submitted`，截止前仍可編輯。
 - 長期目標第一段資料契約已完成：多目標 workspace、多時段排程、Plan revision、結構化出勤與無內容刪除 tombstone；Decision 0017 已接受。
 - 受保護的雲端目標後端已完成：穩定 owner 跨 session 保存、Save/List/Open、狀態轉換、刪除、Cloud Task 取消與晚到回呼圍欄。
+- 真 GPT-5.6 計畫修訂迴路已完成：自由回饋、逐條假設確認／否定／改寫及手動編輯都會重新呼叫結構化 Goal Architect，不再只是把文字附註到本機。
 
 # 正在做
 
-- 已提交 V1 並凍結正式基線；正在 `codex/longitudinal-goal-loop` 把假設確認、錯誤回饋與調整計畫接回真 GPT-5.6 重規劃。
+- 已提交 V1 並凍結正式基線；正在 `codex/longitudinal-goal-loop` 建立手機「我的目標」管理、草稿復原、24 小時及多時段設定。
 
 # 下一步
 
-- 第一個動作：新增 plan revision 結構化請求與受保護 endpoint，讓使用者逐條處理假設或提供修正後，由 GPT-5.6 產生下一版計畫。
-- 再完成手機「我的目標」頁與草稿復原，最後接上出勤和只維持下一筆 Cloud Task 的長期閉環。
+- 第一個動作：讓確認後的計畫寫入雲端 goal workspace，並建立可重新開啟、暫停、完成及刪除的「我的目標」頁。
+- 再完成草稿復原、24 小時／多時段設定，最後接上出勤和只維持下一筆 Cloud Task 的長期閉環。
 - 所有新功能先走 tag-only 預覽與實機驗收；正式 V1 流量在驗收前不動。
 
 # 已知問題
@@ -25,7 +26,7 @@
 - 公開 Guest Lane 尚未實作；依 Decision 0016 為條件項，不得延誤影片與提交。
 - 背景推播與鎖定畫面震動未宣稱完成；私人真實報到需要 PWA 開啟輪詢。
 - Devpost 已正式提交；後續編輯必須在 2026-07-22 08:00 +08:00 前完成，提交基線不得因 V2 施工失效。
-- 尚無雲端多目標管理、草稿復原、Plan revision UI、出勤頁或可自行續接到目標期限的排程循環；目前只保存單一瀏覽器確認紀錄與單次／決策後跟進。
+- 雲端多目標後端已有契約與 API，但手機尚無目標管理頁、草稿復原、多時段編輯、出勤頁或可自行續接到目標期限的排程循環。
 - `docs/EMERGENCY_HANDOFF_ANDROID_FINAL_2026-07-17.md` 與九張 `docs/LOCAL_CHEATSHEET_*.md` 為 local-only，不得進公開 commit。
 
 # 最近測試結果
@@ -38,7 +39,8 @@
 - 2026-07-20 07:51 +08:00：Devpost 顯示 `Project submitted!`，公開作品頁顯示 `Submitted to OpenAI Build Week`；提交證據圖與文字紀錄已保存。
 - 2026-07-20 07:57 +08:00：長期目標契約 6 項新測試通過；全套 33 files passed／5 skipped、131 tests passed／9 skipped；lint、typecheck、production build、`git diff --check` 全通過。
 - 2026-07-20 08:10 +08:00：雲端目標 CRUD、穩定 owner、任務取消與晚到回呼圍欄完成；全套 38 files passed／5 skipped、144 tests passed／9 skipped；lint、typecheck、production build、`git diff --check` 全通過。
+- 2026-07-20 08:25 +08:00：真 GPT-5.6 Plan revision 契約通過，模型 `gpt-5.6-sol`、1,409 tokens、零 SDK retries，拒絕的一次提醒假設已移除，09:00／14:00／19:00 三時段均反映；全套 40 files passed／6 skipped、148 tests passed／10 skipped，lint、typecheck、production build、`git diff --check` 全通過。
 
 # 最後更新時間
 
-- 2026-07-20 08:10 +08:00
+- 2026-07-20 08:25 +08:00
