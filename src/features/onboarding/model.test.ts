@@ -7,6 +7,7 @@ import {
   defaultSupportAgreementDraft,
   normalizeTimeInput,
   OnboardingAnswersSchema,
+  previewNextCheckIn,
 } from "./model";
 
 describe("Phase 2 onboarding model", () => {
@@ -144,5 +145,77 @@ describe("check-in time input on a numeric keypad", () => {
   it("ignores stray characters and extra digits", () => {
     expect(normalizeTimeInput("12a25")).toBe("12:25");
     expect(normalizeTimeInput("122599")).toBe("12:25");
+  });
+});
+
+describe("next check-in preview", () => {
+  const now = new Date("2026-07-20T05:00:00.000Z"); // 13:00 in Asia/Macau
+  const support = {
+    ...defaultSupportAgreementDraft,
+    checkInFrequency: "DAILY" as const,
+    timezone: "Asia/Macau",
+    quietStart: "22:30",
+    quietEnd: "08:00",
+  };
+  const endOfAfternoon = "2026-07-20T10:00:00.000Z"; // 18:00 in Asia/Macau
+
+  it("states the instant the backend will really schedule", () => {
+    const preview = previewNextCheckIn({
+      scheduleTimes: ["15:00"],
+      support,
+      targetEndAt: endOfAfternoon,
+      now,
+    });
+
+    expect(preview.kind).toBe("SCHEDULED");
+    expect(preview.kind === "SCHEDULED" && preview.at).toBe(
+      "2026-07-20T07:00:00.000Z",
+    );
+  });
+
+  it("warns when every chosen time falls outside the goal window", () => {
+    // 12:00 already passed today, and tomorrow's 12:00 is after the goal ends,
+    // so the backend would silently fall back to the plan's proposal.
+    const preview = previewNextCheckIn({
+      scheduleTimes: ["12:00"],
+      support,
+      targetEndAt: endOfAfternoon,
+      now,
+    });
+
+    expect(preview.kind).toBe("UNREACHABLE");
+  });
+
+  it("rolls to tomorrow when the goal has no end time", () => {
+    const preview = previewNextCheckIn({
+      scheduleTimes: ["12:00"],
+      support,
+      targetEndAt: null,
+      now,
+    });
+
+    expect(preview.kind === "SCHEDULED" && preview.at).toBe(
+      "2026-07-21T04:00:00.000Z",
+    );
+  });
+
+  it("stays silent while a time is still being typed", () => {
+    expect(
+      previewNextCheckIn({ scheduleTimes: ["1"], support, targetEndAt: null, now }).kind,
+    ).toBe("NONE");
+    expect(
+      previewNextCheckIn({ scheduleTimes: [], support, targetEndAt: null, now }).kind,
+    ).toBe("NONE");
+  });
+
+  it("does not guess a weekly goal's allowed weekday", () => {
+    const preview = previewNextCheckIn({
+      scheduleTimes: ["15:00"],
+      support: { ...support, checkInFrequency: "WEEKLY" },
+      targetEndAt: null,
+      now,
+    });
+
+    expect(preview.kind).toBe("NONE");
   });
 });

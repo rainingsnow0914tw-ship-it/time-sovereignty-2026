@@ -10,6 +10,7 @@ import {
   type GoalCadence,
   type GoalPlan,
 } from "../../domain/goals/schemas";
+import { nextGoalOccurrence } from "../../live-checkin/goal-schedule";
 import { MockAiProvider } from "../../providers/ai/mock-provider";
 import {
   OnboardingAnswersSchema,
@@ -277,4 +278,73 @@ export function normalizeTimeInput(raw: string): string {
   const digits = raw.replace(/\D/gu, "").slice(0, 4);
   if (digits.length <= 2) return digits;
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+const CLOCK_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/u;
+
+export type NextCheckInPreview =
+  | { kind: "NONE" }
+  | { kind: "SCHEDULED"; at: string; label: string }
+  | { kind: "UNREACHABLE" };
+
+// The onboarding screen used to show whatever time the user typed, while the
+// backend quietly scheduled something else when that time could not occur —
+// for example a slot that had already passed, or one falling after the goal's
+// own end time. This runs the backend's own arithmetic so the screen can state
+// the truth before the goal is saved.
+export function previewNextCheckIn(options: {
+  scheduleTimes: string[];
+  support: SupportAgreementDraft;
+  targetEndAt: string | null;
+  now?: Date;
+}): NextCheckInPreview {
+  const { scheduleTimes, support, targetEndAt } = options;
+  const slots = scheduleTimes.filter((time) => CLOCK_PATTERN.test(time));
+  if (slots.length === 0) return { kind: "NONE" };
+  // A weekly goal's allowed weekday is derived from the plan by the backend, so
+  // previewing it here would be guesswork rather than the same calculation.
+  if (support.checkInFrequency === "WEEKLY") return { kind: "NONE" };
+  if (!CLOCK_PATTERN.test(support.quietStart)) return { kind: "NONE" };
+  if (!CLOCK_PATTERN.test(support.quietEnd)) return { kind: "NONE" };
+
+  try {
+    const at = nextGoalOccurrence({
+      schedule: {
+        version: 1,
+        mode:
+          support.checkInFrequency === "CUSTOM"
+            ? "AI_LED"
+            : support.checkInFrequency,
+        timezone: support.timezone,
+        slots: slots.map((localTime, index) => ({
+          id: `preview-slot-${index + 1}`,
+          localTime,
+          label: null,
+        })),
+        weekdays: [],
+        quietHours: {
+          start: support.quietStart,
+          end: support.quietEnd,
+          timezone: support.timezone,
+        },
+        targetEndAt,
+        nextOccurrenceAt: null,
+      },
+      after: options.now ?? new Date(),
+    });
+    if (!at) return { kind: "UNREACHABLE" };
+    return {
+      kind: "SCHEDULED",
+      at,
+      label: new Intl.DateTimeFormat("en-GB", {
+        timeZone: support.timezone,
+        dateStyle: "medium",
+        timeStyle: "short",
+        hour12: false,
+      }).format(new Date(at)),
+    };
+  } catch {
+    // An unusable timezone string is a transient typing state, not a warning.
+    return { kind: "NONE" };
+  }
 }

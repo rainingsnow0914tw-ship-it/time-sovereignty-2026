@@ -111,6 +111,8 @@ const zhTW: Record<string, string> = {
   "review every": "每隔",
   "This is a recommendation, not permission. You can change every field below.": "這只是建議，不是授權；下方每個欄位都可以由你修改。",
   "Check in at": "報到時間",
+  "These times cannot happen before this goal ends, so the plan's suggested time will be used instead.":
+    "這些時段在此目標結束前都不會發生，系統將改用計畫建議的時間。",
   "Quiet from": "安靜時段開始",
   "Quiet until": "安靜時段結束",
   "Intervention style": "介入風格",

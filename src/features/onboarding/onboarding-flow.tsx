@@ -44,6 +44,7 @@ import {
   createMockGoalArchitectResult,
   defaultSupportAgreementDraft,
   normalizeTimeInput,
+  previewNextCheckIn,
   SupportAgreementDraftSchema,
   type OnboardingAnswers,
   type ProgressFormat,
@@ -881,6 +882,16 @@ function SupportAgreementForm({
     });
   };
 
+  // Show the instant the backend will actually schedule, using the same pure
+  // arithmetic the backend uses. Without this the screen can display a time the
+  // schedule silently discards — for example a slot that already passed, or one
+  // that falls after the goal's own end time.
+  const nextOccurrencePreview = previewNextCheckIn({
+    scheduleTimes,
+    support: value,
+    targetEndAt: recommendation?.targetEndAt ?? null,
+  });
+
   const toggleProgress = (format: ProgressFormat) => {
     onChange({
       ...value,
@@ -1005,6 +1016,18 @@ function SupportAgreementForm({
                 </div>
               ))}
             </div>
+            {nextOccurrencePreview.kind === "SCHEDULED" && (
+              <p className="mt-3 text-xs leading-5 text-[#3f5a4a]">
+                Next check-in
+                {": "}
+                {nextOccurrencePreview.label}
+              </p>
+            )}
+            {nextOccurrencePreview.kind === "UNREACHABLE" && (
+              <p className="mt-3 text-xs leading-5 text-[#8a432c]">
+                {"These times cannot happen before this goal ends, so the plan's suggested time will be used instead."}
+              </p>
+            )}
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <TimeField
@@ -1493,6 +1516,7 @@ export function OnboardingFlow({
     requestId: string;
     record: LocalOnboardingRecord;
   } | null>(null);
+  const journeyStartRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const saved = createLocalOnboardingRepository(
@@ -1998,11 +2022,20 @@ export function OnboardingFlow({
                 )
               ) {
                 resetJourney();
+                // The button sits above the goal list while the fresh question
+                // renders below it, so without this the screen looks unchanged
+                // and the tap reads as "nothing happened".
+                requestAnimationFrame(() => {
+                  journeyStartRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                });
               }
             }}
           />
         )}
-        {content}
+        <div ref={journeyStartRef}>{content}</div>
       </>
     </Shell>
   );
