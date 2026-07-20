@@ -15,6 +15,35 @@
 - 待真人執行：QA 清單第 6 步（實際語音對話）。
 - 將真人測試揭露的 AI／UX 問題改為真 GPT-5.6 協商：多時段 cadence、逐條假設確認、計畫修訂、時區文字、回報 intent 按鈕與 PWA 版本更新。
 
+# 下一次迭代要做的事（Chloe 2026-07-21 指定）
+
+依優先順序。理由與 Chloe 原話見 `docs/PRODUCT_DIRECTION.md` 決策四。
+
+| # | 要做什麼 | 估計 | 解決的痛 |
+| --- | --- | --- | --- |
+| 1 | **web_search**：討論中遇到不知道的事就去查 | 半天–1 天 | 「遇到困難能找到答案」 |
+| 2 | **對話摘要**：討論結束自動把重點填進回報文字框 | 2–3 小時 | 「把這一段放在下面的框架裡面」 |
+
+**第 1 項的已知條件**（已於 2026-07-21 查證，不必重查）：
+- 專案使用 Responses API（`client.responses.parse`），目前 `tool_choice: "none"`、
+  `tools: []`，從未使用過任何工具。
+- `web_search` 內建工具支援 gpt-5.4 以後的模型，含 gpt-5.6。新整合使用
+  `{ "type": "web_search" }`；`web_search_preview` 為舊版，不支援 filters、
+  external_web_access、return_token_budget。
+- `return_token_budget` 可控制搜尋深度與成本，應用於避免高額搜尋。
+- 架構建議：語音層判斷「需要查」→ 呼叫後端 → GPT-5.6 帶 web_search → 結果交回
+  語音層唸出 → 使用者決定是否採納。**語音層本身不得直接寫入任何資料。**
+
+**第 2 項的已知條件**：
+- 使用者說的話已透過 `conversation.item.input_audio_transcription.completed`
+  轉錄並寫進 `setReply`（回報文字框）。
+- 缺的是「整段對話結束時產生重點摘要」，而非逐句轉錄覆蓋。需決定摘要由語音層
+  產生，或送 GPT-5.6 產生。
+- Chloe 要求保留「不討論、直接打字或拍照」的路徑，摘要不得覆蓋她自己輸入的內容。
+
+**成本前提**：階段 1（雙向對話）已上線，語音成本必然高於原本的單向朗讀。
+Chloe 指示先實際使用數次、觀察帳單，再決定是否進入第 1 項。
+
 # 下一步
 
 - **第一個動作：依 `docs/QA_CHECKLIST_2026-07-20_VOICE_ANSWER.md` 做真人手機 QA。**
