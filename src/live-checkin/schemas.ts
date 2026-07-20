@@ -168,6 +168,12 @@ export const LiveDeviceSessionSchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
+    // Written by the parallel `codex/longitudinal-goal-loop` line, which
+    // deployed to the same service and database. This line does not use it,
+    // but the field is accepted and preserved so a session created there stays
+    // readable here and is never stripped on write. Removing it would break
+    // that line's pairing the moment it deploys again.
+    ownerId: EntityIdSchema.optional(),
     deviceLabel: z.string().trim().min(1).max(120),
     expiresAt: IsoDateTimeSchema,
     activeCheckInId: EntityIdSchema.nullable(),
