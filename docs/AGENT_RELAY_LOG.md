@@ -69,6 +69,8 @@
 | `e14b273` | **使用者改過的報到時間第一次不生效**。建立目標時首次排程直接抄 AI 提議的 instant，只有第二次以後才用使用者的 slots。已改為一律由 slots 推導，並把排程算術抽成純函式模組 `goal-schedule.ts`，讓首次與後續共用同一份實作。見 Decision 0018。 |
 | `2e5baf0` | Decision 0018 與 PROJECT_STATE 更新。 |
 | `a62bd9b` | 建立本檔（接力簽名制），並在 `AGENTS.md` 加入「Delivery cadence and human feedback」與續傳協議第 5 條。 |
+| `8cda353` | ①`+ New goal` 按鈕在畫面上方、新問卷長在下方且不捲動，使用者感受是「按了沒反應」（現自動捲動）②設定頁顯示使用者輸入的時間，但後端可能因該時段已過或落在目標窗口外而靜默改用計畫提議（現於設定頁執行**後端同一份純函式** `nextGoalOccurrence`，直接顯示真正的下次報到時刻，或說明所選時段無法發生）。 |
+| `e92ec1b` | `cadence.additionalCheckInTimes`：讓模型結構化表達「一天多個時段」，取代從計畫散文猜時間的橋接。見 Decision 0019。實測七份計畫顯示舊的掃描只在 `assumptionsNeedingConfirmation` 命中過，等於從未真正提供多時段功能，只製造誤報。 |
 | `e13e52f` | 三個只有真人會撞到的缺陷：①時間欄位要求 `HH:MM` 卻宣告 `inputMode="numeric"`，手機數字鍵盤**沒有冒號鍵**，格式根本打不出來（現改為輸入數字自動補冒號）②時段建議掃描整份計畫的時鐘字串，實測只有 `assumptionsNeedingConfirmation` 命中，把「假設你 09:00 開始」這種順口話變成真實報到時段（現只掃描描述節奏的欄位）③`GoalCadenceTimingError` 讓使用者盲按三次、每次都付 token（現把違規內容回饋給模型自動重試一次；傳輸失敗仍不重試）。 |
 
 ### 驗證到什麼程度

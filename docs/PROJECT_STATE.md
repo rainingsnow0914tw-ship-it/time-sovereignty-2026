@@ -17,8 +17,10 @@
 
 - Phase 6 真手機驗收：B 組（真實循環）已於 2026-07-20 在 `00058-mem` 完整通過，證據見 `docs/evidence/phase-6-real-phone-goal-loop-2026-07-20.md`。
 - C 組多目標隔離進行中。第二個目標（肩頸伸展 `goal-5772a0a4`）已建立，與喝水目標 `goal-1683dbc3` 為兩份獨立文件、各自的 `nextCheckInId`，且伸展計畫全文未引用喝水進度或出勤。
-- C 組期間連續抓到三個 bug，皆已修：時間輸入失焦（`f862c55`）、首次排程忽略使用者設定（`e14b273`，Decision 0018）、以及先前的 trace 投影上限（`4522757`）。正在部署含首次排程修正的 revision。
-- 尚未驗證：暫停其一另一續排、刪除後不再通知、以及伸展目標報到時的記憶隔離（需等該目標實際報到）。
+- C 組「刪除後不再通知」已通過：2026-07-20 13:00:00 +08:00，已刪除目標的 Cloud Task 準時送達並被 `isDeliverable` 擋下，雲端記錄 `[live-check-in] task ignored for inactive goal`，手機無任何動靜。`isDeliverable` 為三重防護（tombstone 存在／workspace 不存在／status 非 ACTIVE），順帶涵蓋「暫停」情形。
+- C 組「不串味」已有計畫階段證據：伸展目標的完整計畫未引用喝水目標的任何進度或出勤。報到階段的記憶隔離仍待該目標實際報到後確認。
+- C 組期間連續抓到八個 bug，皆已修：trace 投影上限（`4522757`）、時間輸入失焦（`f862c55`）、首次排程忽略使用者設定（`e14b273`，Decision 0018）、數字鍵盤打不出冒號／假設句時間變成時段／計畫失敗盲按（`e13e52f`）、`+ New goal` 無回饋／排程時間顯示與實際不符（`8cda353`）、契約無法表達多時段（`e92ec1b`，Decision 0019）。
+- 尚未驗證：暫停其一另一續排（機制已在 `isDeliverable` 涵蓋但未實測）、報到階段的記憶隔離。
 
 # 下一步
 
@@ -63,9 +65,9 @@ Chloe 2026-07-20 定義的核心需求原話：
 - 手機已有目標管理、草稿復原、多時段編輯與最近五筆出勤視覺化；長期排程循環尚未在真實雲端／手機驗收。
 - 真手機驗收已連續抓到三個「舊資料／舊上限撞新契約」的 bug：①回訪首頁誤判為模擬入口（`b850407`）②舊 session 的 `goalStates` 淘汰欄位讓 `/api/live/goals` 回 400（`5bfd599`）③客戶端 trace 投影上限 `max(3)` 擋掉四段 goal-led trace，使 `/api/live/check-ins/current` 回 400、整個「今天／報到／出勤」區塊顯示「受保護的連線暫時無法使用」（`4522757`）。同型風險尚未全面盤點，後續改契約時應優先檢查客戶端投影是否與文件層上限同步。
 - `firestore-repository.ts` 的 `findCurrent`（activeCheckInId 分支）與 `findById` 使用 `.parse()`，單筆壞文件會讓整條讀取 API 失敗；同檔案的 fallback 掃描已用 `.safeParse()`。韌性落差已知，未修，因 Decision 0016 凍結期間僅處理實際阻斷驗收的問題。
-- Goal Architect 契約只有單一 `preferredCheckInTime`，無法結構化表達多時段。`e13e52f` 已把 `suggestedScheduleTimes` 的掃描範圍收窄到描述節奏的欄位，止住了「假設句裡的時間變成真實時段」，但契約層的缺口仍在；真正的解法是讓模型輸出時段陣列，會動到凍結中的契約。見 Decision 0018「Not decided here」。
-- `+ New goal` 按鈕位於畫面上方，重置後的新問卷長在下方且不自動捲動，使用者感受為「按了沒反應」（Chloe 2026-07-20 實遇）。未修；評審第一印象風險。
-- 使用者可設定一個超出目標窗口的時段，系統靜默改用計畫提議的 fallback，畫面顯示與實際排程不一致且無提示（Chloe 2026-07-20 實遇：顯示 `12:10`、實排 `11:49:30`，該目標 `targetEndAt` 僅五分鐘）。fallback 本身是 Decision 0018 規格，缺的是當場告知。未修。
+- ~~Goal Architect 契約無法表達多時段~~：已修（`e92ec1b`，Decision 0019）。`cadence.additionalCheckInTimes` 可載最多七個額外時段，文字掃描退居舊計畫的相容 fallback。**尚未經真機驗證**：需要一個模型真的判定為多時段的目標，確認它輸出該欄位且 UI 正確帶入。
+- ~~`+ New goal` 按了沒反應~~：已修（`8cda353`），按下後自動捲動至新問卷。
+- ~~排程時間顯示與實際不符~~：已修（`8cda353`），設定頁改用後端同一份純函式計算並顯示「下次報到」實際時刻；若所選時段在目標窗口內無法發生，當場說明將改用計畫建議時間。
 - 真機驗證的方法論限制：以 `adb shell input text` 模擬輸入可驗證程式邏輯，但會繞過真實鍵盤，無法暴露「格式打不出來」這類可用性缺陷（2026-07-20 實證，見 `docs/AGENT_RELAY_LOG.md`）。使用者需親手操作的功能，最終證據只能來自人。
 - Goal Architect 會在計畫中要求使用者執行介面不支援的操作（例如「每完成一次記錄 1／5」）。模型不知道 UI 的能力邊界，這是「說一套做一套」的來源之一。最小修法是在 prompt 加上能力邊界約束（約 30 分鐘、不動契約、且與上述「產品方向」第 1 項不衝突，功能做出後可移除該約束）；2026-07-20 Chloe 裁示先不加，以免與未來的真實功能互相牴觸。
 - Phase 6 C 組「首次排程採用使用者設定」尚未取得真機直接證據：三次嘗試皆因設定的時段在存檔前就已過期而落入 Decision 0018 的 fallback（程式判斷正確）。邏輯已由 `goal-workspace.test.ts` 的回歸測試涵蓋。若要補真機證據，設定一個距離現在一小時以上、且在目標窗口內的時段，存檔後直接讀 `gcloud tasks list` 的 `SCHEDULE_TIME` 即可判定，**不需要等待報到實際送達**。
@@ -95,6 +97,9 @@ Chloe 2026-07-20 定義的核心需求原話：
 
 - 2026-07-20 12:29 +08:00：修掉三個只有真人會撞到的缺陷（`e13e52f`）：時間欄位在數字鍵盤上打不出冒號、時段建議把假設句裡的時間變成真實時段、`GoalCadenceTimingError` 讓使用者盲按且每次付費。新增 6 項測試（輸入正規化 4、重試行為 2）；全套 46 files passed／6 skipped、170 tests passed／10 skipped；lint、typecheck、production build 全通過。附帶發現：`GoalArchitectOutputSchema` 本身已擋下「報到晚於目標截止」，能走到時間圍欄的只有非未來時間或超出 cadence 最大延遲。
 
+- 2026-07-20 13:00:00 +08:00：C 組「刪除後不再通知」實證。已刪目標的 Cloud Task 準時送達，回呼端 `isDeliverable` 判定不可投遞，雲端記錄 `task ignored for inactive goal`，check-in 未轉為 `PENDING`，手機無通知。
+- 2026-07-20 14:25 +08:00：修掉三個使用者可見缺陷並擴充節奏契約——`+ New goal` 自動捲動、設定頁顯示真實的下次報到時刻（與後端共用同一份純函式）、`cadence.additionalCheckInTimes` 讓模型結構化表達多時段（Decision 0019）。`suggestedScheduleTimes` 與 `previewNextCheckIn` 移入 `features/onboarding/model.ts` 以便直接測試。全套 46 files passed／6 skipped、178 tests passed／10 skipped；lint、typecheck、production build 全通過。附帶發現：Responses 結構化輸出不接受僅 `.optional()` 的欄位，必須同時 `.nullable()`。
+
 # 最後更新時間
 
-- 2026-07-20 12:31 +08:00
+- 2026-07-20 14:28 +08:00
