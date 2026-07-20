@@ -36,9 +36,11 @@
   被接受且在寫回時保留（不刪除、不改寫任何既有文件）；`goalStates` 原本就有
   `.default({})`。跨線相容性由 `session-cross-line-compatibility.test.ts` 五項測試
   涵蓋，其中一項確認真正未知的欄位仍會被拒絕，嚴格性未被弱化。
-  **仍未解決的部分**：其他集合（`live_checkins`、`live_goal_workspaces` 等）的跨線
-  相容性尚未逐一驗證；本線在 `live_checkins` 上是否也會遇到同型問題，需要真人 QA
-  走過一次才知道。兩線是否合併、或長期只保留一線，屬產品取捨，未決定。
+  `live_checkins` 的同型問題已於 `4ebcc45` 一併預先修復（該集合的文件同樣可能帶
+  `ownerId`，一旦被 `activeCheckInId`／`lastConfirmedCheckInId` 指到就會使整個
+  current 請求失敗）。跨線相容共七項測試。
+  **仍未解決的部分**：`live_goal_workspaces`、`live_memories` 等其他集合尚未逐一
+  比對。兩線是否合併、或長期只保留一線，屬產品取捨，未決定。
 - 安裝式 PWA 曾保留舊 client：舊輪詢沒有 `goalId` 而連續 400，舊 check-in confirm 409；本輪用版本化導航恢復為 `current?goalId=...` 200，但需產品化更新策略。
 - 「每天三次橋式」目前仍會被單一 `preferredCheckInTime` 壓成每天一次；行動提醒與每日回顧需分開並允許 AI 產生多時段／彈性規則。
 - `Assumptions to confirm`、`Tell me what feels wrong`、`Adjust plan` 仍不是完整的 GPT-5.6 修訂閉環。
@@ -48,6 +50,12 @@
 - tier-specific Android notification ID 已通過單元測試與 APK 建置；在簡化為「能響且一定能停」後，未再要求重跑多級全螢幕雲端驗收，不得對外宣稱本輪已重驗全螢幕。
 
 # 最近測試結果
+
+- 2026-07-20 16:53 +08:00：跨線 session 相容修正（`207ba57`）。全套 178 tests passed／9 skipped；lint、typecheck、production build 全通過。
+- 2026-07-20 16:59 +08:00（實機，S25）：部署 `00073-bij` 後 `/api/live/session` 與 `/api/live/check-ins/current` 由 400 恢復為 200，PWA 的「受保護的連線暫時無法使用」消失，**且不需要重新配對**。
+- 2026-07-20 17:01–17:03 +08:00（實機，S25）：以「開始你的真實行動時段」排程 2 分鐘後報到，Cloud Task `live-live-1784538082884-c608f145` 於 `09:03:22Z` 準時送達（`[live-check-in] task delivered`），PWA 出現完整回報介面：高擬真語音、標準語音、語音回覆、文字框與照片附件，訊息正確引用使用者的真實目標內容。
+- 2026-07-20 17:05 +08:00：`live_checkins` 跨線相容修正（`4ebcc45`）。全套 180 tests passed／9 skipped；lint、typecheck 全通過。
+- **未取得的證據**：實際語音對話（QA 第 6 步）。阿寶不會在 Chloe 睡著時開啟手機麥克風，故留給真人執行。
 
 - Web：44 test files 通過、5 skipped；173 tests 通過、9 skipped；lint、typecheck、Next production build 通過。
 - Goal isolation：11/11 targeted tests 通過；橋式頁面讀取穩定 goal ID，雲端輪詢 `current?goalId=...` 連續 200。
