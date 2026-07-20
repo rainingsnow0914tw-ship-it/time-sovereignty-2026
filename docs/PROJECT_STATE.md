@@ -16,13 +16,17 @@
 # 正在做
 
 - Phase 6 真手機驗收：B 組（真實循環）已於 2026-07-20 在 `00058-mem` 完整通過，證據見 `docs/evidence/phase-6-real-phone-goal-loop-2026-07-20.md`。
-- 下一段是 C 組多目標隔離驗收；正式 V1 流量仍未動。
+- C 組多目標隔離進行中。第二個目標（肩頸伸展 `goal-5772a0a4`）已建立，與喝水目標 `goal-1683dbc3` 為兩份獨立文件、各自的 `nextCheckInId`，且伸展計畫全文未引用喝水進度或出勤。
+- C 組期間連續抓到三個 bug，皆已修：時間輸入失焦（`f862c55`）、首次排程忽略使用者設定（`e14b273`，Decision 0018）、以及先前的 trace 投影上限（`4522757`）。正在部署含首次排程修正的 revision。
+- 尚未驗證：暫停其一另一續排、刪除後不再通知、以及伸展目標報到時的記憶隔離（需等該目標實際報到）。
 
 # 下一步
 
-- 第一個動作：Phase 6 C 組多目標隔離驗收。在 `00058-mem` 上同時保留兩個目標（例如既有喝水目標與一個新的每日多時段目標），驗證：一個目標的回報不得引用另一個目標的進度、暫停其一另一仍續排、刪除後不再收到通知。
+- 第一個動作：等含 `e14b273` 的 revision Ready 並對齊 `live-mobile` 與 `v2-private` 兩個 tag，然後刪除排錯時間的伸展目標、以同一設定重建，確認首次 Cloud Task 的 `SCHEDULE_TIME` 等於使用者選定的時段（先前為 AI 提議的 `05:00Z`／澳門 13:00）。
+- 接著完成 C 組其餘兩項：暫停伸展目標後喝水目標不受影響、刪除伸展目標後其 Cloud Task 失效且不再通知。
+- 伸展目標報到時，確認 GPT-5.6 的判斷不得引用喝水目標的進度或出勤（記憶隔離的最終證據）。
 - 接著決定「一次性目標完成後 workspace 仍為 `ACTIVE`、`nextCheckInId` 仍指向已完成 check-in」是規格還是缺口；目前完成需使用者手動按 `Complete`。
-- 之後才是 Phase 7 收尾（decision log、README／Devpost story 更新、最終 checkpoint）。不重剪已批准影片。
+- 之後才是 Phase 7 收尾（README／Devpost story 更新、最終 checkpoint）。不重剪已批准影片。
 - 驗收通過後才決定是否提升流量；正式 V1 在 Chloe 明確批准前保持不動。
 
 # 已知問題
@@ -33,6 +37,8 @@
 - 手機已有目標管理、草稿復原、多時段編輯與最近五筆出勤視覺化；長期排程循環尚未在真實雲端／手機驗收。
 - 真手機驗收已連續抓到三個「舊資料／舊上限撞新契約」的 bug：①回訪首頁誤判為模擬入口（`b850407`）②舊 session 的 `goalStates` 淘汰欄位讓 `/api/live/goals` 回 400（`5bfd599`）③客戶端 trace 投影上限 `max(3)` 擋掉四段 goal-led trace，使 `/api/live/check-ins/current` 回 400、整個「今天／報到／出勤」區塊顯示「受保護的連線暫時無法使用」（`4522757`）。同型風險尚未全面盤點，後續改契約時應優先檢查客戶端投影是否與文件層上限同步。
 - `firestore-repository.ts` 的 `findCurrent`（activeCheckInId 分支）與 `findById` 使用 `.parse()`，單筆壞文件會讓整條讀取 API 失敗；同檔案的 fallback 掃描已用 `.safeParse()`。韌性落差已知，未修，因 Decision 0016 凍結期間僅處理實際阻斷驗收的問題。
+- Goal Architect 契約只有單一 `preferredCheckInTime`，無法結構化表達多時段。UI 以 `suggestedScheduleTimes` 掃描計畫自由文字補足，實測 7 份計畫中僅 `assumptionsNeedingConfirmation` 命中（4/7），`cadence.rationale`／`completionSignal`／`proposal.rationale` 皆為 0，因此假設句中順口提到的時間會被當成真實報到時段（Chloe 2026-07-20 遇到未設定過的 `Session 2 · 09:00`）。Chloe 已裁示先不動、優先完成驗收；修法選項見 Decision 0018「Not decided here」。
+- `+ New goal` 按鈕位於畫面上方，重置後的新問卷長在下方且不自動捲動，使用者感受為「按了沒反應」（Chloe 2026-07-20 實遇）。未修；評審第一印象風險。
 - `docs/EMERGENCY_HANDOFF_ANDROID_FINAL_2026-07-17.md` 與九張 `docs/LOCAL_CHEATSHEET_*.md` 為 local-only，不得進公開 commit。
 
 # 最近測試結果
@@ -54,6 +60,9 @@
 - 2026-07-20 10:22 +08:00：`00058-mem` 部署完成，`live-mobile` 與 `v2-private` 兩個 tag 同指該版，`00024` 仍 100%。設定與部署前基準完全一致（22 env、3 Secret Manager 引用、`time-sovereignty-v2-runtime` SA、512Mi、`minScale=1`）。同一支手機同一組 cookie 上，`GET /api/live/check-ins/current` 由 10:06 的 400 變為 10:22 的 200。
 - 2026-07-20 10:25–10:32 +08:00：Phase 6 B 組真手機閉環通過。`[live-check-in] agents completed` 顯示 `gpt-5.6-sol`、1,224 tokens、`assessment: COMPLETED`、`dispatchedAgents: []`；使用者於 10:29 確認後寫入 1 筆 `attendance`（`status: COMPLETED`），手機 Open-goal 面板顯示「已完成 · 7月20日 10:29」；`gcloud tasks list` 回 `Listed 0 items.`，一次性短衝刺未排下一筆。詳見 `docs/evidence/phase-6-real-phone-goal-loop-2026-07-20.md`。
 
+- 2026-07-20 11:01 +08:00：時間輸入失焦修正（`f862c55`）已部署至 `00060-vem` 並在 S25 實測：一次連續輸入 `11:30` 五個字元，焦點保留在欄位內。修正前每次按鍵都會重掛輸入元件。
+- 2026-07-20 11:26 +08:00：首次排程改由使用者確認的時段推導（`e14b273`，Decision 0018），排程算術抽出為純函式模組 `goal-schedule.ts`；新增回歸測試「slot 為 11:30 時首次報到必須是當地 11:30 且不等於計畫提議」。全套 46 files passed／6 skipped、164 tests passed／10 skipped；lint、typecheck、production build 全通過。
+
 # 最後更新時間
 
-- 2026-07-20 10:34 +08:00
+- 2026-07-20 11:28 +08:00
