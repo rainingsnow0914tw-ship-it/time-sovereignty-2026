@@ -15,12 +15,14 @@
 
 # 正在做
 
-- 已提交 V1 並凍結正式基線；`codex/longitudinal-goal-loop` 的本機長期閉環已全綠，正在準備 tag-only 雲端預覽與真手機驗收。
+- Phase 6 真手機驗收進行中。A 組（保存）與 B 組（真實循環）已在雲端 `00056` 實測到「Cloud Task 送達、狀態 `PENDING`」；尚缺使用者回報、GPT-5.6 判斷、確認與出勤寫入這後半段。
+- 剛修掉阻擋 Phase 6 的第三個真手機 bug（客戶端 trace 投影上限，見下方），checkpoint `4522757`，正在部署 tag-only 預覽等待驗收。
 
 # 下一步
 
-- 第一個動作：從此 checkpoint 建立 tag-only Cloud Run 預覽，不分配正式流量，並驗證健康、秘密引用與 revision 狀態。
-- 再用真手機建立一個短期目標，驗證 Save → 關閉／重開 → 我的目標仍存在 → Cloud Task 抵達 → 真 GPT-5.6 判斷 → 確認 → 出勤＋下一筆排程。
+- 第一個動作：等 `4522757` 的 tag-only revision Ready，確認 22 個 env、3 個 Secret Manager 引用、`time-sovereignty-v2-runtime` SA、`minScale=1` 與 `00024` 100% 流量都未變動，再確認 `GET /api/live/check-ins/current` 不再回 400。
+- 接著請 Chloe 在 S25 的 PWA 上，對既有喝水目標（`goal-e8e7f665…`，狀態 `PENDING`）回報一次，驗證 GPT-5.6 真判斷 → 確認 → 出勤寫入；該目標為一次性短衝刺，正確行為是**不**再排下一筆。
+- 之後補 Phase 6 C 組多目標隔離驗收，再依 Phase 7 收尾（evidence、decision、README／Devpost 文案）。
 - 驗收通過後才決定是否提升流量；正式 V1 在 Chloe 明確批准前保持不動。
 
 # 已知問題
@@ -29,7 +31,8 @@
 - 背景推播與鎖定畫面震動未宣稱完成；私人真實報到需要 PWA 開啟輪詢。
 - Devpost 已正式提交；後續編輯必須在 2026-07-22 08:00 +08:00 前完成，提交基線不得因 V2 施工失效。
 - 手機已有目標管理、草稿復原、多時段編輯與最近五筆出勤視覺化；長期排程循環尚未在真實雲端／手機驗收。
-- PWA 新長期路徑仍只在分支與本機通過，尚未部署到 tag-only 雲端預覽；正式 V1 流量保持不動。
+- 真手機驗收已連續抓到三個「舊資料／舊上限撞新契約」的 bug：①回訪首頁誤判為模擬入口（`b850407`）②舊 session 的 `goalStates` 淘汰欄位讓 `/api/live/goals` 回 400（`5bfd599`）③客戶端 trace 投影上限 `max(3)` 擋掉四段 goal-led trace，使 `/api/live/check-ins/current` 回 400、整個「今天／報到／出勤」區塊顯示「受保護的連線暫時無法使用」（`4522757`）。同型風險尚未全面盤點，後續改契約時應優先檢查客戶端投影是否與文件層上限同步。
+- `firestore-repository.ts` 的 `findCurrent`（activeCheckInId 分支）與 `findById` 使用 `.parse()`，單筆壞文件會讓整條讀取 API 失敗；同檔案的 fallback 掃描已用 `.safeParse()`。韌性落差已知，未修，因 Decision 0016 凍結期間僅處理實際阻斷驗收的問題。
 - `docs/EMERGENCY_HANDOFF_ANDROID_FINAL_2026-07-17.md` 與九張 `docs/LOCAL_CHEATSHEET_*.md` 為 local-only，不得進公開 commit。
 
 # 最近測試結果
@@ -45,7 +48,10 @@
 - 2026-07-20 08:25 +08:00：真 GPT-5.6 Plan revision 契約通過，模型 `gpt-5.6-sol`、1,409 tokens、零 SDK retries，拒絕的一次提醒假設已移除，09:00／14:00／19:00 三時段均反映；全套 40 files passed／6 skipped、148 tests passed／10 skipped，lint、typecheck、production build、`git diff --check` 全通過。
 - 2026-07-20 08:44 +08:00：雲端目標 save/list/open/status/delete 客戶端、目標管理 UI、草稿復原、24 小時與 1–8 多時段設定完成；全套 42 files passed／6 skipped、152 tests passed／10 skipped；lint、typecheck、production build、`git diff --check` 全通過，本機 live profile HTTP 200 且正確標示雲端持久化。
 - 2026-07-20 09:03 +08:00：每目標單一下一筆 Cloud Task、結構化出勤、穩定 owner 跨 session、goalId 記憶隔離與確認後續排完成；全套 44 files passed／6 skipped、158 tests passed／10 skipped；lint、typecheck、production build、`git diff --check` 全通過。
+- 2026-07-20 09:34–09:39 +08:00（雲端 `00056` 實測，Codex 額度中斷後由 Chloe 於手機操作、事後從 Cloud Run log 還原）：`POST /api/live/goals/plan` 回 200（先前為 400，`5bfd599` 修正生效）；`/api/live/goals` 多次 200；09:39:45 `[live-check-in] task delivered { checkInId: 'goal-e8e7f665…', duplicate: false, status: 'PENDING' }`，證明目標型 Cloud Task 真實排程並送達。
+- 2026-07-20 10:06 +08:00：`GET /api/live/check-ins/current` 回 400，手機顯示「受保護的連線暫時無法使用」。以 Firestore REST 唯讀取樣 1 筆 session 與 20 筆 check-in 全數通過現行 schema，排除資料損毀；根因為 `ClientLiveCheckInSchema.traces` 上限 `max(3)` 與文件層 `traceRunIds` 上限 `max(4)` 不一致，`live-1784499276418-0d6572b0` 與 `live-1784477994742-2dd18d80` 各帶 4 段 trace 因而落在客戶端投影被拒。
+- 2026-07-20 10:16 +08:00：`traces` 上限對齊為 `max(4)` 並新增四段 goal-led trace 投影測試；全套 46 files passed／6 skipped、163 tests passed／10 skipped；lint、typecheck、production build 全通過。
 
 # 最後更新時間
 
-- 2026-07-20 09:03 +08:00
+- 2026-07-20 10:18 +08:00
