@@ -185,8 +185,12 @@ const LiveDeviceSessionOutputSchema = z
   .strict();
 
 export const LiveDeviceSessionSchema = z.preprocess((value) => {
-  if (!value || typeof value !== "object" || "ownerId" in value) return value;
-  return { ...value, ownerId: LIVE_PRIVATE_OWNER_ID };
+  if (!value || typeof value !== "object") return value;
+  const current = { ...(value as Record<string, unknown>) };
+  delete current.goalStates;
+  return "ownerId" in current
+    ? current
+    : { ...current, ownerId: LIVE_PRIVATE_OWNER_ID };
 }, LiveDeviceSessionOutputSchema);
 
 export const LivePairRequestSchema = z
