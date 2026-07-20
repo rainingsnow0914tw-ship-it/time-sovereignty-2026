@@ -270,7 +270,9 @@ export const ClientLiveCheckInSchema = LiveCheckInDocumentOutputSchema.pick({
 }).strip().extend({
   // A blocked or changed goal has a three-step safe trace:
   // Chief triage -> Commitment Recovery -> final Chief decision.
-  traces: z.array(AgentRunTraceSchema).max(3),
+  // A goal-led check-in adds the Goal Architect run, so the client projection
+  // must accept the same upper bound as `traceRunIds` on the document.
+  traces: z.array(AgentRunTraceSchema).max(4),
 });
 
 export type LiveCheckInContext = z.infer<typeof LiveCheckInContextSchema>;
