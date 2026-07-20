@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { LanguageToggle, Localized } from "../../i18n/locale";
@@ -63,9 +64,12 @@ export function PairingRecoveryPage() {
             <div className="mt-6 rounded-2xl border border-[#b9d4c4] bg-[#eff8f1] p-5">
               <p className="font-semibold text-[#285440]">Pairing restored.</p>
               <p className="mt-2 text-sm leading-6 text-[#476556]">
-                Return to the original goal tab and press Create my plan once.
-                The same protected request will continue.
+                Your protected device session is ready. Return to the private
+                workspace to open saved goals or continue the waiting setup.
               </p>
+              <Link href="/?profile=play" className={`${buttonClass} mt-4`}>
+                Back to my goals
+              </Link>
             </div>
           ) : (
             <form onSubmit={pair} className="mt-6 space-y-4">

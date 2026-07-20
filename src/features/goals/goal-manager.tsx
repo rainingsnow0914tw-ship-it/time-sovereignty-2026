@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type {
@@ -39,6 +40,7 @@ export function GoalManager({
   const [detail, setDetail] = useState<LiveGoalDetail | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [needsPairing, setNeedsPairing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,6 +49,7 @@ export function GoalManager({
       setError(null);
       try {
         const result = await listLiveGoals();
+        setNeedsPairing(false);
         setGoals(result);
         if (result.length > 0) setExpanded(true);
       } catch (caught) {
@@ -55,6 +58,8 @@ export function GoalManager({
           caught.status === 401
         ) {
           setGoals([]);
+          setNeedsPairing(true);
+          setExpanded(true);
         } else {
           setError(
             "My goals could not refresh yet. Your saved goals were not changed.",
@@ -152,7 +157,23 @@ export function GoalManager({
 
         {expanded && (
           <div className="mt-4 space-y-3">
-            {loading && goals.length === 0 ? (
+            {needsPairing ? (
+              <div className="rounded-2xl border border-[#c8d9ce] bg-white p-4">
+                <p className="font-semibold text-[#284b3b]">
+                  Re-pair to open your saved goals
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#65736c]">
+                  Your cloud goals were not deleted. Restore the protected
+                  device session, then return here to continue them.
+                </p>
+                <Link
+                  href="/pair"
+                  className={`${buttonClass} mt-3 inline-flex items-center justify-center`}
+                >
+                  Restore pairing
+                </Link>
+              </div>
+            ) : loading && goals.length === 0 ? (
               <p className="text-sm text-[#68776f]">Refreshing saved goals…</p>
             ) : goals.length === 0 ? (
               <p className="text-sm leading-6 text-[#68776f]">
