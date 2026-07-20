@@ -28,6 +28,8 @@ vi.mock("@/live-checkin/scheduler", () => ({
 import { DELETE, GET, PATCH } from "./route";
 
 const find = vi.fn();
+const findPlanRevision = vi.fn();
+const listAttendance = vi.fn();
 const transition = vi.fn();
 const remove = vi.fn();
 const cancel = vi.fn();
@@ -45,6 +47,8 @@ describe("/api/live/goals/[goalId]", () => {
     } as Awaited<ReturnType<typeof authenticateLiveRequest>>);
     vi.mocked(createLiveGoalWorkspaceRepository).mockReturnValue({
       find,
+      findPlanRevision,
+      listAttendance,
       transition,
       delete: remove,
     } as unknown as ReturnType<typeof createLiveGoalWorkspaceRepository>);
@@ -62,6 +66,34 @@ describe("/api/live/goals/[goalId]", () => {
       context,
     );
     expect(response.status).toBe(404);
+  });
+
+  it("opens the current plan and attendance with the owned workspace", async () => {
+    find.mockResolvedValue({
+      id: "goal-english",
+      currentPlanRevisionId: "revision-2",
+    });
+    findPlanRevision.mockResolvedValue({ id: "revision-2", ordinal: 2 });
+    listAttendance.mockResolvedValue([{ id: "attendance-1" }]);
+    const response = await GET(
+      new NextRequest("https://preview.example/api/live/goals/goal-english"),
+      context,
+    );
+    expect(response.status).toBe(200);
+    expect(findPlanRevision).toHaveBeenCalledWith(
+      "private-single-device",
+      "goal-english",
+      "revision-2",
+    );
+    expect(listAttendance).toHaveBeenCalledWith(
+      "private-single-device",
+      "goal-english",
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      planRevision: { ordinal: 2 },
+      attendance: [{ id: "attendance-1" }],
+    });
   });
 
   it("passes owner and optimistic revision into a pause transition", async () => {

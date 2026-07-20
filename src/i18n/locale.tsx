@@ -30,6 +30,8 @@ const zhTW: Record<string, string> = {
   "Open 30-day Demo Lab": "開啟 30 天 Demo Lab",
   "Journey state and safe traces persist in this browser": "旅程狀態與安全軌跡會保留在此瀏覽器",
   "Saved only in this browser after confirmation": "確認後只儲存在此瀏覽器",
+  "Saved to your private cloud goal workspace after confirmation":
+    "確認後儲存到你的私人雲端目標工作區",
   "Your first plan": "你的第一份計畫",
   "Support agreement": "支持協議",
   "Setup complete": "設定完成",

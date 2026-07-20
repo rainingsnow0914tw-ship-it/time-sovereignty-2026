@@ -27,6 +27,11 @@ export interface LiveGoalWorkspaceRepository {
   }): Promise<{ workspace: GoalWorkspace; duplicate: boolean }>;
   list(ownerId: string): Promise<GoalWorkspace[]>;
   find(ownerId: string, goalId: string): Promise<GoalWorkspace | null>;
+  findPlanRevision(
+    ownerId: string,
+    goalId: string,
+    revisionId: string,
+  ): Promise<GoalPlanRevision | null>;
   isDeliverable(goalId: string): Promise<boolean>;
   transition(options: {
     ownerId: string;
@@ -216,6 +221,23 @@ export function createLiveGoalWorkspaceRepository(
       const workspace = GoalWorkspaceSchema.parse(snapshot.data());
       assertOwner(workspace, ownerId);
       return workspace;
+    },
+
+    async findPlanRevision(ownerId, goalId, revisionId) {
+      const [workspaceSnapshot, revisionSnapshot] = await Promise.all([
+        workspaceRef(goalId).get(),
+        workspaceRef(goalId).collection("revisions").doc(revisionId).get(),
+      ]);
+      if (!workspaceSnapshot.exists || !revisionSnapshot.exists) return null;
+      const workspace = GoalWorkspaceSchema.parse(workspaceSnapshot.data());
+      assertOwner(workspace, ownerId);
+      const revision = GoalPlanRevisionSchema.parse(revisionSnapshot.data());
+      if (revision.ownerId !== ownerId || revision.goalId !== goalId) {
+        throw new LiveGoalWorkspaceStateError(
+          "Goal plan revision does not belong to this workspace.",
+        );
+      }
+      return revision;
     },
 
     async isDeliverable(goalId) {

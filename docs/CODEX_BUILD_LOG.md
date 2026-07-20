@@ -758,3 +758,28 @@
 - Verification passed: 40 test files passed with six skipped; 148 tests passed
   with ten skipped; ESLint, TypeScript, production build, and diff check all
   passed.
+
+## 2026-07-20 — Mobile goal workspace and draft recovery
+
+- Connected the confirmed onboarding record to the protected cloud goal API.
+  A stable save fingerprint preserves the same record and request identity on
+  a safe retry, so a network interruption cannot create duplicate goals.
+- Added a mobile-first `My goals` workspace. It lists every owned goal and can
+  open the current plan, schedule, attendance count, and model trace; explicit
+  controls pause, resume, complete, or delete only that goal.
+- Goal detail reads the current immutable plan revision and structured
+  attendance from Firestore. Deletion still uses a confirmation dialog and the
+  backend tombstone/task-cancellation fence.
+- Added local draft recovery for unfinished questions, AI plans, support
+  agreements, and schedule times. Completed goals remain in cloud storage when
+  the user starts a different goal; local profiles remain isolated.
+- Replaced ambiguous device time controls with visible `HH:MM` 24-hour text
+  fields. One goal can now carry one to eight unique daily times, so a
+  three-times-per-day habit remains one goal rather than three unrelated goals.
+- Updated the private-profile disclosure from browser-only persistence to the
+  truthful private cloud workspace boundary. The public mock profile remains
+  browser-only and unchanged.
+- Verification passed: 42 test files passed with six skipped; 152 tests passed
+  with ten skipped; ESLint, TypeScript, production build, and diff check all
+  passed. The local private profile returned HTTP 200 and rendered the durable
+  cloud workspace entry without console errors.

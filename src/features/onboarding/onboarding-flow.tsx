@@ -17,6 +17,11 @@ import {
   useLocale,
 } from "../../i18n/locale";
 import { JourneyWorkspace } from "../journey/journey-workspace";
+import { GoalManager } from "../goals/goal-manager";
+import {
+  LiveGoalWorkspaceClientError,
+  saveLiveGoal,
+} from "../goals/live-goal-workspace-client";
 import { planTimingNeedsRestart } from "../journey/live-focus-schedule";
 import type { LiveCheckInSummary } from "../journey/live-check-in-summary";
 import {
@@ -25,6 +30,7 @@ import {
   type LocalOnboardingRecord,
   type OnboardingStorageProfile,
 } from "../../repositories/local-onboarding-repository";
+import { createLocalOnboardingDraftRepository } from "../../repositories/local-onboarding-draft-repository";
 import {
   createLiveGoalArchitectResult,
   LiveGoalArchitectClientError,
@@ -374,7 +380,13 @@ function Shell({
                   : "Mock mode · no API usage"}
             </span>
             <span className="flex items-center gap-3">
-              <span>{workspace ? "Journey state and safe traces persist in this browser" : "Saved only in this browser after confirmation"}</span>
+              <span>
+                {workspace
+                  ? "Journey state and safe traces persist in this browser"
+                  : liveGoalArchitect
+                    ? "Saved to your private cloud goal workspace after confirmation"
+                    : "Saved only in this browser after confirmation"}
+              </span>
               <Link href="/demo" className="font-bold text-[#365f50] underline decoration-[#8fb09e] underline-offset-4 hover:text-[#173f35]">
                 Open 30-day Demo Lab
               </Link>
@@ -824,14 +836,20 @@ function EditField({
 function SupportAgreementForm({
   value,
   recommendation,
+  scheduleTimes,
   onChange,
+  onScheduleTimesChange,
+  busy,
   error,
   onBack,
   onSubmit,
 }: {
   value: SupportAgreementDraft;
   recommendation: GoalPlan["cadence"] | null;
+  scheduleTimes: string[];
   onChange: (value: SupportAgreementDraft) => void;
+  onScheduleTimesChange: (times: string[]) => void;
+  busy: boolean;
   error: string | null;
   onBack: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -852,6 +870,13 @@ function SupportAgreementForm({
         ? value.progressSharingFormats.filter((item) => item !== format)
         : [...value.progressSharingFormats, format],
     });
+  };
+
+  const updateScheduleTimes = (times: string[]) => {
+    onScheduleTimesChange(times);
+    if (times[0]) {
+      onChange({ ...value, preferredCheckInTime: times[0] });
+    }
   };
 
   return (
@@ -903,14 +928,64 @@ function SupportAgreementForm({
               </ChoiceButton>
             ))}
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <TimeField
-              label="Check in at"
-              value={value.preferredCheckInTime}
-              onChange={(preferredCheckInTime) =>
-                onChange({ ...value, preferredCheckInTime })
-              }
-            />
+          <div className="mt-4 rounded-2xl border border-[#e0e6e1] bg-[#fafcf9] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#68776f]">
+                  Check-in times · 24-hour clock
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[#68776f]">
+                  Add more than one when the goal truly happens several times a day.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={scheduleTimes.length >= 8}
+                onClick={() => {
+                  const candidates = ["09:00", "14:00", "19:00", "21:00", "12:00"];
+                  const next =
+                    candidates.find((time) => !scheduleTimes.includes(time)) ??
+                    "08:00";
+                  updateScheduleTimes([...scheduleTimes, next]);
+                }}
+                className={`${secondaryButtonClass} disabled:cursor-not-allowed disabled:opacity-45`}
+              >
+                + Add time
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {scheduleTimes.map((time, index) => (
+                <div key={`${index}-${time}`} className="flex items-end gap-2">
+                  <TimeField
+                    label={`Session ${index + 1}`}
+                    value={time}
+                    onChange={(nextTime) =>
+                      updateScheduleTimes(
+                        scheduleTimes.map((item, itemIndex) =>
+                          itemIndex === index ? nextTime : item,
+                        ),
+                      )
+                    }
+                  />
+                  {scheduleTimes.length > 1 && (
+                    <button
+                      type="button"
+                      aria-label={`Remove session ${index + 1}`}
+                      onClick={() =>
+                        updateScheduleTimes(
+                          scheduleTimes.filter((_, itemIndex) => itemIndex !== index),
+                        )
+                      }
+                      className={`${secondaryButtonClass} mb-0.5 px-3 text-[#8a432c]`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <TimeField
               label="Quiet from"
               value={value.quietStart}
@@ -1071,9 +1146,9 @@ function SupportAgreementForm({
         <button type="button" onClick={onBack} className={secondaryButtonClass}>
           Back
         </button>
-        <button type="submit" className={primaryButtonClass}>
-          Confirm how you&apos;ll support me
-          <ArrowRight />
+        <button type="submit" disabled={busy} className={primaryButtonClass}>
+          {busy ? "Saving goal to the cloud…" : "Confirm and save this goal"}
+          {!busy && <ArrowRight />}
         </button>
       </div>
     </form>
@@ -1168,7 +1243,10 @@ function TimeField({
     <label className="block">
       <span className="mb-2 block text-xs font-semibold text-[#65736c]">{label}</span>
       <input
-        type="time"
+        type="text"
+        inputMode="numeric"
+        pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+        placeholder="HH:MM"
         required
         className={inputClass}
         value={value}
@@ -1366,6 +1444,7 @@ export function OnboardingFlow({
         : Intl.DateTimeFormat().resolvedOptions().timeZone ||
           defaultSupportAgreementDraft.timezone,
   }));
+  const [scheduleTimes, setScheduleTimes] = useState<string[]>(["19:30"]);
   const [completedRecord, setCompletedRecord] =
     useState<LocalOnboardingRecord | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
@@ -1378,6 +1457,8 @@ export function OnboardingFlow({
   const [pairingRequired, setPairingRequired] = useState(false);
   const [pairingCode, setPairingCode] = useState("");
   const [deviceLabel, setDeviceLabel] = useState("Android PWA");
+  const [hydrated, setHydrated] = useState(false);
+  const [goalRefreshKey, setGoalRefreshKey] = useState(0);
   const liveRequestRef = useRef<{
     fingerprint: string;
     requestId: string;
@@ -1386,21 +1467,70 @@ export function OnboardingFlow({
     fingerprint: string;
     requestId: string;
   } | null>(null);
+  const pendingGoalSaveRef = useRef<{
+    fingerprint: string;
+    requestId: string;
+    record: LocalOnboardingRecord;
+  } | null>(null);
 
   useEffect(() => {
     const saved = createLocalOnboardingRepository(
       window.localStorage,
       profile,
     ).load();
-    if (!saved) return;
-
+    const draft = createLocalOnboardingDraftRepository(
+      window.localStorage,
+      profile,
+    ).load();
     const restoreTask = window.setTimeout(() => {
-      setCompletedRecord(saved);
-      setStage("complete");
+      if (saved) {
+        setCompletedRecord(saved);
+        setStage("complete");
+      } else if (draft) {
+        setAnswers(draft.answers);
+        setPlan(draft.plan);
+        setTrace(draft.trace);
+        setSupport(draft.support);
+        setScheduleTimes(draft.scheduleTimes);
+        setAssumptionDrafts(
+          draft.plan ? pendingAssumptions(draft.plan) : [],
+        );
+        setStage(draft.stage);
+      }
+      setHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(restoreTask);
   }, [profile]);
+
+  useEffect(() => {
+    if (!hydrated || stage === "complete") return;
+    const saveTask = window.setTimeout(() => {
+      createLocalOnboardingDraftRepository(
+        window.localStorage,
+        profile,
+      ).save({
+        version: 1,
+        stage,
+        answers,
+        plan,
+        trace,
+        support,
+        scheduleTimes,
+        savedAt: new Date().toISOString(),
+      });
+    }, 250);
+    return () => window.clearTimeout(saveTask);
+  }, [
+    answers,
+    hydrated,
+    plan,
+    profile,
+    scheduleTimes,
+    stage,
+    support,
+    trace,
+  ]);
 
   const generatePlan = async (motivation: string) => {
     const completedAnswers = { ...answers, motivation };
@@ -1433,6 +1563,7 @@ export function OnboardingFlow({
       setSupport((current) =>
         applyGoalCadenceRecommendation(current, result.output),
       );
+      setScheduleTimes([result.output.cadence.preferredCheckInTime]);
       setStage("plan");
     } catch (caught) {
       if (
@@ -1564,6 +1695,11 @@ export function OnboardingFlow({
       setSupport((current) =>
         applyGoalCadenceRecommendation(current, result.output),
       );
+      setScheduleTimes((current) =>
+        current.length > 1
+          ? current
+          : [result.output.cadence.preferredCheckInTime],
+      );
       setConcern("");
       setEditingPlan(false);
       setPairingRequired(false);
@@ -1589,7 +1725,7 @@ export function OnboardingFlow({
     void revisePlan("FEEDBACK");
   };
 
-  const confirmSupport = (event: FormEvent<HTMLFormElement>) => {
+  const confirmSupport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setPairingRequired(false);
@@ -1600,7 +1736,21 @@ export function OnboardingFlow({
       return;
     }
 
-    const validatedSupport = SupportAgreementDraftSchema.safeParse(support);
+    const uniqueScheduleTimes = [...new Set(scheduleTimes)];
+    if (
+      uniqueScheduleTimes.length === 0 ||
+      uniqueScheduleTimes.length !== scheduleTimes.length ||
+      uniqueScheduleTimes.some(
+        (time) => !/^([01]\d|2[0-3]):[0-5]\d$/u.test(time),
+      )
+    ) {
+      setError("Add one to eight unique check-in times in 24-hour format.");
+      return;
+    }
+    const validatedSupport = SupportAgreementDraftSchema.safeParse({
+      ...support,
+      preferredCheckInTime: uniqueScheduleTimes[0],
+    });
     if (!validatedSupport.success) {
       setError(
         "Keep at least one support channel and one progress format, then review all boundary fields.",
@@ -1608,23 +1758,61 @@ export function OnboardingFlow({
       return;
     }
 
+    setBusy(true);
     try {
-      const record = createConfirmedOnboardingRecord({
+      const fingerprint = JSON.stringify({
         answers,
         plan,
         support: validatedSupport.data,
-        agentTrace: trace,
+        scheduleTimes: uniqueScheduleTimes,
       });
+      if (pendingGoalSaveRef.current?.fingerprint !== fingerprint) {
+        pendingGoalSaveRef.current = {
+          fingerprint,
+          requestId: crypto.randomUUID(),
+          record: createConfirmedOnboardingRecord({
+            answers,
+            plan,
+            support: validatedSupport.data,
+            agentTrace: trace,
+          }),
+        };
+      }
+      const pending = pendingGoalSaveRef.current;
+      const record = pending.record;
+      if (liveGoalArchitect) {
+        await saveLiveGoal({
+          requestId: pending.requestId,
+          record,
+          scheduleTimes: uniqueScheduleTimes,
+        });
+      }
       createLocalOnboardingRepository(window.localStorage, profile).save(record);
+      createLocalOnboardingDraftRepository(
+        window.localStorage,
+        profile,
+      ).clear();
       setCompletedRecord(record);
       setStage("complete");
-    } catch {
-      setError("The confirmed agreement did not pass validation. Please review the fields.");
+      setGoalRefreshKey((current) => current + 1);
+      pendingGoalSaveRef.current = null;
+    } catch (caught) {
+      if (
+        caught instanceof LiveGoalWorkspaceClientError &&
+        caught.status === 401
+      ) {
+        setError("This device must be paired again before the goal can be saved to its cloud workspace.");
+      } else {
+        setError("The goal was not saved. Nothing was lost; retry keeps the same save identity.");
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
   const resetJourney = () => {
     createLocalOnboardingRepository(window.localStorage, profile).clear();
+    createLocalOnboardingDraftRepository(window.localStorage, profile).clear();
     setAnswers({ goal: "", targetWindow: "", motivation: "" });
     setPlan(null);
     setTrace(null);
@@ -1634,6 +1822,7 @@ export function OnboardingFlow({
         Intl.DateTimeFormat().resolvedOptions().timeZone ||
         defaultSupportAgreementDraft.timezone,
     });
+    setScheduleTimes(["19:30"]);
     setCompletedRecord(null);
     setEditingPlan(false);
     setConcern("");
@@ -1641,6 +1830,8 @@ export function OnboardingFlow({
     setPairingRequired(false);
     setPairingCode("");
     liveRequestRef.current = null;
+    revisionRequestRef.current = null;
+    pendingGoalSaveRef.current = null;
     setStage("goal");
   };
 
@@ -1745,7 +1936,10 @@ export function OnboardingFlow({
       <SupportAgreementForm
         value={support}
         recommendation={plan?.cadence ?? null}
+        scheduleTimes={scheduleTimes}
         onChange={setSupport}
+        onScheduleTimesChange={setScheduleTimes}
+        busy={busy}
         error={error}
         onBack={() => setStage("plan")}
         onSubmit={confirmSupport}
@@ -1772,7 +1966,27 @@ export function OnboardingFlow({
 
   return (
     <Shell stage={stage} liveGoalArchitect={liveGoalArchitect}>
-      {content}
+      <>
+        {liveGoalArchitect && (
+          <GoalManager
+            refreshKey={goalRefreshKey}
+            onNewGoal={() => {
+              const hasDraft =
+                stage !== "complete" &&
+                Object.values(answers).some((answer) => answer.trim().length > 0);
+              if (
+                !hasDraft ||
+                window.confirm(
+                  "Start a new goal and discard the current unfinished draft?",
+                )
+              ) {
+                resetJourney();
+              }
+            }}
+          />
+        )}
+        {content}
+      </>
     </Shell>
   );
 }

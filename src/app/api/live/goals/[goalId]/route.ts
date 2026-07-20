@@ -21,13 +21,26 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const auth = await authenticateLiveRequest(request);
     const { goalId } = await context.params;
-    const goal = await createLiveGoalWorkspaceRepository(
-      auth.config.cloud,
-    ).find(auth.session.ownerId, goalId);
+    const repository = createLiveGoalWorkspaceRepository(auth.config.cloud);
+    const goal = await repository.find(auth.session.ownerId, goalId);
     if (!goal) {
       return liveJson({ ok: false, error: "goal_not_found" }, { status: 404 });
     }
-    return liveJson({ ok: true, goal });
+    const [planRevision, attendance] = await Promise.all([
+      repository.findPlanRevision(
+        auth.session.ownerId,
+        goalId,
+        goal.currentPlanRevisionId,
+      ),
+      repository.listAttendance(auth.session.ownerId, goalId),
+    ]);
+    if (!planRevision) {
+      return liveJson(
+        { ok: false, error: "goal_plan_not_found" },
+        { status: 409 },
+      );
+    }
+    return liveJson({ ok: true, goal, planRevision, attendance });
   } catch (error) {
     return liveErrorResponse(error, "get-goal");
   }
