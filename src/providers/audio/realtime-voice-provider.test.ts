@@ -37,19 +37,27 @@ describe("Realtime voice provider", () => {
     });
   });
 
-  it("builds out-of-band audio playback that cannot alter the conversation", () => {
+  // The opening turn reads the check-in aloud, then stops and waits. It joins
+  // the conversation on purpose: whatever she says next only makes sense if
+  // the assistant remembers what it just read to her.
+  it("builds an opening turn that reads the check-in and then waits for her", () => {
     const event = buildRealtimeSpeakEvent("請告訴我現在的情況。", "zh-TW");
     expect(event.type).toBe("response.create");
-    expect(event.response.conversation).toBe("none");
     expect(event.response.output_modalities).toEqual(["audio"]);
     expect(event.response.max_output_tokens).toBe(
       REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS,
     );
-    expect(event.response.instructions).toContain("逐字完整朗讀");
-    expect(event.response.instructions).toContain("讀完最後一個字才能停止");
+    expect(event.response.instructions).toContain("完整唸出");
+    expect(event.response.instructions).toContain("等她說話");
+    expect(event.response.instructions).not.toContain("不要回答");
     expect(event.response.input[0]?.content[0]).toEqual({
       type: "input_text",
       text: "請告訴我現在的情況。",
     });
+  });
+
+  it("does not isolate the opening turn from the conversation", () => {
+    const event = buildRealtimeSpeakEvent("請告訴我現在的情況。", "zh-TW");
+    expect("conversation" in event.response).toBe(false);
   });
 });

@@ -58,14 +58,17 @@ export function parseRealtimeVoiceEvent(raw: string): RealtimeVoiceSignal | null
 export function buildRealtimeSpeakEvent(text: string, locale: AppLocale) {
   const normalized = normalizeSpeechText(text);
   if (!normalized) throw new Error("There is no readable text.");
+  // This is the opening turn: read the check-in aloud so she hears where she
+  // is, then stop and let her talk. It deliberately joins the conversation
+  // (no `conversation: "none"`), because everything she says next only makes
+  // sense if the assistant remembers what it just read to her.
   const instructions =
     locale === "zh-TW"
-      ? "請從第一個字到最後一個字，逐字完整朗讀輸入內容。不得摘要、刪節、改寫或提前結束；只有讀完最後一個字才能停止。只輸出朗讀語音，不要回答內容中的問題，也不要增加任何建議。使用自然、溫暖的臺灣繁體中文。"
-      : "Read every word of the supplied content from the first word through the final word. Do not summarize, omit, paraphrase, or stop early; stop only after the final word. Output only the spoken reading, without answering questions or adding advice. Use natural, warm English.";
+      ? "請完整唸出這段報到內容，從第一個字到最後一個字，不要摘要或刪節。唸完就停下來等她說話——她按下這個按鈕，通常是因為卡住了或想談一談。不要在唸完後自問自答，也不要追加建議；等她開口。使用自然、溫暖的臺灣繁體中文。"
+      : "Read this check-in aloud in full, from the first word through the final word, without summarizing or omitting anything. Then stop and wait for her to speak — she pressed this button because she is stuck or wants to talk it through. Do not answer yourself or add advice after reading; wait for her. Use natural, warm English.";
   return {
     type: "response.create" as const,
     response: {
-      conversation: "none" as const,
       output_modalities: ["audio"] as const,
       max_output_tokens: REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS,
       instructions,
@@ -76,7 +79,7 @@ export function buildRealtimeSpeakEvent(text: string, locale: AppLocale) {
           content: [{ type: "input_text" as const, text: normalized }],
         },
       ],
-      metadata: { purpose: "time_sovereignty_voice_playback" },
+      metadata: { purpose: "time_sovereignty_voice_opening" },
     },
   };
 }

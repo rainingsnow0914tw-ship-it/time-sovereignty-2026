@@ -15,25 +15,38 @@ const offer = "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\n";
 const answer = "v=0\r\no=- 2 3 IN IP4 127.0.0.1\r\n";
 
 describe("Realtime session boundary", () => {
-  it("builds a voice-only session that transcribes but never auto-decides", () => {
+  // The voice layer used to transcribe without ever answering, so pressing the
+  // button only produced the user's own plan read back to her. It now answers
+  // the person, while still being barred from deciding anything on her behalf:
+  // GPT-5.6 makes the judgement after she submits, and she confirms it.
+  it("builds a voice session that answers the person but never decides for her", () => {
     const config = buildRealtimeSessionConfig("zh-TW");
 
     expect(config.model).toBe(REALTIME_MODEL);
     expect(config.max_output_tokens).toBe(REALTIME_MAX_OUTPUT_TOKENS);
-    expect(config.instructions).toContain("逐字完整朗讀");
-    expect(config.instructions).toContain("讀完最後一個字才能停止");
+    expect(config.instructions).toContain("回應她本人說的話");
+    expect(config.instructions).toContain("你不是決策者");
+    expect(config.instructions).toContain("GPT-5.6");
+    expect(config.instructions).not.toContain("逐字完整朗讀");
     expect(config.audio.input.transcription).toEqual({
       model: REALTIME_TRANSCRIPTION_MODEL,
       language: "zh",
     });
     expect(config.audio.input.turn_detection).toMatchObject({
       type: "server_vad",
-      create_response: false,
-      interrupt_response: false,
+      create_response: true,
+      interrupt_response: true,
     });
     expect(config.audio.output.voice).toBe("marin");
     expect(config.tools).toEqual([]);
     expect(config.tracing).toBeNull();
+  });
+
+  it("keeps the English instructions under the same boundary", () => {
+    const config = buildRealtimeSessionConfig("en");
+
+    expect(config.instructions).toContain("not the decision maker");
+    expect(config.instructions).toContain("GPT-5.6");
   });
 
   it("maps UI locale to an ISO-639-1 transcription language", () => {
