@@ -5,6 +5,22 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!--
+        Android 11 hides other packages unless they are declared here. Without
+        this, queryIntentActivities returns nothing, PrivatePwaHandlerSelector
+        can never find the installed WebAPK, and returning to the journey lands
+        in whichever browser is default - a different storage partition, so the
+        pairing session and drafts appear to have vanished.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" android:host="*" />
+        </intent>
+        <package android:name="com.android.chrome" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:label="Time Sovereignty V2"

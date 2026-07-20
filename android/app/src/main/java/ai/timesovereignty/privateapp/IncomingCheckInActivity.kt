@@ -68,11 +68,25 @@ class IncomingCheckInActivity : Activity() {
                 setPadding(0, 0, 0, dp(14))
             }
             addView(statusText)
+            addAnswerButton()
             addResponseButton("我完成了", "complete")
             addResponseButton("延後 10 分鐘", "reschedule")
             addResponseButton("把行動縮小", "downgrade")
             addResponseButton("今天需要休息", "mercy")
         }
+    }
+
+    // Answering opens the private journey with the natural-voice control armed,
+    // so a real conversation is possible instead of picking a canned outcome.
+    // It is deliberately first: refusing a voice is harder than dismissing one.
+    private fun LinearLayout.addAnswerButton() {
+        val button = Button(this@IncomingCheckInActivity).apply {
+            text = "接聽並說話"
+            isAllCaps = false
+            setOnClickListener { answerWithVoice(this) }
+        }
+        responseButtons += button
+        addView(button)
     }
 
     private fun LinearLayout.addResponseButton(label: String, responseType: String) {
@@ -83,6 +97,13 @@ class IncomingCheckInActivity : Activity() {
         }
         responseButtons += button
         addView(button)
+    }
+
+    private fun answerWithVoice(button: Button) {
+        CatchAttentionSignal.stopAll()
+        CatchNotifications.cancel(this, eventId)
+        statusText.text = "正在開啟語音報到…"
+        openPwa(PrivatePwaReturnUrl.buildVoiceAnswer(BuildConfig.PRIVATE_PWA_BASE_URL), button)
     }
 
     private fun submitResponse(responseType: String) {
@@ -158,7 +179,10 @@ class IncomingCheckInActivity : Activity() {
     }
 
     private fun openPwaForConfirmation(button: Button) {
-        val returnUrl = PrivatePwaReturnUrl.build(BuildConfig.PRIVATE_PWA_BASE_URL)
+        openPwa(PrivatePwaReturnUrl.build(BuildConfig.PRIVATE_PWA_BASE_URL), button)
+    }
+
+    private fun openPwa(returnUrl: String?, button: Button) {
         if (returnUrl == null) {
             button.text = "無法開啟 PWA；請從桌面開啟 Time Sovereignty"
             button.isEnabled = false

@@ -54,4 +54,19 @@ class PrivatePwaReturnUrlTest {
         )
         assertNull(PrivatePwaHandlerSelector.choose(listOf("com.sec.android.app.sbrowser")))
     }
+
+    @Test
+    fun `answering by voice keeps the play profile and arms the voice layer`() {
+        assertEquals(
+            "https://live-mobile.example.test/?profile=play&answer=voice",
+            PrivatePwaReturnUrl.buildVoiceAnswer("https://live-mobile.example.test")
+        )
+    }
+
+    @Test
+    fun `voice answer applies the same origin safety rules`() {
+        assertNull(PrivatePwaReturnUrl.buildVoiceAnswer("http://live-mobile.example.test"))
+        assertNull(PrivatePwaReturnUrl.buildVoiceAnswer("https://user@live-mobile.example.test"))
+        assertNull(PrivatePwaReturnUrl.buildVoiceAnswer("not a URL"))
+    }
 }

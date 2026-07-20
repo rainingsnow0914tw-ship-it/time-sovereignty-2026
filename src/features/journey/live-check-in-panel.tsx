@@ -97,6 +97,7 @@ export function LiveCheckInPanel({
   const [pausePolling, setPausePolling] = useState(false);
   const [memoryDisposition, setMemoryDisposition] =
     useState<LiveMemoryDisposition>("DEFER");
+  const voiceButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeVoiceRef = useRef<RealtimeVoiceSession | null>(null);
   const scheduleIdRef = useRef<string | null>(null);
   const replyAttemptRef = useRef<{
@@ -201,6 +202,22 @@ export function LiveCheckInPanel({
       realtimeVoiceRef.current = null;
     };
   }, []);
+
+  // The native app opens this screen with ?answer=voice when the user taps
+  // 接聽並說話. A browser may not open a microphone without a tap, so answering
+  // cannot connect by itself — bring the voice control into view instead, so
+  // the one required tap is the obvious next thing on screen.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("answer") !== "voice") {
+      return;
+    }
+    if (!voiceButtonRef.current) return;
+    voiceButtonRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [current]);
 
   useEffect(() => {
     if (!realtimeVoiceRef.current) return;
@@ -772,7 +789,7 @@ export function LiveCheckInPanel({
         <div className="mt-5">
           <h3 className="text-xl font-semibold text-[#173f35]">{current.message}</h3>
           <div className="mt-4 flex flex-wrap gap-2">
-            {realtimeActive ? <button type="button" className={secondary} onClick={stopRealtimeVoice}>■ Stop natural voice</button> : <button type="button" className={primary} disabled={realtimeStatus === "CONNECTING"} onClick={() => void startRealtimeVoice()}>✦ Start natural voice</button>}
+            {realtimeActive ? <button type="button" className={secondary} onClick={stopRealtimeVoice}>■ Stop natural voice</button> : <button ref={voiceButtonRef} type="button" className={primary} disabled={realtimeStatus === "CONNECTING"} onClick={() => void startRealtimeVoice()}>✦ Start natural voice</button>}
             <button type="button" className={secondary} onClick={() => void speakBrowserText(t(current.message), { language: speechLanguage })}>▶ Standard voice</button>
             <button type="button" className={secondary} disabled={listening} onClick={listen}>{listening ? "Listening…" : "🎙 Standard voice reply"}</button>
           </div>

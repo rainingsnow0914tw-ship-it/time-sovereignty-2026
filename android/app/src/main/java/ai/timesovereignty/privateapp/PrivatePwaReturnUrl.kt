@@ -3,7 +3,16 @@ package ai.timesovereignty.privateapp
 import java.net.URI
 
 object PrivatePwaReturnUrl {
-    fun build(baseUrl: String): String? {
+    fun build(baseUrl: String): String? = buildWithQuery(baseUrl, "profile=play")
+
+    // Answering an incoming check-in lands on the private journey with the
+    // natural-voice control armed, so the user speaks instead of typing. A
+    // browser still requires one tap before it may open the microphone, so this
+    // arms the control; it cannot start the microphone on its own.
+    fun buildVoiceAnswer(baseUrl: String): String? =
+        buildWithQuery(baseUrl, "profile=play&answer=voice")
+
+    private fun buildWithQuery(baseUrl: String, query: String): String? {
         val base = runCatching { URI(baseUrl.trim()) }.getOrNull() ?: return null
         if (
             base.scheme != "https" ||
@@ -20,7 +29,7 @@ object PrivatePwaReturnUrl {
             base.host,
             base.port,
             "/",
-            "profile=play",
+            query,
             null
         ).toASCIIString()
     }

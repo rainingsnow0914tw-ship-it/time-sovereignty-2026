@@ -294,6 +294,8 @@ const zhTW: Record<string, string> = {
   "Natural voice stopped safely. Text and standard voice still work.": "高擬真語音已安全停止；文字與標準語音仍可使用。",
   "Connecting the protected natural voice…": "正在連接受保護的高擬真語音…",
   "Natural voice is on. Speak once, then review the transcript.": "高擬真語音已開啟；說完一次後，請確認轉錄內容。",
+  "You answered the call. Tap Start natural voice to speak; a browser cannot open the microphone without your tap.":
+    "妳接起了這通報到。按「開啟高擬真語音」就能直接說話；瀏覽器必須經過妳這一按才能開啟麥克風。",
   "Natural voice could not connect. Text and standard voice still work.": "高擬真語音無法連接；文字與標準語音仍可使用。",
   "Natural voice is off. The microphone has been released.": "高擬真語音已關閉，麥克風也已釋放。",
   "Notifications are unavailable in this browser.": "此瀏覽器無法使用通知。",
