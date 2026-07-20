@@ -46,6 +46,35 @@ Treat those files as the current product source of truth. Preserve them unchange
 - Preserve the status distinctions `IMPLEMENTED_IN_MVP`, `INTERFACE_PREPARED`, and `FUTURE` used by the source documents.
 - Never fabricate completion, deployment, test, trace, or API evidence.
 
+## Delivery cadence and human feedback
+
+Chloe uses this product herself. It is not a demo that stops at submission, so
+the cost of a late UX correction is paid in real rework, not in review notes.
+
+- Do not queue a long local-only phase before a human ever touches the change.
+  Once the vertical slice runs locally, deploy it to the tag-only preview and
+  put it in front of Chloe.
+- Get the human-interaction pass early. Interface behaviour, wording, layout,
+  and input feel are product requirements, not polish scheduled after the
+  backend is finished. A screen that is correct but unusable is not done.
+- Ship the smallest thing a person can actually operate, then extend it. Do not
+  build several phases deep and hand over the whole surface for its first human
+  review at the end.
+- This does not weaken the verification bar. Tests, lint, typecheck, and build
+  still gate every checkpoint, and a real-runtime check is still required.
+  The rule is about *when a human first sees it*, not about lowering proof.
+
+Evidence for this rule, all from 2026-07-20:
+
+- The client trace projection cap (`4522757`) passed 163 local tests and failed
+  on the first real phone read.
+- The check-in time input remounted on every keystroke (`f862c55`). The local
+  suite runs in a `node` environment with no DOM, so no local test could have
+  observed it. Chloe found it in seconds by typing.
+- The first occurrence ignored the user's edited check-in time (`e14b273`).
+  Local tests passed because they never exercised the case where the user's
+  slot differs from the plan's proposal — which is exactly what a human does.
+
 ## Important directories and files
 
 - `src/app/`: Next.js UI and HTTP routes. Protected live-device and Cloud Tasks entry points live under `src/app/api/`.
@@ -87,6 +116,18 @@ After a new conversation, resume, or context compression, do this before editing
 2. Run `git status --short`, `git log -5 --oneline --decorate`, `git diff --stat`, and inspect the existing diff.
 3. Compare the written state with actual files and test evidence; summarize the verified start point before continuing.
 4. Never discard, overwrite, reset, or silently absorb unconfirmed existing changes.
+5. Read `docs/AGENT_RELAY_LOG.md`. It records what each previous agent changed
+   and, more importantly, what it deliberately left alone and why. Do not
+   "fix" a documented deliberate omission without reading its reason first.
+
+This project outlives any single agent or hackathon deadline: Chloe uses it,
+and it will keep moving through V2, V3, and beyond with different agents taking
+turns. Therefore, before handing off — and always before a likely interruption
+— add a signed entry to `docs/AGENT_RELAY_LOG.md` in its stated format:
+who you are, the exact commit and state you started from and how you verified
+it, what you changed and its product-level effect, how far it was verified
+(local, cloud, physical phone, and who accepted it), what you deliberately did
+not do and why, and concrete advice for the next agent. Sign it.
 
 At every verifiable phase boundary:
 
