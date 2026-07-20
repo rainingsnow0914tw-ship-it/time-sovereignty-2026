@@ -6,12 +6,16 @@ import {
   defaultSupportAgreementDraft,
 } from "@/features/onboarding/model";
 import { createLiveGoalWorkspaceRepository } from "@/live-checkin/goal-workspace-repository";
+import { scheduleNextGoalOccurrence } from "@/live-checkin/goal-loop";
 import { authenticateLiveRequest } from "@/live-checkin/route-helpers";
 import { assertAllowedOrigin } from "@/live-checkin/session-auth";
 import { createConfirmedOnboardingRecord } from "@/repositories/local-onboarding-repository";
 
 vi.mock("@/live-checkin/goal-workspace-repository", () => ({
   createLiveGoalWorkspaceRepository: vi.fn(),
+}));
+vi.mock("@/live-checkin/goal-loop", () => ({
+  scheduleNextGoalOccurrence: vi.fn(),
 }));
 vi.mock("@/live-checkin/route-helpers", () => ({
   authenticateLiveRequest: vi.fn(),
@@ -88,6 +92,16 @@ describe("/api/live/goals", () => {
       workspace,
       duplicate: false,
     }));
+    vi.mocked(scheduleNextGoalOccurrence).mockImplementation(
+      async ({ workspace }) => ({
+        workspace: {
+          ...workspace,
+          nextCheckInId: "check-in-english",
+          nextTaskName: "task-english",
+        },
+        checkIn: null,
+      }),
+    );
 
     const response = await POST(await saveRequest());
 
@@ -106,6 +120,13 @@ describe("/api/live/goals", () => {
     );
     const payload = await response.json();
     expect(payload.workspace.schedule.slots).toHaveLength(3);
+    expect(payload.nextCheckInId).toBe("check-in-english");
+    expect(scheduleNextGoalOccurrence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerId: "private-single-device",
+        sessionId: "short-lived-session",
+      }),
+    );
   });
 
   it("lists only workspaces belonging to the authenticated owner", async () => {

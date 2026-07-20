@@ -20,6 +20,7 @@ const GoalCreateResponseSchema = z
     ok: z.literal(true),
     workspace: GoalWorkspaceSchema,
     duplicate: z.boolean(),
+    nextCheckInId: z.string().nullable(),
   })
   .strict();
 

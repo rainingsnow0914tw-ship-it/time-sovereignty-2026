@@ -251,6 +251,35 @@ export function GoalManager({
                     </p>
                   </div>
                 </div>
+                <div className="mt-4 rounded-xl border border-[#c9d9cd] bg-white p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#5c7066]">
+                    Attendance
+                  </p>
+                  {detail.attendance.length ? (
+                    <ul className="mt-2 space-y-2">
+                      {detail.attendance.slice(0, 5).map((entry) => (
+                        <li key={entry.id} className="text-xs leading-5 text-[#52675d]">
+                          <span className="font-bold text-[#315744]">
+                            {entry.status.replaceAll("_", " ")}
+                          </span>
+                          {" · "}
+                          {new Intl.DateTimeFormat(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hourCycle: "h23",
+                          }).format(new Date(entry.recordedAt))}
+                          <span className="mt-0.5 block">{entry.summary}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs text-[#66766e]">
+                      The first confirmed check-in will appear here.
+                    </p>
+                  )}
+                </div>
               </article>
             )}
 

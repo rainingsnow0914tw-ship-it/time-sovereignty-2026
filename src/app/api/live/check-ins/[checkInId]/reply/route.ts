@@ -39,6 +39,7 @@ export async function POST(
     const claim = await auth.repository.claimReply({
       checkInId,
       sessionId: auth.session.id,
+      ownerId: auth.session.ownerId,
       replyId: body.replyId,
       replyFingerprint,
       evidenceKinds: [
@@ -70,6 +71,7 @@ export async function POST(
     };
     const relevantMemories = await auth.repository.findRelevantMemories({
       sessionId: auth.session.id,
+      ownerId: auth.session.ownerId,
       context: claim.checkIn.context,
       limit: 8,
     });

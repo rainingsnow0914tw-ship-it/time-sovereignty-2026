@@ -41,6 +41,17 @@ export class LivePairingAlreadyUsedError extends Error {
   }
 }
 
+export function liveCheckInBelongsTo(options: {
+  checkIn: LiveCheckInDocument;
+  sessionId: string;
+  ownerId?: string;
+}) {
+  return (
+    options.checkIn.sessionId === options.sessionId ||
+    Boolean(options.ownerId && options.checkIn.ownerId === options.ownerId)
+  );
+}
+
 export class LiveDeviceAlreadyPairedError extends Error {
   constructor() {
     super("A live device is already paired.");
@@ -83,15 +94,20 @@ export interface LiveCheckInRepository {
   createScheduled(options: {
     id: string;
     sessionId: string;
+    ownerId?: string;
     message: string;
     context: LiveCheckInContext;
     scheduledFor: string;
   }): Promise<{ checkIn: LiveCheckInDocument; duplicate: boolean }>;
   attachTask(checkInId: string, taskName: string): Promise<LiveCheckInDocument>;
-  findCurrent(sessionId: string): Promise<LiveCheckInDocument | null>;
+  findCurrent(
+    sessionId: string,
+    ownerId?: string,
+  ): Promise<LiveCheckInDocument | null>;
   findById(checkInId: string): Promise<LiveCheckInDocument | null>;
   findRelevantMemories(options: {
     sessionId: string;
+    ownerId?: string;
     context: LiveCheckInContext;
     limit?: number;
   }): Promise<LiveMemoryRecord[]>;
@@ -102,6 +118,7 @@ export interface LiveCheckInRepository {
   claimReply(options: {
     checkInId: string;
     sessionId: string;
+    ownerId?: string;
     replyId: string;
     replyFingerprint: string;
     evidenceKinds: Array<"TEXT" | "PHOTO">;
@@ -133,12 +150,14 @@ export interface LiveCheckInRepository {
   confirm(options: {
     checkInId: string;
     sessionId: string;
+    ownerId?: string;
     confirmationId: string;
     memoryDisposition: LiveMemoryDisposition;
   }): Promise<{ checkIn: LiveCheckInDocument; duplicate: boolean }>;
   claimMemoryCuration(options: {
     checkInId: string;
     sessionId: string;
+    ownerId?: string;
   }): Promise<LiveMemoryCurationClaim>;
   finishMemoryCuration(options: {
     checkInId: string;
@@ -256,7 +275,14 @@ export function createLiveCheckInRepository(
       });
     },
 
-    async createScheduled({ id, sessionId, message, context, scheduledFor }) {
+    async createScheduled({
+      id,
+      sessionId,
+      ownerId,
+      message,
+      context,
+      scheduledFor,
+    }) {
       const checkInRef = firestore.collection("live_checkins").doc(id);
       return firestore.runTransaction(async (transaction) => {
         const [existingSnapshot, sessionSnapshot] = await Promise.all([
@@ -265,7 +291,7 @@ export function createLiveCheckInRepository(
         ]);
         if (existingSnapshot.exists) {
           const existing = LiveCheckInDocumentSchema.parse(existingSnapshot.data());
-          if (existing.sessionId !== sessionId) {
+          if (!liveCheckInBelongsTo({ checkIn: existing, sessionId, ownerId })) {
             throw new LiveCheckInStateError("Check-in identity is already in use.");
           }
           return { checkIn: existing, duplicate: true };
@@ -277,11 +303,15 @@ export function createLiveCheckInRepository(
         if (session.id !== sessionId || session.revokedAt !== null) {
           throw new LiveSessionStateError("Session is not active.");
         }
+        if (ownerId && session.ownerId !== ownerId) {
+          throw new LiveSessionStateError("Session owner does not match.");
+        }
         const timestamp = now().toISOString();
         const checkIn = LiveCheckInDocumentSchema.parse({
           version: 1,
           id,
           sessionId,
+          ownerId: session.ownerId,
           status: "SCHEDULED",
           message,
           context,
@@ -336,18 +366,48 @@ export function createLiveCheckInRepository(
       });
     },
 
-    async findCurrent(sessionId) {
+    async findCurrent(sessionId, ownerId) {
       const sessionSnapshot = await sessionRef.get();
       if (!sessionSnapshot.exists) return null;
       const session = LiveDeviceSessionSchema.parse(sessionSnapshot.data());
-      if (session.id !== sessionId || !session.activeCheckInId) return null;
+      if (session.id !== sessionId) return null;
+      if (session.activeCheckInId) {
+        const snapshot = await firestore
+          .collection("live_checkins")
+          .doc(session.activeCheckInId)
+          .get();
+        if (snapshot.exists) {
+          const current = LiveCheckInDocumentSchema.parse(snapshot.data());
+          if (!ownerId || current.ownerId === ownerId) return current;
+        }
+      }
+      if (!ownerId) return null;
       const snapshot = await firestore
         .collection("live_checkins")
-        .doc(session.activeCheckInId)
+        .where("ownerId", "==", ownerId)
         .get();
-      return snapshot.exists
-        ? LiveCheckInDocumentSchema.parse(snapshot.data())
-        : null;
+      const statusPriority = new Map([
+        ["DECISION_READY", 0],
+        ["PROCESSING", 1],
+        ["FAILED", 2],
+        ["PENDING", 3],
+        ["SCHEDULED", 4],
+      ]);
+      return (
+        snapshot.docs
+          .flatMap((document) => {
+            const parsed = LiveCheckInDocumentSchema.safeParse(document.data());
+            return parsed.success && statusPriority.has(parsed.data.status)
+              ? [parsed.data]
+              : [];
+          })
+          .sort((left, right) => {
+            const status =
+              (statusPriority.get(left.status) ?? 99) -
+              (statusPriority.get(right.status) ?? 99);
+            return status || left.scheduledFor.localeCompare(right.scheduledFor);
+          })[0] ?? null
+      );
     },
 
     async findById(checkInId) {
@@ -357,14 +417,31 @@ export function createLiveCheckInRepository(
         : null;
     },
 
-    async findRelevantMemories({ sessionId, context, limit }) {
-      const snapshot = await firestore
-        .collection("live_memories")
-        .where("sessionId", "==", sessionId)
-        .get();
-      const memories = snapshot.docs.flatMap((document) => {
+    async findRelevantMemories({ sessionId, ownerId, context, limit }) {
+      const snapshots = await Promise.all([
+        firestore
+          .collection("live_memories")
+          .where("sessionId", "==", sessionId)
+          .get(),
+        ...(ownerId
+          ? [
+              firestore
+                .collection("live_memories")
+                .where("ownerId", "==", ownerId)
+                .get(),
+            ]
+          : []),
+      ]);
+      const documents = new Map(
+        snapshots.flatMap((snapshot) =>
+          snapshot.docs.map((document) => [document.id, document] as const),
+        ),
+      );
+      const memories = [...documents.values()].flatMap((document) => {
         const parsed = LiveMemoryRecordSchema.safeParse(document.data());
-        return parsed.success ? [parsed.data] : [];
+        return parsed.success && (!ownerId || parsed.data.ownerId === ownerId)
+          ? [parsed.data]
+          : [];
       });
       return selectRelevantLiveMemories({
         memories,
@@ -419,6 +496,7 @@ export function createLiveCheckInRepository(
     async claimReply({
       checkInId,
       sessionId,
+      ownerId,
       replyId,
       replyFingerprint,
       evidenceKinds,
@@ -428,7 +506,7 @@ export function createLiveCheckInRepository(
         const snapshot = await transaction.get(ref);
         if (!snapshot.exists) throw new LiveCheckInStateError("Check-in not found.");
         const current = LiveCheckInDocumentSchema.parse(snapshot.data());
-        if (current.sessionId !== sessionId) {
+        if (!liveCheckInBelongsTo({ checkIn: current, sessionId, ownerId })) {
           throw new LiveCheckInStateError("Check-in does not belong to this session.");
         }
         if (
@@ -537,6 +615,7 @@ export function createLiveCheckInRepository(
     async confirm({
       checkInId,
       sessionId,
+      ownerId,
       confirmationId,
       memoryDisposition,
     }) {
@@ -555,7 +634,10 @@ export function createLiveCheckInRepository(
         }
         const current = LiveCheckInDocumentSchema.parse(snapshot.data());
         const session = LiveDeviceSessionSchema.parse(sessionSnapshot.data());
-        if (current.sessionId !== sessionId || session.id !== sessionId) {
+        if (
+          session.id !== sessionId ||
+          !liveCheckInBelongsTo({ checkIn: current, sessionId, ownerId })
+        ) {
           throw new LiveCheckInStateError("Check-in does not belong to this session.");
         }
         if (current.status === "CONFIRMED") {
@@ -632,7 +714,13 @@ export function createLiveCheckInRepository(
         for (const memorySnapshot of retrievedMemorySnapshots) {
           if (!memorySnapshot.exists) continue;
           const parsed = LiveMemoryRecordSchema.safeParse(memorySnapshot.data());
-          if (!parsed.success || parsed.data.sessionId !== sessionId) continue;
+          if (
+            !parsed.success ||
+            (parsed.data.sessionId !== sessionId &&
+              (!ownerId || parsed.data.ownerId !== ownerId))
+          ) {
+            continue;
+          }
           const effective = applyMemoryOutcome({
             memory: parsed.data,
             assessment: current.decision.assessment,
@@ -647,13 +735,16 @@ export function createLiveCheckInRepository(
       });
     },
 
-    async claimMemoryCuration({ checkInId, sessionId }) {
+    async claimMemoryCuration({ checkInId, sessionId, ownerId }) {
       const ref = firestore.collection("live_checkins").doc(checkInId);
       return firestore.runTransaction(async (transaction) => {
         const snapshot = await transaction.get(ref);
         if (!snapshot.exists) throw new LiveCheckInStateError("Check-in not found.");
         const current = LiveCheckInDocumentSchema.parse(snapshot.data());
-        if (current.sessionId !== sessionId || current.status !== "CONFIRMED") {
+        if (
+          !liveCheckInBelongsTo({ checkIn: current, sessionId, ownerId }) ||
+          current.status !== "CONFIRMED"
+        ) {
           throw new LiveCheckInStateError(
             "Only the confirmed session may curate this memory.",
           );

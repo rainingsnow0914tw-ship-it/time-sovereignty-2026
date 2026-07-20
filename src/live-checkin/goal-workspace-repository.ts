@@ -52,6 +52,7 @@ export interface LiveGoalWorkspaceRepository {
     nextOccurrenceAt: string | null;
     nextCheckInId: string | null;
     nextTaskName: string | null;
+    nextAction?: string;
   }): Promise<GoalWorkspace>;
   recordAttendance(options: {
     ownerId: string;
@@ -319,6 +320,7 @@ export function createLiveGoalWorkspaceRepository(
       nextOccurrenceAt,
       nextCheckInId,
       nextTaskName,
+      nextAction,
     }) {
       const ref = workspaceRef(goalId);
       return firestore.runTransaction(async (transaction) => {
@@ -328,6 +330,13 @@ export function createLiveGoalWorkspaceRepository(
         }
         const current = GoalWorkspaceSchema.parse(snapshot.data());
         assertOwner(current, ownerId);
+        if (
+          current.nextCheckInId === nextCheckInId &&
+          current.nextTaskName === nextTaskName &&
+          current.schedule.nextOccurrenceAt === nextOccurrenceAt
+        ) {
+          return current;
+        }
         assertRevision(current, expectedRevision);
         if (current.status !== "ACTIVE") {
           throw new LiveGoalWorkspaceStateError(
@@ -338,7 +347,13 @@ export function createLiveGoalWorkspaceRepository(
         const next = GoalWorkspaceSchema.parse({
           ...current,
           schedule: { ...current.schedule, nextOccurrenceAt },
-          action: { ...current.action, nextCheckAt: nextOccurrenceAt, updatedAt: timestamp },
+          action: {
+            ...current.action,
+            title: nextAction ?? current.action.title,
+            minimumVersion: nextAction ?? current.action.minimumVersion,
+            nextCheckAt: nextOccurrenceAt,
+            updatedAt: timestamp,
+          },
           nextCheckInId,
           nextTaskName,
           revision: current.revision + 1,

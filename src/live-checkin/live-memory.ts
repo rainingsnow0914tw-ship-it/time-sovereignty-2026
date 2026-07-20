@@ -35,11 +35,12 @@ export const LiveMemoryEffectivenessSchema = z
   })
   .strict();
 
-export const LiveMemoryRecordSchema = z
+const LiveMemoryRecordOutputSchema = z
   .object({
     version: z.literal(2),
     id: EntityIdSchema,
     sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     sourceCheckInId: EntityIdSchema,
     scope: LiveMemoryScopeSchema,
     goalKey: z.string().regex(/^[a-f0-9]{32}$/u).nullable(),
@@ -79,11 +80,17 @@ export const LiveMemoryRecordSchema = z
     }
   });
 
-export const LiveEpisodeSchema = z
+export const LiveMemoryRecordSchema = z.preprocess((value) => {
+  if (!value || typeof value !== "object" || "ownerId" in value) return value;
+  return { ...value, ownerId: "private-single-device" };
+}, LiveMemoryRecordOutputSchema);
+
+const LiveEpisodeOutputSchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
     sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     checkInId: EntityIdSchema,
     goalKey: z.string().regex(/^[a-f0-9]{32}$/u),
     goalSnapshot: z.string().trim().min(1).max(240),
@@ -99,11 +106,17 @@ export const LiveEpisodeSchema = z
   })
   .strict();
 
+export const LiveEpisodeSchema = z.preprocess((value) => {
+  if (!value || typeof value !== "object" || "ownerId" in value) return value;
+  return { ...value, ownerId: "private-single-device" };
+}, LiveEpisodeOutputSchema);
+
 export type LiveMemoryRecord = z.infer<typeof LiveMemoryRecordSchema>;
 export type LiveEpisode = z.infer<typeof LiveEpisodeSchema>;
 
 export function deriveLiveGoalKey(context: LiveCheckInContext): string {
-  const normalized = context.goal.trim().toLocaleLowerCase("en-US");
+  const normalized =
+    context.goalId ?? context.goal.trim().toLocaleLowerCase("en-US");
   return createHash("sha256").update(normalized).digest("hex").slice(0, 32);
 }
 
@@ -123,6 +136,7 @@ export function buildLiveEpisode(options: {
     version: 1,
     id: memoryDocumentId("episode", checkIn.id),
     sessionId: checkIn.sessionId,
+    ownerId: checkIn.ownerId,
     checkInId: checkIn.id,
     goalKey: deriveLiveGoalKey(checkIn.context),
     goalSnapshot: checkIn.context.goal,
@@ -161,6 +175,7 @@ export function buildStrategyMemory(options: {
     version: 2,
     id: memoryDocumentId("strategy", checkIn.id),
     sessionId: checkIn.sessionId,
+    ownerId: checkIn.ownerId,
     sourceCheckInId: checkIn.id,
     scope: "GOAL",
     goalKey: deriveLiveGoalKey(checkIn.context),
@@ -193,6 +208,7 @@ export function buildResumeMemory(options: {
     version: 2,
     id: memoryDocumentId("resume", checkIn.id),
     sessionId: checkIn.sessionId,
+    ownerId: checkIn.ownerId,
     sourceCheckInId: checkIn.id,
     scope: "GOAL",
     goalKey: deriveLiveGoalKey(checkIn.context),

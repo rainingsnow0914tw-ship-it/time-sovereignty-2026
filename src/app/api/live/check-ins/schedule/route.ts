@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     const created = await repository.createScheduled({
       id: body.scheduleId,
       sessionId: session.id,
+      ownerId: session.ownerId,
       message: body.message,
       context: body.context,
       scheduledFor: body.scheduledFor,

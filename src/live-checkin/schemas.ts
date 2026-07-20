@@ -121,11 +121,14 @@ export const LiveChiefOfStaffDecisionSchema = z.preprocess((value) => {
   return value;
 }, LiveChiefOfStaffDecisionOutputSchema);
 
-export const LiveCheckInDocumentSchema = z
+export const LIVE_PRIVATE_OWNER_ID = "private-single-device";
+
+const LiveCheckInDocumentOutputSchema = z
   .object({
     version: z.literal(1),
     id: EntityIdSchema,
     sessionId: EntityIdSchema,
+    ownerId: EntityIdSchema,
     status: LiveCheckInStatusSchema,
     message: z.string().trim().min(1).max(1_000),
     context: LiveCheckInContextSchema,
@@ -161,7 +164,10 @@ export const LiveCheckInDocumentSchema = z
   })
   .strict();
 
-export const LIVE_PRIVATE_OWNER_ID = "private-single-device";
+export const LiveCheckInDocumentSchema = z.preprocess((value) => {
+  if (!value || typeof value !== "object" || "ownerId" in value) return value;
+  return { ...value, ownerId: LIVE_PRIVATE_OWNER_ID };
+}, LiveCheckInDocumentOutputSchema);
 
 const LiveDeviceSessionOutputSchema = z
   .object({
@@ -238,7 +244,7 @@ export const LiveConfirmRequestSchema = z
   })
   .strict();
 
-export const ClientLiveCheckInSchema = LiveCheckInDocumentSchema.pick({
+export const ClientLiveCheckInSchema = LiveCheckInDocumentOutputSchema.pick({
   id: true,
   status: true,
   message: true,

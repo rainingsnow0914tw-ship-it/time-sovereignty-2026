@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { createLiveGoalWorkspaceRepository } from "@/live-checkin/goal-workspace-repository";
 import { GoalWorkspaceCreateRequestSchema } from "@/live-checkin/goal-workspace-requests";
 import { createInitialGoalWorkspace } from "@/live-checkin/goal-workspace";
+import { scheduleNextGoalOccurrence } from "@/live-checkin/goal-loop";
 import {
   authenticateLiveRequest,
   liveErrorResponse,
@@ -35,10 +36,29 @@ export async function POST(request: NextRequest) {
       record: body.record,
       scheduleTimes: body.scheduleTimes,
     });
-    const result = await createLiveGoalWorkspaceRepository(
+    const workspaceRepository = createLiveGoalWorkspaceRepository(
       auth.config.cloud,
-    ).create({ workspace, planRevision });
-    return liveJson({ ok: true, ...result });
+    );
+    const result = await workspaceRepository.create({ workspace, planRevision });
+    const scheduled = result.workspace.nextCheckInId
+      ? { workspace: result.workspace, checkIn: null }
+      : await scheduleNextGoalOccurrence({
+          workspace: result.workspace,
+          plan: planRevision.plan,
+          sessionId: auth.session.id,
+          ownerId: auth.session.ownerId,
+          sourceKey: `initial-${body.requestId}`,
+          config: auth.config,
+          checkInRepository: auth.repository,
+          workspaceRepository,
+          preferredAt: planRevision.plan.initialCheckInProposal.scheduledFor,
+        });
+    return liveJson({
+      ok: true,
+      workspace: scheduled.workspace,
+      duplicate: result.duplicate,
+      nextCheckInId: scheduled.workspace.nextCheckInId,
+    });
   } catch (error) {
     return liveErrorResponse(error, "save-goal");
   }

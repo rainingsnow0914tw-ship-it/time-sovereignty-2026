@@ -68,6 +68,26 @@ function pendingAssumptions(plan: GoalPlan): AssumptionDraft[] {
   }));
 }
 
+function suggestedScheduleTimes(plan: GoalPlan): string[] {
+  const humanText = [
+    plan.goalSummary,
+    plan.targetWindow,
+    plan.cadence.rationale,
+    plan.cadence.completionSignal,
+    ...plan.feasibilityNotes,
+    plan.firstMilestone,
+    plan.bestNextAction,
+    plan.minimumViableAction,
+    plan.initialCheckInProposal.rationale,
+    ...plan.assumptionsNeedingConfirmation,
+  ].join(" ");
+  const mentioned = humanText.match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/gu) ?? [];
+  return [...new Set([plan.cadence.preferredCheckInTime, ...mentioned])].slice(
+    0,
+    8,
+  );
+}
+
 const stageOrder: Stage[] = [
   "goal",
   "window",
@@ -1563,7 +1583,7 @@ export function OnboardingFlow({
       setSupport((current) =>
         applyGoalCadenceRecommendation(current, result.output),
       );
-      setScheduleTimes([result.output.cadence.preferredCheckInTime]);
+      setScheduleTimes(suggestedScheduleTimes(result.output));
       setStage("plan");
     } catch (caught) {
       if (
@@ -1695,11 +1715,7 @@ export function OnboardingFlow({
       setSupport((current) =>
         applyGoalCadenceRecommendation(current, result.output),
       );
-      setScheduleTimes((current) =>
-        current.length > 1
-          ? current
-          : [result.output.cadence.preferredCheckInTime],
-      );
+      setScheduleTimes(suggestedScheduleTimes(result.output));
       setConcern("");
       setEditingPlan(false);
       setPairingRequired(false);

@@ -783,3 +783,28 @@
   with ten skipped; ESLint, TypeScript, production build, and diff check all
   passed. The local private profile returned HTTP 200 and rendered the durable
   cloud workspace entry without console errors.
+
+## 2026-07-20 — Longitudinal scheduling, attendance, and memory isolation
+
+- Added a single-next-occurrence scheduler for durable goals. It evaluates the
+  goal timezone, one-to-eight local schedule slots, weekday/weekly cadence,
+  target end, quiet hours, and a schema-validated GPT follow-up time while
+  materializing exactly one named Cloud Task at a time.
+- Saving a confirmed goal now creates its first check-in and task immediately.
+  Confirming a real GPT-5.6 decision records one idempotent attendance row and
+  then advances only that goal to its next occurrence. Completed or expired
+  goals stop instead of manufacturing a thirty-day script.
+- Migrated new check-ins, Episodes, and Strategy Cards from an expiring pairing
+  session to the stable private owner. Existing session-scoped data remains
+  readable, while replacement pairings can find and confirm new long-term
+  check-ins without inheriting another owner's state.
+- Memory scoping now uses the durable `goalId` when present. This prevents two
+  goals with similar titles, or unrelated goals such as sketching and bridge
+  exercise, from sharing intervention evidence.
+- Added a visible recent-attendance section to the mobile goal detail. It shows
+  only structured outcomes and safe summaries; raw text, voice, and photos are
+  not retained.
+- Verification passed: 44 test files passed with six skipped; 158 tests passed
+  with ten skipped; ESLint, TypeScript, production build, and diff check all
+  passed. Cloud and physical-phone acceptance remain the next gated step; the
+  submitted V1 revision and production traffic were not changed.
