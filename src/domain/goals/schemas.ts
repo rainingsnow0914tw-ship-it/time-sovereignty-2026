@@ -66,12 +66,44 @@ export const GoalCadenceSchema = z
     preferredCheckInTime: z
       .string()
       .regex(/^([01]\d|2[0-3]):[0-5]\d$/u),
+    // A goal that genuinely happens several times a day (three bridge sets, a
+    // medication schedule) needs to say so structurally. Without this the UI
+    // could only infer extra sessions by scanning the plan's prose for clock
+    // strings, which also picked up times mentioned in passing.
+    // Nullable rather than optional: the Responses structured-output API
+    // requires every field to be present, so the model must return null for a
+    // single daily check-in. The default keeps plans stored before this field
+    // existed readable.
+    additionalCheckInTimes: z
+      .array(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/u))
+      .max(7)
+      .nullable()
+      .optional(),
     reviewFrequencyDays: z.number().int().min(1).max(90),
     rationale: z.string().trim().min(1).max(700),
     completionSignal: z.string().trim().min(1).max(500),
   })
   .strict()
   .superRefine((cadence, context) => {
+    if (cadence.additionalCheckInTimes?.includes(cadence.preferredCheckInTime)) {
+      context.addIssue({
+        code: "custom",
+        path: ["additionalCheckInTimes"],
+        message:
+          "Additional check-in times must not repeat the preferred time.",
+      });
+    }
+    if (
+      cadence.additionalCheckInTimes &&
+      new Set(cadence.additionalCheckInTimes).size !==
+        cadence.additionalCheckInTimes.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["additionalCheckInTimes"],
+        message: "Additional check-in times must be distinct.",
+      });
+    }
     if (
       cadence.kind === "SPRINT" &&
       cadence.checkInFrequency === "WEEKLY"

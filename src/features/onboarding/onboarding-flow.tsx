@@ -45,6 +45,7 @@ import {
   defaultSupportAgreementDraft,
   normalizeTimeInput,
   previewNextCheckIn,
+  suggestedScheduleTimes,
   SupportAgreementDraftSchema,
   type OnboardingAnswers,
   type ProgressFormat,
@@ -68,23 +69,6 @@ function pendingAssumptions(plan: GoalPlan): AssumptionDraft[] {
     disposition: "PENDING",
     userNote: "",
   }));
-}
-
-function suggestedScheduleTimes(plan: GoalPlan): string[] {
-  // Only scan fields that describe the check-in rhythm itself. Narrative fields
-  // — especially `assumptionsNeedingConfirmation` — routinely mention a clock
-  // time in passing ("assuming your day starts at 09:00"), and scanning them
-  // turned those asides into real scheduled sessions the user never chose.
-  const humanText = [
-    plan.cadence.rationale,
-    plan.cadence.completionSignal,
-    plan.initialCheckInProposal.rationale,
-  ].join(" ");
-  const mentioned = humanText.match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/gu) ?? [];
-  return [...new Set([plan.cadence.preferredCheckInTime, ...mentioned])].slice(
-    0,
-    8,
-  );
 }
 
 const stageOrder: Stage[] = [

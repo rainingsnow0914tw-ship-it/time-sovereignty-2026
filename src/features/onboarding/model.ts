@@ -348,3 +348,32 @@ export function previewNextCheckIn(options: {
     return { kind: "NONE" };
   }
 }
+
+const CLOCK_IN_TEXT = /\b(?:[01]\d|2[0-3]):[0-5]\d\b/gu;
+
+export function suggestedScheduleTimes(plan: GoalPlan): string[] {
+  // The model can now state extra daily sessions structurally. When it does,
+  // that is the answer and no inference is required.
+  if (plan.cadence.additionalCheckInTimes?.length) {
+    return [
+      ...new Set([
+        plan.cadence.preferredCheckInTime,
+        ...plan.cadence.additionalCheckInTimes,
+      ]),
+    ].slice(0, 8);
+  }
+  // Otherwise fall back to reading the fields that describe the rhythm itself.
+  // Narrative fields — especially assumptionsNeedingConfirmation — routinely
+  // mention a clock time in passing ("assuming your day starts at 09:00"), and
+  // scanning those turned such asides into real sessions the user never chose.
+  const humanText = [
+    plan.cadence.rationale,
+    plan.cadence.completionSignal,
+    plan.initialCheckInProposal.rationale,
+  ].join(" ");
+  const mentioned = humanText.match(CLOCK_IN_TEXT) ?? [];
+  return [...new Set([plan.cadence.preferredCheckInTime, ...mentioned])].slice(
+    0,
+    8,
+  );
+}

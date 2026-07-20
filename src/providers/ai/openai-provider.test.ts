@@ -18,6 +18,7 @@ const goalPlan = {
     targetEndAt: "2026-07-21T23:59:00.000Z",
     checkInFrequency: "WEEKDAYS",
     preferredCheckInTime: "19:30",
+    additionalCheckInTimes: null,
     reviewFrequencyDays: 7,
     rationale: "Use milestone-scale support until submission is complete.",
     completionSignal: "The submission is complete and verifiable.",

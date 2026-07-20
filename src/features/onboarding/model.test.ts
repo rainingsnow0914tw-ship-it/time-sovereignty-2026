@@ -8,6 +8,7 @@ import {
   normalizeTimeInput,
   OnboardingAnswersSchema,
   previewNextCheckIn,
+  suggestedScheduleTimes,
 } from "./model";
 
 describe("Phase 2 onboarding model", () => {
@@ -217,5 +218,71 @@ describe("next check-in preview", () => {
     });
 
     expect(preview.kind).toBe("NONE");
+  });
+});
+
+describe("schedule suggestions from a plan", () => {
+  const basePlan = async () =>
+    (
+      await createMockGoalArchitectResult(
+        {
+          goal: "每天三組橋式",
+          targetWindow: "一個月",
+          motivation: "保護下背",
+        },
+        () => new Date("2026-07-20T01:00:00.000Z"),
+      )
+    ).output;
+
+  it("uses the sessions the model stated structurally", async () => {
+    const plan = await basePlan();
+    const times = suggestedScheduleTimes({
+      ...plan,
+      cadence: {
+        ...plan.cadence,
+        preferredCheckInTime: "09:00",
+        additionalCheckInTimes: ["14:00", "19:00"],
+      },
+    });
+
+    expect(times).toEqual(["09:00", "14:00", "19:00"]);
+  });
+
+  it("does not turn a time mentioned in an assumption into a session", async () => {
+    const plan = await basePlan();
+    const times = suggestedScheduleTimes({
+      ...plan,
+      cadence: {
+        ...plan.cadence,
+        preferredCheckInTime: "21:00",
+        additionalCheckInTimes: null,
+        rationale: "Protect one evening review.",
+        completionSignal: "Thirty sessions are recorded.",
+      },
+      initialCheckInProposal: {
+        ...plan.initialCheckInProposal,
+        rationale: "Check in after the first real session.",
+      },
+      assumptionsNeedingConfirmation: [
+        "假設你的一天從 09:00 開始，且 12:30 前後有空檔",
+      ],
+    });
+
+    expect(times).toEqual(["21:00"]);
+  });
+
+  it("still reads sessions stated in the rhythm fields themselves", async () => {
+    const plan = await basePlan();
+    const times = suggestedScheduleTimes({
+      ...plan,
+      cadence: {
+        ...plan.cadence,
+        preferredCheckInTime: "09:00",
+        additionalCheckInTimes: null,
+        rationale: "三個時段：09:00、14:00 與 19:00 各一次。",
+      },
+    });
+
+    expect(times).toEqual(["09:00", "14:00", "19:00"]);
   });
 });
