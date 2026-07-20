@@ -25,9 +25,15 @@ describe("Realtime session boundary", () => {
     expect(config.model).toBe(REALTIME_MODEL);
     expect(config.max_output_tokens).toBe(REALTIME_MAX_OUTPUT_TOKENS);
     expect(config.instructions).toContain("回應她本人說的話");
-    expect(config.instructions).toContain("你不是決策者");
     expect(config.instructions).toContain("GPT-5.6");
     expect(config.instructions).not.toContain("逐字完整朗讀");
+    // Says what it did, never what it cannot do: answering "我做不到" reads as
+    // though the whole conversation was wasted, because she has no reason to
+    // know a submit-judge-confirm chain exists behind it.
+    expect(config.instructions).toContain("我記下來了");
+    expect(config.instructions).toContain("不要用「我做不到」");
+    // The boundary itself is unchanged.
+    expect(config.instructions).toContain("不要宣布她已經完成");
     expect(config.audio.input.transcription).toEqual({
       model: REALTIME_TRANSCRIPTION_MODEL,
       language: "zh",
@@ -45,7 +51,8 @@ describe("Realtime session boundary", () => {
   it("keeps the English instructions under the same boundary", () => {
     const config = buildRealtimeSessionConfig("en");
 
-    expect(config.instructions).toContain("not the decision maker");
+    expect(config.instructions).toContain("never say you have already changed");
+    expect(config.instructions).toContain("never answer with 'I cannot do that'");
     expect(config.instructions).toContain("GPT-5.6");
   });
 
