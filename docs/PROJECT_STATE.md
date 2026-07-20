@@ -14,6 +14,13 @@
 
 # 下一步
 
+- **第一個動作：解決 session 格式不相容**（見「已知問題」第一條）。未解決前，本線
+  部署到線上時 PWA 的私人即時路徑不可用，語音接聽也無法驗收——因為語音控制只在
+  存在 `PENDING`／`FAILED` 報到時才顯示，而報到讀不到就沒有。
+- 接著驗收 2026-07-20 新增的「接聽並說話」（commit `82acead`）：來電畫面第一顆
+  按鈕開啟私人旅程並把語音控制捲入視野，需確認真實對話可用。已驗證的部分：五顆
+  按鈕正確顯示、接聽會開啟已安裝的 WebAPK（非預設瀏覽器）、配對狀態與目標保留。
+  未驗證：實際語音對話。
 - 先修 PWA 部署後仍可能執行舊 JavaScript 的更新機制，避免新版 backend 要求 `goalId` 時舊 client 持續 400／409。
 - 再修 GPT-5.6 的時區上下文與三個假協商入口，讓 Chloe 用手機逐項真測；API 不省，mock 只做回歸。
 - 恢復正式安靜時段 `22:30–08:00`，完成一次端到端驗收與乾淨 checkpoint。
@@ -21,6 +28,18 @@
 
 # 已知問題
 
+- **兩條開發線的 session 格式互不相容（2026-07-20 發現，最高優先）**。本線
+  `LiveDeviceSessionSchema` 需要 `goalStates`（goal-scoped pointers）且沒有
+  `ownerId`；平行線 `codex/longitudinal-goal-loop`（本機路徑
+  `Desktop/openAI build week202607130721`）反之——它有 `ownerId`，並在
+  commit `5bfd599` 明確刪除 `goalStates`。兩線都部署到同一個 Cloud Run 服務與
+  同一個 Firestore，因此**後部署的一方會讓另一方的既有配對失效**。
+  現況：Firestore 的 `live_device_sessions/single-device` 是 longitudinal 格式
+  （有 `ownerId`、無 `goalStates`），所以本線讀不懂它，`/api/live/session` 與
+  `/api/live/check-ins/current` 連續回 400，PWA 顯示「受保護的連線暫時無法使用」。
+  **解法（擇一）**：①手機重新配對，讓本線寫出自己格式的 session（最快，但需
+  Chloe 操作）②在本線的 session schema 加相容 preprocess，容忍 `ownerId` 並
+  補上空的 `goalStates` ③兩線合併（實測共同核心檔案差異逾 8000 行，1–2 天工程）。
 - 安裝式 PWA 曾保留舊 client：舊輪詢沒有 `goalId` 而連續 400，舊 check-in confirm 409；本輪用版本化導航恢復為 `current?goalId=...` 200，但需產品化更新策略。
 - 「每天三次橋式」目前仍會被單一 `preferredCheckInTime` 壓成每天一次；行動提醒與每日回顧需分開並允許 AI 產生多時段／彈性規則。
 - `Assumptions to confirm`、`Tell me what feels wrong`、`Adjust plan` 仍不是完整的 GPT-5.6 修訂閉環。
