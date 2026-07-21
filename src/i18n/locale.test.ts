@@ -42,3 +42,16 @@ describe("native interface localization", () => {
     expect(speechLanguageForLocale("en")).toBe("en-US");
   });
 });
+
+describe("headings that carry a count", () => {
+  it("translates the assumptions heading, count and all", () => {
+    // It rendered as English inside a Chinese page because the JSX split it
+    // into a string plus an interpolated number, so no key could match.
+    expect(translateUiText("Assumptions to confirm (2)", "zh-TW")).toBe(
+      "待確認的假設（2）",
+    );
+    expect(translateUiText("Assumptions to confirm (0)", "zh-TW")).toBe(
+      "待確認的假設（0）",
+    );
+  });
+});

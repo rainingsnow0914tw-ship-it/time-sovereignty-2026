@@ -294,6 +294,22 @@ const zhTW: Record<string, string> = {
   "Natural voice stopped safely. Text and standard voice still work.": "高擬真語音已安全停止；文字與標準語音仍可使用。",
   "Connecting the protected natural voice…": "正在連接受保護的高擬真語音…",
   "Natural voice is on. Speak once, then review the transcript.": "高擬真語音已開啟；說完一次後，請確認轉錄內容。",
+  "✎ Tidy this into the key points": "✎ 整理成重點",
+  "This goal's end date has already passed, so no next check-in can be scheduled and this reply cannot complete. Revise the plan with a new end date, then send it again.":
+    "這個目標的結束時間已經過了，所以無法排下一次報到，這筆回報也沒辦法完成。請重新制定計畫、給一個新的結束時間，再送出一次。",
+  "▶ Read it to me": "▶ 唸給我聽",
+  "■ Stop reading": "■ 停止唸",
+  "Checking something before answering…": "我先確認一下再回答…",
+  "Tidying up…": "整理中…",
+  "Merges what you changed your mind about. You can still edit it.":
+    "會把你改過主意的地方合併起來，整理完仍然可以自己修改。",
+  "It was not sure": "它不確定這一點",
+  "Tidied up. Read it, edit anything, then send.":
+    "已整理完成。看過、需要就改，然後送出。",
+  "Tidied up. It was unsure about something — see the question below.":
+    "已整理完成。有一處它不確定，請看下方的提問。",
+  "It could not tidy this up. Your own words are untouched.":
+    "這次無法整理，你原本說的話原封不動保留著。",
   "You answered the call. Tap Start natural voice to speak; a browser cannot open the microphone without your tap.":
     "妳接起了這通報到。按「開啟高擬真語音」就能直接說話；瀏覽器必須經過妳這一按才能開啟麥克風。",
   "Natural voice could not connect. Text and standard voice still work.": "高擬真語音無法連接；文字與標準語音仍可使用。",

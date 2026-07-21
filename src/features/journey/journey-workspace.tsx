@@ -1139,11 +1139,13 @@ function Eyebrow({ children, light = false }: { children: ReactNode; light?: boo
 }
 
 function ResumeField({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl bg-[#f4f6f2] p-4"><p className="text-[10px] font-bold uppercase tracking-[0.11em] text-[#58675f]">{label}</p><p className="mt-2 text-sm font-semibold leading-6 text-[#364c42]">{value}</p></div>;
+  const { t } = useLocale();
+  return <div className="rounded-2xl bg-[#f4f6f2] p-4"><p className="text-[10px] font-bold uppercase tracking-[0.11em] text-[#58675f]">{t(label)}</p><p className="mt-2 text-sm font-semibold leading-6 text-[#364c42]">{value}</p></div>;
 }
 
 function StatusRow({ label, value, good = false }: { label: string; value: string; good?: boolean }) {
-  return <div className="flex items-center justify-between gap-3 border-b border-[#edf0ed] pb-3"><span className="text-[#68766f]">{label}</span><span className={`text-right font-bold ${good ? "text-[#47735c]" : "text-[#354b41]"}`}>{value}</span></div>;
+  const { t } = useLocale();
+  return <div className="flex items-center justify-between gap-3 border-b border-[#edf0ed] pb-3"><span className="text-[#68766f]">{t(label)}</span><span className={`text-right font-bold ${good ? "text-[#47735c]" : "text-[#354b41]"}`}>{value}</span></div>;
 }
 
 function recoveryAction(

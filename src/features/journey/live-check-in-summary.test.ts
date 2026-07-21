@@ -47,6 +47,7 @@ function checkIn(
     traces: [],
     confirmedAt: null,
     nextCheckInId: null,
+    errorName: null,
     createdAt: "2026-07-18T13:51:46.000Z",
     updatedAt: "2026-07-18T13:51:46.000Z",
   };

@@ -275,6 +275,9 @@ export const ClientLiveCheckInSchema = LiveCheckInDocumentSchema.pick({
   nextCheckInId: true,
   createdAt: true,
   updatedAt: true,
+  // Without this the phone knew a reply had failed but never why, so an
+  // expired goal window showed up as a button that simply did nothing.
+  errorName: true,
 }).strip().extend({
   // A blocked or changed goal has three user-facing decision traces, followed
   // by the post-response Memory Curator trace after confirmation.

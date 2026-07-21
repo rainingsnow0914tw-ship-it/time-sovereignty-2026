@@ -121,6 +121,7 @@ describe("client-safe recovery trace", () => {
       traces,
       confirmedAt: "2026-07-18T02:33:00.000Z",
       nextCheckInId: null,
+      errorName: null,
       createdAt: "2026-07-18T02:29:00.000Z",
       updatedAt: "2026-07-18T02:32:55.000Z",
     });

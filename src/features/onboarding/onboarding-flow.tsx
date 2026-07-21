@@ -611,7 +611,10 @@ function PlanReview({
 
       <details className="mt-5 rounded-2xl border border-[#e1e5e1] bg-[#fafaf7] p-4 text-sm">
         <summary className="cursor-pointer font-semibold text-[#43554d]">
-          Assumptions to confirm ({plan.assumptionsNeedingConfirmation.length})
+          {/* Built as one string on purpose: split into text plus an
+              interpolated number, no translation key can ever match it, and
+              this heading stayed English inside an otherwise Chinese page. */}
+          {`Assumptions to confirm (${plan.assumptionsNeedingConfirmation.length})`}
         </summary>
         <ul className="mt-3 space-y-2 pl-5 text-[#6a746f]">
           {plan.assumptionsNeedingConfirmation.map((assumption) => (
@@ -710,10 +713,11 @@ function EditField({
   onChange: (value: string) => void;
   multiline?: boolean;
 }) {
+  const { t } = useLocale();
   return (
     <label className="block">
       <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-[#68776f]">
-        {label}
+        {t(label)}
       </span>
       {multiline ? (
         <textarea
@@ -1004,10 +1008,11 @@ function Fieldset({
   hint: string;
   children: ReactNode;
 }) {
+  const { t } = useLocale();
   return (
     <fieldset className="rounded-[1.6rem] border border-[#dfe4df] bg-white p-5 sm:p-6">
-      <legend className="px-1 text-base font-semibold text-[#24342d]">{legend}</legend>
-      <p className="mb-4 -mt-0.5 text-xs leading-5 text-[#5f6a64]">{hint}</p>
+      <legend className="px-1 text-base font-semibold text-[#24342d]">{t(legend)}</legend>
+      <p className="mb-4 -mt-0.5 text-xs leading-5 text-[#5f6a64]">{t(hint)}</p>
       {children}
     </fieldset>
   );
@@ -1247,10 +1252,11 @@ function CompletedJourney({
 }
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
+  const { t } = useLocale();
   return (
     <div>
       <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#59665f]">
-        {label}
+        {t(label)}
       </p>
       <p className="mt-1.5 text-sm font-semibold capitalize text-[#2d4037]">{value}</p>
     </div>
