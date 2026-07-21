@@ -62,7 +62,7 @@ and did not create or modify Firestore data.
   Codex/GPT-5.6 audio lines.
 - `docs/submission/time-sovereignty-architecture.mmd`: source diagram of the
   implemented system.
-- `docs/submission/time-sovereignty-architecture.png`: rendered submission
+- `docs/submission/time-sovereignty-architecture-v1.png`: historical V1 rendered submission
   diagram, visually inspected at approximately 1917×1247.
 - `docs/SUBMISSION_CHECKLIST.md`: current completion and human-action boundary.
 

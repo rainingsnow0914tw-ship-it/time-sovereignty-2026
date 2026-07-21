@@ -1,360 +1,51 @@
-# 產品方向與已定決策
+# Public product decisions
 
-這份文件記錄 **Chloe 親自做的產品決定**，以及她給的理由。
-理由比決定本身更重要——它決定了未來遇到取捨時該往哪邊倒。
+This is the public, privacy-safe decision summary for Time Sovereignty. The original private discovery notes are not part of the submission repository.
 
-**這不是待辦清單，是產品的憲法。** 接手的 agent 要動這些方向前，必須先問 Chloe。
+## 1. Recovery is the product
 
----
+The product is not a one-shot planner. Its core loop is `retrieve → inject → decide → act → save Episode → curate limited memory → retrieve again`.
 
-## 核心哲學（Chloe 2026-07-21 原話）
+## 2. Consent remains visible
 
-> **「長期工具要越用越懂你。」**
->
-> **「如果他不搬過來，那怎麼看我之前做過了什麼、成功跟失敗呢？這也是一種歷史記錄。」**
->
-> **「如果沒有記憶，這個 AI 就不是個人的 AI，就是一個通用的 AI。這樣對用戶來說它就沒有黏著度了——它都不記得我，我用誰不都一樣嗎？」**
->
-> （2026-07-20）**「拒絕一個鈴聲是很容易的，但是你要拒絕一個人打電話過來是很難的。」**
->
-> （2026-07-20）**「能夠因為 AI 的靈活而靈活的改變計劃。這才能跟需求相呼應啊。」**
+Quiet hours, pause conditions, category controls, revocation, a permanent stop action, and bounded ringing remain enforceable product rules. Non-response is evidence, not permission to shame or coerce.
 
-**這個產品的核心不是提醒，是壓力與記得。**
-一個不記得你的提醒工具，跟鬧鐘沒有差別；一個記得你、會為你調整、而且叫得動你的 AI，才是它要成為的東西。
+## 3. Cadence follows the goal
 
----
+Short sprints, finite projects, and ongoing habits require different check-in rhythms. The system must never force every goal into a thirty-day journey or a single daily time.
 
-## 決策一：兩條開發線合併為一（Accepted 2026-07-21）
+## 4. Episodes and memory are different
 
-**決定**：合併 `codex/v2-private` 與 `codex/longitudinal-goal-loop`。
+Episodes are immutable interaction facts. User-level and goal-level summaries are derived, scoped, revisable, and separately retrievable. Temporary conditions require expiry or recheck dates.
 
-**Chloe 的理由**：「雖然難，但是對之後的新版本應該是有好處。」
+## 5. One success is limited evidence
 
-**現況**：兩線共用同一個 Cloud Run 服務與 Firestore，但功能與資料格式分歧。
-共同核心檔案實測差異逾 8000 行（`onboarding-flow.tsx` 3610、
-`firestore-repository.ts` 1766、`live-check-in-panel.tsx` 1679、`schemas.ts` 538、
-`orchestrator.ts` 362、`route-helpers.ts` 210）。
+Strategy Cards begin tentative. Durable conclusions require an explicit user choice, and later outcomes update confidence without silently turning a hypothesis into permanent truth.
 
-| 只有 v2-private 有 | 只有 longitudinal 有 |
-| --- | --- |
-| Android 原生 App、真實來電、鈴聲 | 「我的目標」多目標清單 |
-| `catch-v2` 升級層級 | 出勤表 |
-| `live/native/*` 配對與回應 | 計畫修訂（`goals/plan/revise`） |
-| goal-scoped session pointers | 穩定 owner 跨 session |
+## 6. GPT-5.6 is the decision brain
 
-**已完成的前置**：跨線 session 與 check-in 相容（`207ba57`、`4ebcc45`），
-兩線目前不會再互相踢掉對方的配對。
+GPT-5.6 owns structured goal and intervention judgments. Deterministic code owns scheduling, escalation, idempotency, safety, and persistence. `gpt-realtime-2.1` is a user-started ears/mouth layer only.
 
-**尚未決定**：以哪一條為基底、分幾個階段合、每階段的驗收標準。
-**估計**：1–2 天，且必須逐步驗收，不可一次大合併。
+## 7. Search is justified, bounded, and separate
 
----
+External lookup is allowed only for a real current-knowledge or resource gap. It must not search the user's own history, is capped at two calls per spoken session, cites sources, and keeps external evidence separate from personal memory.
 
-## 決策二：「我的目標」清單與出勤表要移植過來（Accepted 2026-07-21）
+## 8. Native escalation is a state machine
 
-**決定**：把 longitudinal 線的多目標 workspace、出勤表移植到主線。
+The protected Android lane escalates `1 → 2 → 4 → stop` only for an approved, still-valid commitment. Domain responses are `complete`, `reschedule`, `downgrade`, `mercy`, and `timeout`; any promised reschedule must create a durable new event.
 
-**Chloe 的理由**（完整保留，因為它定義了這個功能的目的）：
+## 9. Voice should end deliberation
 
-> 「本來這就是一個在用的長期工具，要越用越懂你。」
-> 「如果他不搬過來，那怎麼看我之前做過了什麼、成功跟失敗呢？這也是一種歷史記錄啊。」
-> 「而且有可能不只追求一個目標——例如像我，想要每天能夠做一點簡單運動，跟每天固定學一些東西。這就是兩個目標啦，很正常嘛，一般人都會有。」
-> 「看看我之前做過什麼、成功什麼、失敗什麼，AI 也可以統計，就越來越知道你下一個目標成功率有多大。」
+The voice layer should produce one concrete proposal and a clear confirmation question. It must not become an open-ended conversation that rewards continued deliberation instead of action.
 
-**這段話比功能規格重要**：出勤表不是「歷史清單 UI」，它是**AI 用來判斷你下一次成功率的資料來源**。移植時若只搬畫面、不讓 AI 讀得到這些統計，就等於沒做。
+## 10. Public proof and private use are separate surfaces
 
-**牽涉範圍**：`live/goals` CRUD、`live/goals/[goalId]`、`goals/plan/revise`、
-`GoalWorkspace` 與 `GoalAttendanceEntry` 契約、對應 UI。
+The public Demo Lab is a clearly scripted, zero-API evaluator path. The live paired phone lane remains private. Claims about native delivery use redacted evidence and a supplemental video, never public credentials or a guest bypass.
 
----
+## 11. Capabilities and failures are explicit
 
-## 決策三：記憶要分層整理，重要的留下、瑣碎的淡出（Accepted 2026-07-21）
+Agents receive a two-sided capability boundary: what the app can really do and what it must never promise. User-visible failures state the actual reason instead of leaving an apparently dead button.
 
-**決定**：實作週期性記憶整理（catch-loop 的 `refineDaily` 模式）。
+## 12. Freeze before integration
 
-**Chloe 的理由**：
-
-> 「如果沒有記憶，這個 AI 就不是個人的 AI，就是一個通用的 AI。這樣對用戶來說，它就沒有黏著度了——它都不記得我，我用誰不都一樣嗎？」
-
-**現況**：`runLiveMemoryCurator` 只在每次確認報到後執行；沒有任何週期性整理。
-`live_memories` 已有 10 筆真實記憶，含 `effectiveness`、`recheckAt`、`confirmationState`，
-資料結構足以支撐分層，缺的是整理排程與升降層規則。
-
-**參考模式**（Chloe 自用專案 `chloe-catch-loop`，蒸餾包已存在於她本機）：
-- 記憶重要度是回應類型的函數：mercy/downgrade 0.82 > reschedule 0.74 >
-  timeout 0.72 > complete 0.55。**失敗比成功重要**，因為要調整下次戰術。
-- 每晚 `refineDaily`：importance ≥ 0.75 升為長期記憶，衰減率轉慢。
-
----
-
-## 決策四：語音層是「可以商量的對象」，不是朗讀機（Accepted 2026-07-21）
-
-**決定**：語音層必須能回應使用者、能被打斷、能記得剛才談過什麼。
-決策權仍完全屬於 GPT-5.6 與使用者本人。
-
-**Chloe 的原話**：
-
-> 「問題出在，我要的不是他念給我聽，是想要跟他有互動。我自己可以把計劃看完，但是我希望跟他討論一下。例如，我遇到了什麼困難，然後講完之後，它就可以把這一段放在下面的框架裡面，就算寫一個重點摘要也好。」
->
-> 「如果我不想跟他討論，我就直接單純地記錄。例如拍照片或是打字在框框裏面。」
->
-> 「這是一個人機互動很重要的環節。當遇到困難時，AI 可以立刻被你找到。」
-
-**改之前的狀態**（三道鎖，全都是刻意設定的，不是故障）：
-
-1. session instructions 要求「逐字完整朗讀」並明文禁止「回答內容中的問題」與「補充建議」
-2. `turn_detection.create_response: false` —— 偵測到她說完話，但不產生回應
-3. 開場使用 `conversation: "none"` —— 該次發言不進入對話歷史，所以它不記得剛唸過什麼
-
-因此使用者按下按鈕後，只會聽到自己的計畫被唸一遍；她說的話會被轉錄到文字框，
-但永遠得不到回應。
-
-**改之後**（commit `8b65865`）：三道鎖全開，並以新的邊界取代舊的禁令——
-語音可以討論、提問、幫忙把過大的行動縮小，但**不得代替使用者宣布完成／延後／
-縮小／休息，也不得聲稱自己記錄或安排了任何事**。這條邊界寫在 instructions 裡，
-並由 `realtime-session.test.ts` 斷言。
-
-**兩段尚未實作（Chloe 已表示要做）**：
-
-- **階段 2 — 外部搜尋**：討論中遇到不知道的事時去查。技術已驗證可行：專案使用
-  Responses API，而 `web_search` 內建工具支援 gpt-5.4 以後的模型（含 gpt-5.6），
-  新整合使用 `{ "type": "web_search" }`，另有 `return_token_budget` 可控制深度與成本。
-  目前 provider 從未使用任何工具（`tool_choice: "none"`、`tools: []`）。
-- **階段 3 — 對話摘要**：討論結束時自動把重點寫進回報文字框，讓她看過後送出。
-
-**成本注意**：改為真對話後，每一輪來回都要處理音訊，語音成本必然高於原本的
-單向朗讀。建議先實際使用數次並觀察帳單，再決定是否進入階段 2。
-
-## 決策五：對話摘要是「協議更新」，不是文字整理（Accepted 2026-07-21）
-
-**背景**：階段 1 上線後 Chloe 立即實測成功——語音真的會對話。同一次對話也暴露了
-下一個問題：轉錄逐句覆蓋回報欄，她說「五次太多，改成一次」再說「十分鐘後做」，
-**留下的只有時間，被沖掉的正是份量的改變**。若當時送出，GPT-5.6 會以為她只是要
-延後，完全不知道她把份量減半。已於 `appendVoiceTurn` 止血（改為累加），但那是
-流水帳，不是摘要。
-
-### 合併邏輯（Chloe 定義）
-
-> 「例如剛才講，十分鐘後做，然後只做一次，兩個是兩件事情，就應該是一加一。
-> 然後如果說我一開始說，我們做兩次吧，後來我又更改說，兩次有點累了，我改成做一次好了。
-> 那就是，一次取代兩次，是這個邏輯。」
-
-**摘要不是累加也不是覆蓋，而是每個維度各自保留最新值**：
-
-| 維度 | 行為 | 例 |
-| --- | --- | --- |
-| 份量 | 後者取代前者 | 兩次 → 一次 |
-| 時間 | 後者取代前者 | 十分鐘後 |
-| 障礙／狀態 | 累加，不被取代 | 腰痛 |
-
-### 摘要必須驅動排程
-
-> 「之後下一個頁面我們不是會生成那個時間表裡面有提醒的時間，他就要運用剛才我們這個記憶。」
-
-**摘要不只是給使用者看的紀錄，它要能改變接下來的排程。** 她說「十分鐘後」，
-排程就該長出十分鐘後那一筆。否則討論完仍要自己回去改設定，討論就只是聊天。
-因此摘要應是結構化輸出，而非一段散文。
-
-## 決策六：語音要說「我做了什麼」，不說「我不能做什麼」（Accepted 2026-07-21）
-
-**背景**：決策四的邊界（語音不得代替使用者決定）第一次實測就顯示，**技術正確
-但溝通失敗**。語音回答「我沒辦法直接改」，Chloe 的反應是：
-
-> 「用戶就会想那我跟你讲那麼多干嘛啊，什么都做不到啊。因為用户不懂得流程是
-> 討論 → 送出 → GPT-5.6 判斷 → 確認 → 才生效。」
-
-**使用者不知道背後有那條鏈，所以「我不能改」等於「你白講了」。**
-
-**決定**：邊界不變，措辭改變。語音必須陳述它**實際做到的事**與**下一步在哪**，
-而不是宣告自己的限制。
-
-| 不可以 | 應該說 |
-| --- | --- |
-| 「我沒辦法直接改」 | 「好，我把『改成一次、十分鐘後』記在下面了，妳按送出，它就會照這個重新安排」 |
-
-**這句話成立的四個理由**：
-
-1. **從「被拒絕」變成「有進展」**——同樣的能力邊界，完全不同的心理結果。
-2. **讓使用者知道流程，但不必學流程**——只告訴她下一步按哪裡、結果會是什麼，
-   不解釋 GPT-5.6、結構化判斷、確認寫入這些內部設計。
-3. **明確交棒**：「**妳**按送出」四個字把決定權說出口，與心理暗示那一節一致。
-4. **承諾即時可驗證**：它說「記下來了」，使用者低頭就看得到框裡真的有。
-   這正是 `chloe-catch-loop` 產品契約的鐵律——**AI 嘴巴答應的事，程式碼必須讓它成真**。
-   如果改說「我幫妳改好了」，就成了空頭支票，而空頭支票開一次信任就沒了。
-
-**最根本的一點（Chloe 補充）**：
-
-> 「承諾了記在下面，用戶都覺得我的壓力就減輕了。不然用戶要記就覺得很累。」
-
-**這是認知負荷，不是話術。** 若 AI 不記，使用者得一邊講一邊記住自己說過什麼、
-稍後再自己打進去。「我記下來了」是這個產品第一次真正履行「幕僚長」的職責——
-幕僚長就是幫你記住事情的人。它與「長期工具要越用越懂你」「不記得我，我用誰不都
-一樣」屬於同一條線：**把使用者腦中的東西，安全地放到別處**。
-
-## 決策七：AI 判斷不了時要問使用者，不要猜（Accepted 2026-07-21）
-
-**Chloe 原話**：
-
-> 「這幾個問題也不用我來告訴你……這個 AI 都能判斷嗎？**如果 AI 判斷不了就訪問
-> 用戶就好啦。** 我們不能把它寫死啊，寫死到時候會出很多問題啊。」
-
-摘要的合併語意（哪句取代哪句、哪句該丟）**不得寫成程式規則**。語意關係寫不完，
-只會不斷長出例外。規則屬於 prompt，判斷屬於模型。
-
-**但模型必須有第三個選項**：
-
-| 只有兩個選項（不足） | 三個選項（正確） |
-| --- | --- |
-| 留 / 取代 | 留 / 取代 / **「這句我不確定，妳的意思是？」** |
-
-不確定時硬猜，使用者根本不知道它猜過；問一句，反而符合這個產品「不替你決定」的
-本質。**不確定時問一句，比猜對九次珍貴。**
-
-## 產品倫理邊界：心理暗示可以，操控不行（Chloe 2026-07-21 明訂）
-
-> 「你今天用言語對話、自然語言對話承諾了……你的心又覺得說，我已經說出口了，
-> 我就不能輕易反悔了。有這樣子的一個心理暗示。」
->
-> **「不是操控，我強調一下。」**
-
-這是本產品「有效」的核心機制，也是最容易被越過的界線。**未來若有人為了提高完成率
-而想加入罪惡感、羞辱或恐嚇，這一節就是拒絕的依據。**
-
-| 允許（心理暗示） | 禁止（操控） |
-| --- | --- |
-| 讓使用者聽見自己的承諾 | 讓使用者害怕不做的後果 |
-| 記得她說過什麼並溫和提起 | 用羞辱、罪惡感、恐嚇 |
-| 她說做不到時**幫她縮小** | 她說做不到時**加壓** |
-| 隨時可以說「今天算了」 | 沒有退出的路 |
-
-**判準：暗示是讓她更容易做到她想做的事；操控是讓她做系統想要她做的事。**
-
-同一條界線早已出現在 Chloe 自用專案 `chloe-catch-loop` 的產品契約中
-（系統不可以羞辱使用者、以真實傷害威脅、把創造性恢復當成懲罰性 KPI），
-本專案沿用並正式納入。
-
-## 決策八：對話摘要按維度合併（2026-07-21 實作）
-
-Chloe 的原話：
-
-> 他跟我对完一次对话之后，他应该把重点截录下来……十分钟后做，然后只做一次，
-> 两个是两件事情，就应该是一加一……一次取代两次。
-
-> 承諾了記在下面，用戶都覺得我的壓力就減輕了。不然用戶要記就覺得很累。
-
-**為什麼不是「把對話全文送出去就好」**：Memory Curator 收不到原始回覆
-（trace 的 `inputSummary` 明寫 `raw reply and media omitted`）。
-也就是說 **摘要品質＝長期記憶品質**——寫壞的摘要會永久污染她的記憶層，
-這是它排在 web_search 前面的原因。
-
-**合併語意（寫在 `MERGE_RULES_ZH`，不是寫在程式碼裡）**：
-
-| 維度 | 規則 | 例 |
-|---|---|---|
-| amount 數量 | 取代 | 「五次」→「一次」＝ 一次 |
-| timing 時間 | 取代 | 「現在」→「十分鐘後」＝ 十分鐘後 |
-| circumstances 處境 | 累積 | 腰痛 ＋ 在浴室 ＝ 兩件都留 |
-
-**為什麼用 AI 判斷而不用程式判斷**（Chloe 指定）：
-
-> Q1 跟 Q2 这时候就要用 AI 自己去判断。不能用程序去写。
-> 如果 AI 判断不了就访问用户就好啦，我们不能把它写死啊。
-
-所以 schema 裡有 `questions` 這個逃生口——模型判斷不出「五次改一次」是修正
-還是兩件事時，不准猜，要寫成問題回到畫面上讓她回答。
-
-**為什麼是按鈕不是自動**：一次摘要＝一次模型呼叫。web_search 實測單次燒掉
-23,877 token（≒ 七天用量的 58%），成本必須由她按下去才發生。
-
-**為什麼可以直接覆蓋輸入框**：那些字本來就是她自己說的，而且她在送出前一定
-會看到；她自己也說過「还没有按出最后决策之前都可以更改」。
-
-**重開語音會帶著已記下的內容**：她會關掉語音、想到一件事再打開。第二次連線
-若不知道第一次談定什麼，她就得重講一遍。已寫在回報欄的內容會當成背景交過去，
-但明確指示「不要唸出來」，避免她又聽一次自己講過的話。
-
-## 決策九：語音層可以查一次資料（2026-07-21 實作）
-
-Chloe 的原話：
-
-> 它可以外部搜寻。
-
-**為什麼要有**：語音夥伴的界線是「不准編造」。但只做到「我不知道」對使用者是死路
-——她講了半天，得到一句沒有用的話。查得到就查，是把誠實從「拒絕回答」升級成
-「去弄清楚」。
-
-**為什麼是工具而不是永遠開著**：實測一次查詢 11,376 token（更早一次量到 23,877）。
-永遠開著等於每句話都可能燒掉一天的額度。所以：
-
-| 護欄 | 位置 | 為什麼在這 |
-|---|---|---|
-| 一次 session 最多 2 次 | `RealtimeVoiceSession`（用戶端） | 不能信任模型自制，要用程式擋 |
-| 不准查她自己的事 | 工具 description ＋ session instructions | 目標、計畫、過去、心情它本來就有；拿去查既錯又貴 |
-| 查之前先講一句 | session instructions | 9.4 秒的沉默要有解釋，不然像當機 |
-| 查不到也不能句點 | `voiceSearchUnavailableOutput` | 延續「不要用『我做不到』回應她」那條界線 |
-| 證據弱要說證據弱 | `evidenceIsWeak` | 實測會觸發：下背痛那題它自己說「沒有定論」 |
-| 不給個人化醫療/財務指示 | `SEARCH_RULES_ZH` | 它是幕僚長不是醫生 |
-
-**為什麼特地跑真實 API 驗證**：structured output ＋ web_search 同時用是全新組合。
-`return_token_budget` 那次的教訓是 **TypeScript 綠、單元測試綠、真打 API 400**。
-所以 `voice-search.live.test.ts` 存在，預設 skip，要 `npm run test:live:voice-search`
-才會真的花錢跑。2026-07-21 實測通過：3 個來源、11,376 token、9.4 秒。
-
-**已知代價**：查詢期間有約 10 秒沉默。目前用一句「我先確認一下」蓋掉，
-是否要做成畫面上的等待指示，未定。
-
-## 決策十：語音要果斷收尾，不可以變成聊天（2026-07-21 立）
-
-Chloe 的原話：
-
-> 我們這個產品的核心是用戶動起來馬上做，go go go，而不是過度思考。
-> 思考要交給 AI，人就開始做。
-
-> 人就是過度猶豫所以才做不好啊……如果 AI 也開始跟他聊天了，那還做什麼運動？
-> 就變成聊天機器人了。
-
-> 我剛剛就覺得那個 AI 就很想跟我一起聊下去。我差點被他帶歪掉了。
-
-**這條是修正前一次的修正。** 2026-07-21 早上先把語音改成「講短一點」，寫的是
-「給一個建議，然後問她覺得如何；她說不行，再給下一個」——那是一個**聊天迴圈**。
-表面解決了「講太長」，實際把它推向「聊不完」，當天真機測試就被帶偏。
-
-**核心風險**：這個產品要解決的病是過度思考。如果 AI 本身變成一個可以聊的地方，
-它就變成**最舒服的那一種拖延**——使用者感覺自己在「處理問題」，實際一步都沒動。
-那不是功能沒做好，那是產品反過來加重了它要治的病。
-
-**因此語音層的成功指標是「這通對話越短越成功」**，不是使用者聊得越久黏著度越高。
-一般對話式 AI 的直覺在這裡是反的，未來任何人要「提升互動性」之前先讀這一條。
-
-| 要 | 不要 |
-|---|---|
-| 直接給一個今天做得到的版本 | 問「妳覺得呢」「妳想怎麼安排」 |
-| 用可以答好／不好的話收尾 | 開放式問題（會把她推回猶豫） |
-| 不行就再給一個，最多兩個，然後定下來 | 無限給替代方案 |
-| 她答應就叫她去做 | 再補充、再確認一次 |
-
-**唯一的例外仍然是解釋**（例如某個做法安不安全）：那時候講完整比講得短重要，
-但講完要回到行動上。果斷不等於把安全問題答一半。
-
-**這條和倫理界線的關係**：果斷是「替她省下決策成本」，不是「替她做決定」。
-既有的鎖沒有放寬——它仍然不准宣布她完成、延後、縮小或休息，那些只有她能決定。
-判準還是決策六那句：暗示是讓她更容易做到她想做的事，操控是讓她做系統想要她做的事。
-
-## 尚未決定（不要自行決定）
-
-1. **真正的來電（全螢幕假電話）在主線的最終形態**。Android App 已有來電與五顆
-   回應按鈕，2026-07-20 新增「接聽並說話」。是否進一步做到 ConnectionService
-   等級（進入系統通話記錄），未定。
-2. ~~**AI 計畫會要求使用者做介面不支援的操作**~~ **（2026-07-21 已解決，選項 A）**
-   Chloe 原本傾向不加約束、直接把功能做出來，但在交件前選了選項 A：
-   把能力邊界寫進規劃層的 prompt（`src/domain/agents/app-capabilities.ts`），
-   雙向陳述——做得到什麼、以及**絕對不可以承諾什麼**（手機鬧鐘、行事曆、計次）。
-   當天重新制定計畫驗證通過：新的下一步變成「現在拿起 1 杯水並喝完，完成後告訴我」，
-   不再有「設 5 個提醒、記 1/5」。
-   **仍未決定的是**：要不要真的把鬧鐘／行事曆功能做出來（那才是 Chloe 說的正解）。
-3. **`reviewFrequencyDays` 是死欄位**：schema 定義、UI 顯示「協議檢視頻率 · N 天」、
-   也存進協議，但全專案沒有任何地方讀它來觸發檢視。使用者會預期 N 天後 AI 主動
-   回頭做全局檢討，實際不會發生。要做還是要移除顯示，未定。
-4. **限時目標到期後 workspace 不會自動轉狀態**：伸展目標 `targetEndAt` 為
-   2026-07-20 18:00，過期後 `status` 仍為 `ACTIVE`，只是排程器不再產生新報到。
-   是規格或缺口，未定。
+The judging snapshot preserves V1 and V2 as separate, labelled branches. Post-hackathon V3 work may integrate the multi-goal workspace and native lane only after the frozen submission state is tagged.

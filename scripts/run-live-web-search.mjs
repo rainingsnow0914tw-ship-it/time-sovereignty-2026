@@ -5,14 +5,9 @@
 import { readFileSync } from "node:fs";
 import OpenAI from "openai";
 
-// This workspace keeps no .env.local of its own; the key lives in the sibling
-// workspace. Read it, never print it.
-const ENV_CANDIDATES = [
-  new URL("../.env.local", import.meta.url),
-  new URL(
-    "file:///C:/Users/soulf/Desktop/openAI%20build%20week202607130721/.env.local",
-  ),
-];
+// Read an ignored repository-local .env.local when the shell does not already
+// provide the key. Never print the key or search sibling workspaces for it.
+const ENV_CANDIDATES = [new URL("../.env.local", import.meta.url)];
 if (!process.env.OPENAI_API_KEY) {
   for (const candidate of ENV_CANDIDATES) {
     try {

@@ -11,7 +11,7 @@ acceptance.
 
 Android inspection showed all of the following at the start of this repair:
 
-- only the intended S25 was attached: `R5CY12Y90ZF`, `SM-S9380`, SDK 36;
+- only the intended S25 test device was attached: serial redacted, `SM-S9380`, SDK 36;
 - notification permission was granted;
 - the manifest declared `USE_FULL_SCREEN_INTENT`, `VIBRATE`, and `WAKE_LOCK`;
 - the full-screen AppOp was at its default state and contained a recent reject

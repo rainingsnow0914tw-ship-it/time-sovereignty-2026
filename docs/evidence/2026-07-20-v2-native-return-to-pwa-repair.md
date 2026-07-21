@@ -28,7 +28,7 @@ Date: 2026-07-20 (Asia/Shanghai)
 - Android tasks `:app:testDebugUnitTest :app:assembleDebug --no-daemon`:
   `BUILD SUCCESSFUL`.
 - The rebuilt debug APK installed with `-r` on the intended S25 Ultra only:
-  serial `R5CY12Y90ZF`, model `SM-S9380`, Android SDK 36. Existing app data and
+  serial redacted, model `SM-S9380`, Android SDK 36. Existing app data and
   pairing state were preserved.
 - Android resolved the exact private play-profile URL to the installed Chrome
   WebAPK package `org.chromium.webapk.a205e950c055f3aec_v2`; the foreground

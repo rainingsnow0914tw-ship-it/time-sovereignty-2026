@@ -3,7 +3,7 @@
 ## 2026-07-16 — Repository foundation
 
 - Primary environment: Codex desktop task.
-- Workspace selected by Chloe: `C:\Users\soulf\Desktop\openAI build week202607130721`.
+- Original V1 workspace selected by Chloe: local path redacted from the public log.
 - Imported the v0.6 source package into `docs/source/` without modifying its contents.
 - Created a project-specific OpenAI API key through the secure Platform flow.
 - Stored the key in local `.env.local`; no plaintext key was displayed or committed.
@@ -784,7 +784,7 @@
   unsafe-origin rejection, WebAPK preference, and Chrome fallback. Unit tests
   and the debug APK build passed.
 - The rebuilt APK was installed with data preservation on S25
-  `R5CY12Y90ZF` / `SM-S9380`. Android resolved the link to the installed Chrome
+  redacted serial / `SM-S9380`. Android resolved the link to the installed Chrome
   WebAPK, and Chloe confirmed it opened the original cup-sketch journey without
   showing the blank North Star onboarding.
 - No GPT-5.6 call, cloud deployment, Firestore write, Cloud Task, public V1
@@ -829,3 +829,31 @@
 - Android escalation tiers now have independent notification identities. More importantly, the call signal has a hard 30-second cap, every activity exit stops app-owned sound and vibration, opening the native main screen is an unconditional stop, and the main screen permanently exposes `立即停止所有提醒`.
 - Android unit tests and APK build passed. Chloe completed six S25 safety checks: audible, vibration, no response required to escape, app exit, app reopen, and explicit stop control all passed.
 - Evidence: `docs/evidence/2026-07-20-goal-isolation-and-android-stop-safety.md`.
+
+## 2026-07-21 — V2 judging snapshot closed without moving stable traffic
+
+- Resumed from the documented final-day Claude Code handoff after the primary
+  Codex quota returned. Reconciled the public repository, V2 branch, phone
+  acceptance, Cloud Run state, Devpost form, and both videos before changing
+  any submission claim.
+- Produced and publicly verified a 56.5-second V2 supplemental video using
+  OpenAI `tts-1-hd` with `nova`. The video labels the Android incoming screen
+  as `NATIVE UI REPLAY` and the 15-second cadence as test acceleration.
+- Replaced the Devpost Story with the canonical V1/V2-aware version, updated
+  judge instructions, and added three truth-labelled V2 gallery images while
+  leaving the original under-three-minute V1 video as the main embed.
+- Re-verified Devpost `Submitted` / 5-of-5 state and re-read the public page for
+  the final Story, both video links, and all three evidence captions.
+- Fresh verification passed: 215 web tests with 10 deliberate live-only skips,
+  lint, TypeScript, production build, 19/19 static pages, Android 15/15, debug
+  APK assembly, and `git diff --check`.
+- Public-source scanning found zero secret-pattern hits and zero local-path or
+  full-device-identifier hits. Local phone screenshots under `tmp/` are now
+  ignored and excluded from the checkpoint.
+- Read-only cloud checks confirmed stable `00024-dih` at 100%, both protected
+  tags on `00073-c44`, min/max/concurrency one, a RUNNING empty queue with one
+  dispatch/second and one attempt, and HTTP 200 on all health routes and the
+  Demo Lab. No deployment, traffic, key, IAM, Firestore, or task mutation was
+  made during closeout.
+- Evidence: `docs/evidence/2026-07-21-v2-submission-closeout.md` and
+  `docs/evidence/2026-07-21-v2-supplemental-video.md`.

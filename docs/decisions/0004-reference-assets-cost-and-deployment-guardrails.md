@@ -136,7 +136,7 @@ fired state. Phase 3 must test the retry window explicitly.
 ## Phase-gated on-demand index
 
 The paths below are bookmarks, not required reading now. Their common root is
-`C:\Users\soulf\Desktop\code寶創作天地\AI情報員\`.
+the private local reference-assets workspace (path redacted from the public log).
 
 | Phase | Read only when this problem is active | Indexed reference |
 | --- | --- | --- |

@@ -1,10 +1,10 @@
 # Codex Repository Instructions
 
-This is the isolated, local-only V2 repository for **Time Sovereignty**.
+This is the final-day V2 submission branch for **Time Sovereignty**.
 
 It was branched from the accepted public V1 submission candidate at commit
-`20ca832`. V1 is frozen. V2 work must never modify, deploy over, or push into
-the public V1 repository.
+`20ca832`. V1 is frozen on `main`; V2 is published only on
+`codex/v2-private`. Neither branch may be rewritten during judging.
 
 ## Product goal
 
@@ -19,16 +19,16 @@ The valuable V2 loop is:
 
 `schedule -> message -> no response -> interactive prompt -> no response -> full-screen call -> voice/choice -> follow-up + memory -> later retrieval`.
 
-## Private-repository boundary
+## Submission-branch boundary
 
-- This repository must remain local-only until Chloe explicitly approves a
-  private remote destination and its access list.
-- Do not add a Git remote, publish a branch, or open a pull request by default.
+- The remote is public under the MIT license. Keep `main` as the V1 judging
+  snapshot and `codex/v2-private` as the labelled final-day V2 snapshot.
+- After the deadline, continue development on a new `codex/v3-integration`
+  branch instead of changing the judging snapshots.
 - Never copy `.env`, `google-services.json`, `local.properties`, API keys,
   pairing values, session secrets, device tokens, Firestore user data, APKs,
   archives, or raw media from either reference project.
-- The public V1 repository at
-  `C:\Users\soulf\Desktop\openAI build week202607130721` is read-only reference.
+- The public V1 `main` branch is read-only reference during judging.
 - The Catch Loop repositories are read-only reference. They contain existing
   user changes and must not be cleaned, reset, staged, or silently absorbed.
 
@@ -63,7 +63,7 @@ branding, or unverified runtime assumptions.
   the one exact action needed.
 - Immediately before announcing that a verifiable milestone or work segment is
   complete, run
-  `powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\soulf\.codex\chloe-notification-hook.ps1" -Event complete`.
+  `powershell -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\chloe-notification-hook.ps1" -Event complete`.
 - The global `Stop` hook owns ordinary stage-stop sound. Do not manually replay
   it or ring for ordinary progress updates.
 

@@ -12,7 +12,7 @@
 - [x] Demo has audible English narration covering the product, Codex, and
       GPT-5.6.
 - [x] English captions are corrected.
-- [ ] Final Devpost submission is completed before July 21, 2026, 5:00 PM PDT
+- [x] Final Devpost submission is completed before July 21, 2026, 5:00 PM PDT
       (July 22, 2026, 8:00 AM Taiwan time).
 
 ## Product acceptance
@@ -32,7 +32,8 @@
 
 ## Latest evidence
 
-- [x] 125 tests passed / 9 live-only skipped.
+- [x] Historical V1: 125 tests passed / 9 live-only skipped.
+- [x] Final-day V2: 215 tests passed / 10 live-only skipped; Android 15/15.
 - [x] ESLint, TypeScript, production build, diff check.
 - [x] Real photo focus loop: COMPLETED, 1,484 tokens, photo not persisted.
 - [x] Real memory loop: four calls, 5,447 tokens, zero SDK retries.
@@ -61,7 +62,9 @@
 - [x] Public GitHub + MIT.
 - [x] `/feedback` Session ID.
 - [x] Public YouTube URL.
-- [ ] English language check for all submitted materials.
+- [x] `Created by` contribution statement is populated and visible publicly.
+- [x] English language check for all submitted materials.
 - [x] Final link check: Demo Lab, stable app, GitHub, YouTube returned HTTP 200
       from an unauthenticated request on 2026-07-19.
-- [ ] Submit and save confirmation screenshot.
+- [x] Submitted state, 5/5 steps, final Story, V2 video, and three V2 gallery
+      captions re-verified on the public Devpost page on 2026-07-21.

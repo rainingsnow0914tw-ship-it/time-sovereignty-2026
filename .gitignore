@@ -22,6 +22,7 @@ coverage/
 Thumbs.db
 .turbo/
 .cache/
+/tmp/
 
 # Private Android build and Firebase pairing
 /android/.gradle/

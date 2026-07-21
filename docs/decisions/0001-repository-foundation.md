@@ -5,9 +5,9 @@
 
 ## Decision
 
-Use `C:\Users\soulf\Desktop\openAI build week202607130721` as the standalone Time Sovereignty repository and the single local home for Build Week work.
+Use a standalone Time Sovereignty repository as the single Build Week project history.
 
-Preserve the original v0.6 PRD, Architecture v2, and Codex kickoff prompt under `docs/source/`. Do not mix this repository's commit history with the older `C:\Users\soulf\Documents\New project` repository.
+Preserve the original v0.6 PRD, Architecture v2, and Codex kickoff prompt under `docs/source/`. Do not mix this repository's commit history with unrelated projects.
 
 ## Rationale
 

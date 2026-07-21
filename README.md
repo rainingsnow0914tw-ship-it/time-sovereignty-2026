@@ -7,10 +7,14 @@ structured decision brain—not a decorative chat box.
 
 - **Public 30-day Demo Lab:**
   https://live-mobile---time-sovereignty-defqnamrrq-de.a.run.app/demo
-- **Under-three-minute submission video:**
+- **Original under-three-minute V1 submission video:**
   https://youtu.be/d0cX1V4R7h4
+- **Final-day V2 supplemental video (56 seconds):**
+  https://youtu.be/XPdfnJ6klu0
 - **Stable app:** https://time-sovereignty-defqnamrrq-de.a.run.app
-- **Source:** https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
+- **V1 source (`main`):** https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
+- **V2 source (`codex/v2-private`):**
+  https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026/tree/codex/v2-private
 - **License:** [MIT](LICENSE)
 - **Primary Codex `/feedback` Session ID:**
   `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`
@@ -40,7 +44,8 @@ an ephemeral model input and was not stored.
 - Editable support agreement covering quiet hours, tone, channels, pause
   conditions, progress formats, and consent for firmer follow-up.
 - Real Cloud Tasks check-ins with Google OIDC, open-PWA polling, text, photo,
-  voice transcription, standard TTS, and user-started Realtime voice.
+  voice transcription, standard TTS, user-started Realtime voice, and a
+  consent-bounded private Android escalation lane.
 - Need-based Agent routing: Chief of Staff, Goal Architect, Commitment
   Recovery, and post-response Memory Curator.
 - Immutable Episodes plus user-scoped and goal-scoped derived memory.
@@ -117,7 +122,12 @@ and speaks; GPT-5.6 remains the structured decision brain.
 
 Codex was the primary engineering environment from clean repository to real
 phone acceptance. Chloe supplied the product intent and challenged assumptions;
-Codex implemented, deployed, tested, and maintained the evidence chain.
+Codex implemented, deployed, tested, and maintained the core evidence chain.
+When the Codex quota was exhausted on the final day, Claude Code continued a
+bounded V2 pass from the documented handoff. The repository keeps this tooling
+history explicit: Codex remained the primary engineering environment; Claude
+Code handled the documented final-day continuation; GPT-5.6 and, only when
+voice is invoked, `gpt-realtime-2.1` are the product runtime models.
 
 Codex accelerated the project by:
 
@@ -166,8 +176,10 @@ Open the [public Demo Lab](https://live-mobile---time-sovereignty-defqnamrrq-de.
 4. Open **Developer** to inspect all four schema-validated mock traces.
 
 The private live phone path intentionally requires a one-time pairing code and
-is not offered as a public guest account. Its real behavior is documented in
-the evidence files and demonstrated in the submission video.
+is not offered as a public guest account. The original V1 video shows the
+accepted baseline. The separate V2 supplement shows the final-day interface
+with explicit replay labels; redacted server and physical-device evidence
+verify the real protected path separately.
 
 ## Run locally
 
@@ -198,14 +210,17 @@ configuration and preserve zero automatic SDK retries.
 
 ## Current verified state
 
-- 125 routine tests passed; 9 deliberate live-only tests skipped.
-- ESLint, TypeScript, production build, and diff check passed.
-- Private memory acceptance revision: `time-sovereignty-00036-qov`.
-- Accepted Demo Lab revision: `time-sovereignty-00038-zey`, `live-mobile` tag,
-  0% normal traffic.
-- Stable revision: `time-sovereignty-00024-dih`, 100% normal traffic.
+- Historical V1 checkpoint: 125 routine tests passed; 9 deliberate live-only
+  tests skipped.
+- Final-day V2 checkpoint: 215 tests passed; 10 deliberate live-only tests
+  skipped; ESLint, TypeScript, production build, and Android build passed.
+- Stable V1 revision: `time-sovereignty-00024-dih`, 100% normal traffic.
+- Protected V2 acceptance revision: `time-sovereignty-00073-c44`, tag-only;
+  the test-accelerated lane received no normal public traffic.
 - Public Demo Lab: HTTP 200, Day 30, mock trace visible, zero `/api/*`, zero
-  framework overlays, zero console errors at 390×844.
+  framework overlays, and no access to the paired private session.
+- V2 supplemental media: 56.50 seconds, 1920×1080, H.264/AAC, burned English
+  captions, full decode passed.
 
 ## Evidence map
 
@@ -215,16 +230,26 @@ configuration and preserve zero automatic SDK retries.
 - [Cloud Demo Lab browser acceptance](docs/evidence/demo-lab-browser-acceptance-2026-07-19.md)
 - [Live Goal Architect contract](docs/evidence/live-goal-cadence-contract-2026-07-18.md)
 - [Realtime Android voice acceptance](docs/evidence/realtime-android-production-acceptance-2026-07-18.md)
+- [V2 native pairing physical acceptance](docs/evidence/2026-07-19-v2-native-pairing-physical.md)
+- [V2 FCM lock-screen physical acceptance](docs/evidence/2026-07-19-v2-fcm-lockscreen-physical.md)
+- [V2 real catch, confirmation, and recovery](docs/evidence/2026-07-20-v2-real-catch-confirmation-recovery.md)
+- [Goal isolation and Android stop safety](docs/evidence/2026-07-20-goal-isolation-and-android-stop-safety.md)
+- [V2 Android full-screen local acceptance](docs/evidence/2026-07-20-v2-android-fullscreen-access-and-local-wake.md)
+- [V2 supplemental video verification](docs/evidence/2026-07-21-v2-supplemental-video.md)
+- [Final V2 submission closeout](docs/evidence/2026-07-21-v2-submission-closeout.md)
 - [Full dated build log](docs/CODEX_BUILD_LOG.md)
 
 ## Honest limitations and next steps
 
-- Real check-in polling currently requires the PWA to remain open near the due
-  time; background push and lock-screen vibration are future integrations.
-- The public evaluator path is scripted and local-only by design. A rate-limited
-  live Guest Lane was cut to protect submission time and private data.
-- Web Search remains behind a provider interface and was not allowed to delay
-  memory acceptance or submission.
+- V1 stable uses open-PWA polling. The V2 branch adds consent-bounded FCM and
+  native escalation; judges do not receive the owner-only pairing credential.
+- The public evaluator path is scripted and local-only by design. A live Guest
+  Lane was cut to protect private data and prevent uncontrolled API spend.
+- V2 lookup is user-justified, source-aware, and capped at two calls per spoken
+  session. It is not invoked for the user's own goal or memory.
+- The protected acceptance revision used a 15-second escalation override to
+  compress waiting time. That is not the intended production cadence and must
+  be removed before post-hackathon release.
 - Future versions can add wearables, smart speakers, calendar/email adapters,
   and richer research support behind the same consent, trace, and memory
   boundaries.
@@ -233,6 +258,8 @@ configuration and preserve zero automatic SDK retries.
 
 - [Under-three-minute video script](docs/DEMO_SCRIPT.md)
 - [Devpost submission draft](docs/DEVPOST_SUBMISSION.md)
+- [Final Devpost Story](docs/DEVPOST_STORY_FINAL.md)
+- [V2 supplemental video](https://youtu.be/XPdfnJ6klu0)
 - [Submission checklist](docs/SUBMISSION_CHECKLIST.md)
 - [Architecture source](docs/submission/time-sovereignty-architecture.mmd)
 

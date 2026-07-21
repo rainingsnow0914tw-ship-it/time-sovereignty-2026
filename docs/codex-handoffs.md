@@ -1,9 +1,14 @@
 # Codex Handoff Manual
 
+> Historical V1 handoff retained as part of the Build Week evidence chain.
+> For the final judging snapshot, read `HANDOVER_TO_CODEX_2026-07-21.md`,
+> `PROJECT_STATE.md`, and `../START_HERE.md`. Do not treat the branch or cloud
+> details below as current without re-verification.
+
 ## Current checkpoint
 
 - Handoff updated: 2026-07-17 04:38 Asia/Shanghai.
-- Repository: `C:\Users\soulf\Desktop\openAI build week202607130721`
+- Repository: public `time-sovereignty-2026` repository (local path redacted)
 - Public remote:
   `https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026`
 - Branch: `main`

@@ -9,8 +9,7 @@
 
 ## 前置狀態（阿寶已完成，不需要妳做）
 
-- Firestore 全庫備份 110 筆，存於 `C:\Users\soulf\Documents\New project\firestore-backup-20260720\`
-  （在 repo 之外，不會進 git；內含私人內容，請勿上傳）。
+- Firestore 全庫備份已保存在 repo 之外的私人位置；內含私人內容，請勿上傳。
 - 線上 `live-mobile` 與 `v2-private` 兩個 tag 指向本線最新 revision；
   **提交版 `time-sovereignty-00024-dih` 維持 100% 正式流量，全程未動。**
 - Android APK 已編譯並安裝到 S25（含「接聽並說話」與 `<queries>` 修正）。

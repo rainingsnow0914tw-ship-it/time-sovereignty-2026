@@ -1,4 +1,7 @@
-# Devpost submission draft
+# Devpost submission reference
+
+The canonical final Story is [DEVPOST_STORY_FINAL.md](DEVPOST_STORY_FINAL.md).
+This file preserves the shorter V1-oriented field draft and testing checklist.
 
 ## Project name
 
@@ -19,7 +22,10 @@ Apps for Your Life
 - Stable app: https://time-sovereignty-defqnamrrq-de.a.run.app
 - Public MIT repository:
   https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
-- Public YouTube demo: https://youtu.be/d0cX1V4R7h4
+- Original V1 YouTube demo: https://youtu.be/d0cX1V4R7h4
+- Final-day V2 supplement: https://youtu.be/XPdfnJ6klu0
+- Final-day V2 source:
+  https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026/tree/codex/v2-private
 - Codex `/feedback` Session ID:
   `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`
 
@@ -159,8 +165,11 @@ photo was not persisted.
   post-response memory curation.
 - Real text, photo, voice transcription, TTS, and user-started Realtime voice.
 - A public, one-click, thirty-day evaluator story that makes zero API calls.
-- 125 passing routine tests, TypeScript, ESLint, production build, Android and
-  cloud browser acceptance, and a dated Codex evidence chain.
+- Historical V1 checkpoint: 125 routine tests passed, 9 deliberate live-only
+  tests skipped.
+- Final-day V2 checkpoint: 215 tests passed, 10 deliberate live-only tests
+  skipped, plus TypeScript, ESLint, production build, Android build, physical
+  acceptance, and a dated evidence chain.
 
 ## What we learned
 
@@ -174,13 +183,11 @@ over repeated outcomes, not manufacture certainty from one success.
 
 ## What's next
 
-- Background push and lock-screen vibration so the AI can find the user without
-  the PWA remaining open.
-- Wearable and smart-speaker adapters behind explicit consent.
-- ResearchProvider activation only when the user asks or a real resource gap
-  justifies external search.
-- Longer real-world pilots to measure which interventions actually help people
-  continue.
+- Remove the 15-second judging-only escalation override and restore a humane
+  production cadence.
+- Integrate the frozen V1 and V2 branches only after the judging snapshot.
+- Run longer real-world pilots before claiming which interventions generalize.
+- Add wearable and smart-speaker adapters only behind explicit consent.
 
 ## Testing instructions
 
@@ -192,9 +199,9 @@ over repeated outcomes, not manufacture certainty from one success.
    explicit no-API boundary.
 5. No account, credential, API key, or rebuild is required.
 
-The private real-phone lane is intentionally pairing-protected. Its live
-behavior is shown in the video and documented with redacted evidence in the
-repository.
+The private real-phone lane is intentionally pairing-protected. The original
+V1 video shows the baseline. The separate V2 supplement labels the native UI
+replay honestly; redacted evidence verifies the protected cloud and phone path.
 
 ## Built with
 
