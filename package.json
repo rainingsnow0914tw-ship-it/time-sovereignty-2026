@@ -16,6 +16,7 @@
     "test:live:check-in": "node scripts/run-live-check-in.mjs",
     "test:live:web-search": "node scripts/run-live-web-search.mjs",
     "test:live:memory-curator": "node scripts/run-live-memory-curator.mjs",
+    "test:live:voice-search": "node scripts/run-live-voice-search.mjs",
     "test:watch": "vitest",
     "smoke:openai": "node scripts/smoke-openai.mjs"
   },
