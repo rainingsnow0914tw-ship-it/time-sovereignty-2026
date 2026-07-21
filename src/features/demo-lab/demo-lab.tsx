@@ -46,12 +46,35 @@ export function DemoLab() {
                 <li>✓ {chinese ? "所有 trace 明確標示 mock" : "Every trace is labeled mock"}</li>
                 <li>✓ {chinese ? "使用同一套狀態與 schema" : "Same state and schema contracts"}</li>
               </ul>
-              <Link
-                href="/?profile=play"
-                className="mt-5 inline-flex rounded-full border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/10"
-              >
-                {chinese ? "私人真實產品（需要配對）" : "Private live product (pairing required)"}
-              </Link>
+              {/* The live layer is deliberately absent here: opening it to an
+                  unpaired visitor would mean anyone could spend the owner's
+                  model budget. Saying what it does, and showing it on video,
+                  costs nothing and stops the pairing link being a dead end. */}
+              <p className="mt-5 font-bold text-[#d8f48a]">
+                {chinese ? "配對後的即時層另外包含" : "The paired live layer also has"}
+              </p>
+              <ul className="mt-2 space-y-2">
+                <li>· {chinese ? "可以打斷的即時語音對話" : "Interruptible real-time voice"}</li>
+                <li>· {chinese ? "把對話整理成重點，不確定就反問" : "Spoken turns merged into a report, questions when unsure"}</li>
+                <li>· {chinese ? "答案需要外部事實時會查證來源" : "Sourced web lookup when an answer needs it"}</li>
+                <li>· {chinese ? "Android 全螢幕來電，拒絕比忽略難" : "Android full-screen call, harder to ignore than a chime"}</li>
+              </ul>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <a
+                  href="https://youtu.be/d0cX1V4R7h4"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex rounded-full bg-[#d8f48a] px-4 py-2 text-xs font-bold text-[#173f35] hover:bg-[#c7e86f]"
+                >
+                  {chinese ? "▶ 看即時層實際運作" : "▶ Watch the live layer"}
+                </a>
+                <Link
+                  href="/?profile=play"
+                  className="inline-flex rounded-full border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/10"
+                >
+                  {chinese ? "私人真實產品（需要配對）" : "Private live product (pairing required)"}
+                </Link>
+              </div>
             </div>
           </div>
         </section>

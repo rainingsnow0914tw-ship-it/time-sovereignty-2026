@@ -9,6 +9,7 @@ import {
   useLocale,
 } from "../../i18n/locale";
 import { appendVoiceTurn } from "../onboarding/model";
+import { formatVoiceSearchOutput } from "../../live-checkin/voice-search";
 import type { LocalOnboardingRecord } from "../../repositories/local-onboarding-repository";
 import type {
   ClientLiveCheckIn,
@@ -18,6 +19,7 @@ import type {
 import {
   isSpeechRecognitionSupported,
   speakBrowserText,
+  stopBrowserSpeech,
   transcribeBrowserSpeech,
 } from "../../providers/audio/browser-audio-provider";
 import {
@@ -98,6 +100,13 @@ export function LiveCheckInPanel({
   const [pausePolling, setPausePolling] = useState(false);
   const [memoryDisposition, setMemoryDisposition] =
     useState<LiveMemoryDisposition>("DEFER");
+  // Tidying the transcript is a separate, explicit action: it costs one model
+  // call, so it happens when she asks for it rather than after every sentence.
+  // Plain browser speech is the fallback for when the natural voice cannot
+  // connect, so it stays — but it now stops when she says stop.
+  const [speakingStandard, setSpeakingStandard] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
+  const [summaryQuestions, setSummaryQuestions] = useState<string[]>([]);
   const voiceButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeVoiceRef = useRef<RealtimeVoiceSession | null>(null);
   const scheduleIdRef = useRef<string | null>(null);
@@ -384,6 +393,42 @@ export function LiveCheckInPanel({
     }
   };
 
+  const summarizeConversation = async () => {
+    if (!current || !reply.trim()) return;
+    setSummarizing(true);
+    setSummaryQuestions([]);
+    try {
+      const response = await fetch("/api/live/check-ins/summary", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: reply,
+          goal: t(current.context.goal),
+          currentAction: t(current.context.currentAction),
+          locale,
+        }),
+      });
+      if (!response.ok) throw new Error("summary_unavailable");
+      const payload = (await response.json()) as {
+        summary: { reportText: string; questions: string[] };
+      };
+      // Replacing the field is safe here only because she reads it before
+      // submitting, and because the raw turns were hers to begin with.
+      setReply(payload.summary.reportText);
+      setSummaryQuestions(payload.summary.questions);
+      setNotice(
+        payload.summary.questions.length
+          ? "Tidied up. It was unsure about something — see the question below."
+          : "Tidied up. Read it, edit anything, then send.",
+      );
+    } catch {
+      setNotice("It could not tidy this up. Your own words are untouched.");
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
   const startRealtimeVoice = async () => {
     if (!current) return;
     realtimeVoiceRef.current?.disconnect(false);
@@ -403,6 +448,22 @@ export function LiveCheckInPanel({
           setNotice("Natural voice stopped safely. Text and standard voice still work.");
         }
       },
+      // She should see that it went to look something up, so a pause in the
+      // conversation reads as working rather than as broken.
+      onLookUpStarted: () => setNotice("Checking something before answering…"),
+      onLookUp: async (query) => {
+        const response = await fetch("/api/live/voice-search", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, goal: t(current.context.goal), locale }),
+        });
+        if (!response.ok) return null;
+        const payload = (await response.json()) as {
+          answer: { spokenAnswer: string; sources: string[]; evidenceIsWeak: boolean };
+        };
+        return formatVoiceSearchOutput(payload.answer, locale);
+      },
     });
     realtimeVoiceRef.current = session;
     setNotice("Connecting the protected natural voice…");
@@ -412,7 +473,7 @@ export function LiveCheckInPanel({
         session.disconnect(false);
         return;
       }
-      session.speak(t(current.message));
+      session.speak(t(current.message), reply);
       setNotice("Natural voice is on. Speak once, then review the transcript.");
     } catch {
       if (realtimeVoiceRef.current === session) realtimeVoiceRef.current = null;
@@ -512,10 +573,19 @@ export function LiveCheckInPanel({
       const refreshed = await refreshCurrent()
         .then(() => true)
         .catch(() => false);
+      // "Interrupted, but recovered" is true and useless when the cause is a
+      // goal whose end date has passed: every retry fails the same way, and
+      // the user is left pressing a button that appears to do nothing.
+      const blockedByGoalWindow =
+        error instanceof Error &&
+        (error.message === "live_check_in_conflict" ||
+          error.message.startsWith("reply_failed_409"));
       setNotice(
-        refreshed
-          ? "The direct reply was interrupted, but the phone recovered the latest safe result. Review it below before retrying."
-          : `The live reply was not returned (${error instanceof Error ? error.message : "unknown_error"}). Do not resend yet; automatic refresh will keep trying with the same reply identity.`,
+        blockedByGoalWindow
+          ? "This goal's end date has already passed, so no next check-in can be scheduled and this reply cannot complete. Revise the plan with a new end date, then send it again."
+          : refreshed
+            ? "The direct reply was interrupted, but the phone recovered the latest safe result. Review it below before retrying."
+            : `The live reply was not returned (${error instanceof Error ? error.message : "unknown_error"}). Do not resend yet; automatic refresh will keep trying with the same reply identity.`,
       );
     } finally {
       setBusy(false);
@@ -796,11 +866,25 @@ export function LiveCheckInPanel({
           <h3 className="text-xl font-semibold text-[#173f35]">{current.message}</h3>
           <div className="mt-4 flex flex-wrap gap-2">
             {realtimeActive ? <button type="button" className={secondary} onClick={stopRealtimeVoice}>■ Stop natural voice</button> : <button ref={voiceButtonRef} type="button" className={primary} disabled={realtimeStatus === "CONNECTING"} onClick={() => void startRealtimeVoice()}>✦ Start natural voice</button>}
-            <button type="button" className={secondary} onClick={() => void speakBrowserText(t(current.message), { language: speechLanguage })}>▶ Standard voice</button>
+            {speakingStandard ? <button type="button" className={secondary} onClick={() => { stopBrowserSpeech(); setSpeakingStandard(false); }}>■ Stop reading</button> : <button type="button" className={secondary} onClick={() => { setSpeakingStandard(true); void speakBrowserText(t(current.message), { language: speechLanguage }).finally(() => setSpeakingStandard(false)); }}>▶ Read it to me</button>}
             <button type="button" className={secondary} disabled={listening} onClick={listen}>{listening ? "Listening…" : "🎙 Standard voice reply"}</button>
           </div>
-          <p className="mt-3 text-xs leading-5 text-[#5f6a64]">Natural voice: {realtimeStatusLabel(realtimeStatus)}. It starts only after your tap and releases the microphone when stopped.</p>
+          <p className="mt-3 text-xs leading-5 text-[#5f6a64]">Natural voice: {realtimeStatusLabel(realtimeStatus)}.{" "}<span>It starts only after your tap and releases the microphone when stopped.</span></p>
           <label className="mt-4 block text-xs font-bold uppercase tracking-[0.12em] text-[#66766e]">Voice transcript or text reply<textarea className={`${input} mt-2 min-h-28 resize-y`} value={reply} onChange={(event) => setReply(event.target.value)} placeholder="What changed, in your own words…" /></label>
+          {reply.trim() ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button type="button" className={secondary} disabled={summarizing} onClick={() => void summarizeConversation()}>{summarizing ? "Tidying up…" : "✎ Tidy this into the key points"}</button>
+              <span className="text-xs leading-5 text-[#5f6a64]">Merges what you changed your mind about. You can still edit it.</span>
+            </div>
+          ) : null}
+          {summaryQuestions.length ? (
+            <div className="mt-3 rounded-2xl border border-[#dcc9a4] bg-[#fdf6e7] px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8a6a2c]">It was not sure</p>
+              {summaryQuestions.map((question) => (
+                <p key={question} className="mt-1 text-sm leading-6 text-[#5b451c]">{question}</p>
+              ))}
+            </div>
+          ) : null}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <label className={`${secondary} cursor-pointer`}>
               {preparingPhoto ? "Preparing photo…" : "📷 Attach progress photo"}
