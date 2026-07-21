@@ -9,11 +9,19 @@ structured decision brain—not a decorative chat box.
   https://live-mobile---time-sovereignty-defqnamrrq-de.a.run.app/demo
 - **Under-three-minute submission video:**
   https://youtu.be/d0cX1V4R7h4
+- **Final-day V2 supplemental video (56 seconds):**
+  https://youtu.be/XPdfnJ6klu0
+- **Final-day V2 source and evidence snapshot:**
+  https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026/tree/codex/v2-private
 - **Stable app:** https://time-sovereignty-defqnamrrq-de.a.run.app
 - **Source:** https://github.com/rainingsnow0914tw-ship-it/time-sovereignty-2026
 - **License:** [MIT](LICENSE)
 - **Primary Codex `/feedback` Session ID:**
   `019f6085-1e4d-7e23-a0b8-371e6e47bbfa`
+
+> `main` preserves the original V1 submission shown in the primary video. The
+> labelled `codex/v2-private` branch documents the protected Android follow-up
+> completed on the final day without replacing the accepted V1 baseline.
 
 ## Why this exists
 
