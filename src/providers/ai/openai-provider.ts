@@ -3,6 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import type { z } from "zod";
 
 import type { ImplementedAgentRole } from "../../domain/agents/schemas";
+import { APP_CAPABILITIES } from "../../domain/agents/app-capabilities";
 import type { AiProvider, AgentRunResult, StructuredAgentRequest } from "./types";
 
 type ResponseParseBody = Parameters<OpenAI["responses"]["parse"]>[0];
@@ -173,11 +174,15 @@ export function instructionsFor(
     const liveCheckIn = outputSchemaName === "LiveChiefOfStaffDecision"
       ? " For a live check-in, first classify the user's real progress. Dispatch Commitment Recovery only when the report is blocked or the goal direction changed. Produce one concrete commitment the user can confirm, set a future follow-up unless the goal is completed, and include at most one tentative memory proposal."
       : "";
-    return `${common} Synthesize one unified user-facing decision. Decide from the supplied specialist outputs and context. When a dispatchedAgents array is supplied, copy it exactly; never claim an agent was called when it was not. Propose memory changes as proposals, never as silently confirmed facts.${liveCheckIn}`;
+    return `${common} Synthesize one unified user-facing decision. Decide from the supplied specialist outputs and context. When a dispatchedAgents array is supplied, copy it exactly; never claim an agent was called when it was not. Propose memory changes as proposals, never as silently confirmed facts.${liveCheckIn}
+
+${APP_CAPABILITIES}`;
   }
 
   if (agent === "GOAL_ARCHITECT") {
-    return `${common} Evaluate goal clarity and feasibility, create a concise milestone, propose both a best next action and a minimum viable action, suggest an initial check-in, and expose assumptions that need confirmation.`;
+    return `${common} Evaluate goal clarity and feasibility, create a concise milestone, propose both a best next action and a minimum viable action, suggest an initial check-in, and expose assumptions that need confirmation.
+
+${APP_CAPABILITIES}`;
   }
 
   if (agent === "COMMITMENT_RECOVERY") {
