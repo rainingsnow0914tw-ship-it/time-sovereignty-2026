@@ -1,9 +1,15 @@
 import type { AppLocale } from "../../i18n/locale";
 import { normalizeSpeechText } from "./browser-audio-provider";
+import {
+  MAX_VOICE_SEARCHES_PER_SESSION,
+  buildVoiceToolResultEvents,
+  parseVoiceToolCall,
+  voiceSearchUnavailableOutput,
+} from "../../live-checkin/voice-search";
 
 export const REALTIME_VOICE_PROVIDER = "openai";
 export const REALTIME_VOICE_MODEL = "gpt-realtime-2.1";
-export const REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS = 1_024;
+export const REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS = 4_096;
 
 export type RealtimeVoiceStatus =
   | "IDLE"
@@ -55,9 +61,18 @@ export function parseRealtimeVoiceEvent(raw: string): RealtimeVoiceSignal | null
   return null;
 }
 
-export function buildRealtimeSpeakEvent(text: string, locale: AppLocale) {
+export function buildRealtimeSpeakEvent(
+  text: string,
+  locale: AppLocale,
+  priorNotes = "",
+) {
   const normalized = normalizeSpeechText(text);
   if (!normalized) throw new Error("There is no readable text.");
+  // Voice can be stopped and started again mid-check-in — she reopens it to add
+  // one more thing. Without this, the second session began with no idea what
+  // was already agreed, and she had to repeat herself. What is already in the
+  // report field is handed over as memory, not as something to read aloud.
+  const carried = priorNotes.trim();
   // This is the opening turn: read the check-in aloud so she hears where she
   // is, then stop and let her talk. It deliberately joins the conversation
   // (no `conversation: "none"`), because everything she says next only makes
@@ -66,13 +81,36 @@ export function buildRealtimeSpeakEvent(text: string, locale: AppLocale) {
     locale === "zh-TW"
       ? "請完整唸出這段報到內容，從第一個字到最後一個字，不要摘要或刪節。唸完就停下來等她說話——她按下這個按鈕，通常是因為卡住了或想談一談。不要在唸完後自問自答，也不要追加建議；等她開口。使用自然、溫暖的臺灣繁體中文。"
       : "Read this check-in aloud in full, from the first word through the final word, without summarizing or omitting anything. Then stop and wait for her to speak — she pressed this button because she is stuck or wants to talk it through. Do not answer yourself or add advice after reading; wait for her. Use natural, warm English.";
+  const carryInstruction =
+    locale === "zh-TW"
+      ? "另外附上的「先前已記下的內容」是這次報到稍早談定的事，請當作你已經知道的背景，不要唸出來；她接下來說的話若是修改其中一項，就以最新的說法為準。"
+      : "The 'already noted' block is what was agreed earlier in this same check-in. Treat it as background you already know and do not read it aloud; if what she says next revises one of those items, the newest version wins.";
   return {
     type: "response.create" as const,
     response: {
       output_modalities: ["audio"] as const,
       max_output_tokens: REALTIME_PLAYBACK_MAX_OUTPUT_TOKENS,
-      instructions,
+      instructions: carried ? `${instructions} ${carryInstruction}` : instructions,
       input: [
+        ...(carried
+          ? [
+              {
+                type: "message" as const,
+                role: "user" as const,
+                content: [
+                  {
+                    type: "input_text" as const,
+                    text:
+                      locale === "zh-TW"
+                        ? `先前已記下的內容：
+${carried}`
+                        : `Already noted:
+${carried}`,
+                  },
+                ],
+              },
+            ]
+          : []),
         {
           type: "message" as const,
           role: "user" as const,
@@ -91,11 +129,18 @@ export class RealtimeVoiceSession {
   private audio: HTMLAudioElement | null = null;
   private pendingSpeech: ReturnType<typeof buildRealtimeSpeakEvent> | null = null;
   private locale: AppLocale = "zh-TW";
+  // Search is the most expensive thing the product can do, so the ceiling is
+  // enforced here rather than trusted to the model's own restraint.
+  private searchesUsed = 0;
 
   constructor(
     private readonly callbacks: {
       onTranscript: (transcript: string) => void;
       onStatus: (status: RealtimeVoiceStatus) => void;
+      // Resolving a lookup needs the server, which the panel owns. Returning
+      // null means "could not answer" and is handled the same as a failure.
+      onLookUp?: (query: string) => Promise<string | null>;
+      onLookUpStarted?: (reason: string) => void;
     },
   ) {}
 
@@ -150,6 +195,11 @@ export class RealtimeVoiceSession {
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== "string") return;
+        const toolCall = parseVoiceToolCall(event.data);
+        if (toolCall) {
+          void this.resolveLookUp(toolCall.callId, toolCall.arguments.query, toolCall.arguments.reason);
+          return;
+        }
         const signal = parseRealtimeVoiceEvent(event.data);
         if (!signal) return;
         if (signal.type === "TRANSCRIPT") {
@@ -190,8 +240,38 @@ export class RealtimeVoiceSession {
     }
   }
 
-  speak(text: string): void {
-    const event = buildRealtimeSpeakEvent(text, this.locale);
+  private async resolveLookUp(
+    callId: string,
+    query: string,
+    reason: string,
+  ): Promise<void> {
+    let output: string | null = null;
+    if (this.searchesUsed < MAX_VOICE_SEARCHES_PER_SESSION) {
+      this.searchesUsed += 1;
+      this.callbacks.onLookUpStarted?.(reason);
+      try {
+        output = (await this.callbacks.onLookUp?.(query)) ?? null;
+      } catch {
+        output = null;
+      }
+    }
+    // Over budget, failed, or unwired all end the same way: the voice keeps
+    // talking to her instead of stalling on an unanswered tool call.
+    this.send(
+      ...buildVoiceToolResultEvents(
+        callId,
+        output ?? voiceSearchUnavailableOutput(this.locale),
+      ),
+    );
+  }
+
+  private send(...events: object[]): void {
+    if (this.channel?.readyState !== "open") return;
+    for (const event of events) this.channel.send(JSON.stringify(event));
+  }
+
+  speak(text: string, priorNotes = ""): void {
+    const event = buildRealtimeSpeakEvent(text, this.locale, priorNotes);
     if (this.channel?.readyState === "open") {
       this.channel.send(JSON.stringify(event));
       return;
@@ -201,6 +281,7 @@ export class RealtimeVoiceSession {
 
   disconnect(notify = true): void {
     this.pendingSpeech = null;
+    this.searchesUsed = 0;
     this.channel?.close();
     this.peer?.close();
     for (const track of this.microphone?.getTracks() ?? []) track.stop();

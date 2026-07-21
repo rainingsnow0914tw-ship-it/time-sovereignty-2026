@@ -61,3 +61,28 @@ describe("Realtime voice provider", () => {
     expect("conversation" in event.response).toBe(false);
   });
 });
+
+describe("carrying earlier turns back into a reopened voice session", () => {
+  it("hands over what is already written without asking for it to be read aloud", () => {
+    const event = buildRealtimeSpeakEvent(
+      "請告訴我現在的情況。",
+      "zh-TW",
+      "改成一次\n十分鐘後做",
+    );
+    const texts = event.response.input.flatMap((item) =>
+      item.content.map((part) => part.text),
+    );
+    expect(texts[0]).toContain("改成一次");
+    expect(texts[0]).toContain("十分鐘後做");
+    expect(texts[1]).toBe("請告訴我現在的情況。");
+    expect(event.response.instructions).toContain("不要唸出來");
+    expect(event.response.instructions).toContain("以最新的說法為準");
+  });
+
+  it("stays byte-for-byte unchanged when nothing has been written yet", () => {
+    const withEmpty = buildRealtimeSpeakEvent("請告訴我現在的情況。", "zh-TW", "   ");
+    const without = buildRealtimeSpeakEvent("請告訴我現在的情況。", "zh-TW");
+    expect(withEmpty).toEqual(without);
+    expect(withEmpty.response.input).toHaveLength(1);
+  });
+});

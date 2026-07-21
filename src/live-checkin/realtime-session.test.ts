@@ -44,8 +44,34 @@ describe("Realtime session boundary", () => {
       interrupt_response: true,
     });
     expect(config.audio.output.voice).toBe("marin");
-    expect(config.tools).toEqual([]);
+    // Lookup is the only tool it gets, and nothing else may be added without
+    // a deliberate decision: every tool here can act while she is mid-sentence.
+    expect(config.tools).toHaveLength(1);
+    expect(config.tools[0]?.name).toBe("look_up");
+    expect(config.tool_choice).toBe("auto");
+    expect(config.instructions).toContain("不准拿去查");
     expect(config.tracing).toBeNull();
+  });
+
+  it("pushes toward acting rather than toward more conversation", () => {
+    // Brevity alone was the wrong fix and briefly made things worse: "offer a
+    // suggestion and ask how it sounds, then offer another" is a chat loop.
+    // Reported from real use as "他很想跟我一起聊下去，我差點被帶歪掉了".
+    // A product whose job is to end over-deliberation must not become a new
+    // and more comfortable place to over-deliberate.
+    const zh = buildRealtimeSessionConfig("zh-TW").instructions;
+    expect(zh).toContain("讓她開始動，不是陪她想");
+    expect(zh).toContain("不要問開放式的問題");
+    expect(zh).toContain("這通對話越短越成功");
+    // The explanation exception survives: being decisive never means leaving
+    // a safety question half-answered.
+    expect(zh).toContain("唯一的例外");
+
+    const en = buildRealtimeSessionConfig("en").instructions;
+    expect(en).toContain("get her moving, not to think alongside her");
+    expect(en).toContain("Never ask open questions");
+    expect(en).toContain("The shorter this call, the better it went");
+    expect(en).toContain("The one exception is when she asks you to explain");
   });
 
   it("keeps the English instructions under the same boundary", () => {

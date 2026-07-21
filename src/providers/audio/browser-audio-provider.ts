@@ -60,6 +60,14 @@ export async function speakBrowserText(
   });
 }
 
+// Once started, browser speech ran to the last word with no way out. That is
+// tolerable in a demo and wrong in a product whose whole premise is that the
+// user stays in control — she must be able to stop anything it is doing.
+export function stopBrowserSpeech(): void {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+}
+
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === "undefined") return false;
   const browserWindow = window as WindowWithSpeechRecognition;
