@@ -77,7 +77,11 @@ flowchart LR
     RUN <--> DB["Firestore\ncheck-ins · Episodes · layered memory · safe traces"]
     RUN --> SECRETS["Secret Manager\nOpenAI key · pairing · session signing"]
     RUN <--> GPT["Responses API · GPT-5.6\nstrict Zod · store false · retries 0"]
-    PWA <--> VOICE["gpt-realtime-2.1\nuser-started ears and voice"]
+    GPT --> SEARCH["web_search\nsourced lookup - opt-in - 2 per session"]
+    PWA <--> VOICE["gpt-realtime-2.1\nuser-started ears and voice\nlook_up tool - interruptible"]
+    RUN --> FCM["FCM data message\nescalation 1 to 2 to 4"]
+    FCM --> NATIVE["Private Android app\nfull-screen incoming call"]
+    NATIVE --> RUN
     DEMO["Public Demo Lab\nscripted · browser-only · no API"] -. "same local schemas" .-> PWA
 ```
 
